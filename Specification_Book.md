@@ -93,7 +93,6 @@ A web application that allows users to browse, curate, and share news, articles,
 * **User Profile:** Followed topics, saved articles, activity feed.
 * **Topic Page:** List of articles under a topic, follow/unfollow button.
 
-*(Wireframes can be created using Figma, Adobe XD, or Sketch.)*
 
 ---
 
@@ -186,16 +185,7 @@ A web application that allows users to browse, curate, and share news, articles,
 2. **Reverse Proxy:** Nginx for routing and SSL termination.
 3. **Database:** Managed PostgreSQL or MongoDB instance.
 4. **CDN:** Serve images and static assets via a CDN.
-5. **Monitoring:** Use Prometheus/Grafana or similar for system metrics.
+5. **Admin Page:** Using Budibase.
 
 ---
 
-## Future Enhancements
-
-* AI-powered content recommendation
-* Offline reading mode with PWA support
-* Video and audio content integration
-* Multi-language support
-* Social sharing to external platforms
-
----
