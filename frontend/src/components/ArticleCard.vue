@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{
+import { useArticleStore } from '../stores/articles'
+
+const props = defineProps<{
   article: {
     id: string
     title: string
@@ -7,12 +9,28 @@ defineProps<{
     imageUrl: string
     source: string
     author: string
+    liked?: boolean
+    saved?: boolean
   }
 }>()
+
+const articleStore = useArticleStore()
+
+const toggleLike = (e: Event) => {
+  e.preventDefault()
+  e.stopPropagation()
+  articleStore.toggleLike(props.article.id)
+}
+
+const toggleSave = (e: Event) => {
+  e.preventDefault()
+  e.stopPropagation()
+  articleStore.toggleSave(props.article.id)
+}
 </script>
 
 <template>
-  <div class="group flex flex-col bg-gray-900 h-full hover:bg-gray-800 transition-colors duration-200 cursor-pointer border border-gray-800">
+  <div class="group flex flex-col bg-gray-900 h-full hover:bg-gray-800 transition-colors duration-200 cursor-pointer border border-gray-800 relative">
     <!-- Image Container -->
     <div class="relative aspect-[4/3] overflow-hidden bg-gray-800">
       <img 
@@ -42,7 +60,7 @@ defineProps<{
         </h3>
       </RouterLink>
 
-      <!-- Excerpt (Hidden on smaller cards usually, but keeping for now) -->
+      <!-- Excerpt -->
       <p class="text-sm text-gray-400 line-clamp-3 mb-4 font-sans leading-relaxed">
         {{ article.description }}
       </p>
@@ -50,8 +68,8 @@ defineProps<{
       <!-- Footer -->
       <div class="mt-auto pt-4 flex items-center justify-between border-t border-gray-800">
         <div class="flex items-center space-x-3 text-gray-500">
-           <button class="hover:text-flipboard-red transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+           <button @click="toggleLike" class="transition-colors" :class="article.liked ? 'text-flipboard-red' : 'hover:text-flipboard-red'">
+              <svg xmlns="http://www.w3.org/2000/svg" :fill="article.liked ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
               </svg>
            </button>
@@ -61,9 +79,9 @@ defineProps<{
                </svg>
            </button>
         </div>
-        <button class="text-gray-500 hover:text-white transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+        <button @click="toggleSave" class="transition-colors" :class="article.saved ? 'text-white' : 'text-gray-500 hover:text-white'">
+          <svg xmlns="http://www.w3.org/2000/svg" :fill="article.saved ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
           </svg>
         </button>
       </div>

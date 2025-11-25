@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
@@ -17,7 +21,7 @@ import { RouterLink } from 'vue-router'
 
         <!-- Center: Logo -->
         <div class="flex-shrink-0 flex items-center justify-center w-1/3">
-            <RouterLink to="/" class="font-display font-bold text-3xl tracking-tighter text-white">
+            <RouterLink to="/" @click="scrollToTop" class="font-display font-bold text-3xl tracking-tighter text-white">
               FLIPBOARD
             </RouterLink>
         </div>
@@ -25,7 +29,7 @@ import { RouterLink } from 'vue-router'
         <!-- Right: Navigation & Login -->
         <div class="flex items-center justify-end w-1/3 space-x-6">
           <div class="hidden sm:flex sm:space-x-6">
-            <RouterLink to="/" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
+            <RouterLink to="/" @click="scrollToTop" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Home
             </RouterLink>
             <RouterLink to="/topics" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
