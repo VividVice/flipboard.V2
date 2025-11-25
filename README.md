@@ -81,7 +81,3 @@ flipboard.V2/
 - [ ] **Backend API:** Node.js/Python server for content aggregation.
 - [ ] **Authentication:** User login and profile management.
 - [ ] **Interactions:** Likes, bookmarks, and comments.
-
-## 📄 License
-
-[MIT](LICENSE)
