@@ -6,7 +6,7 @@ import { useArticleStore } from '../stores/articles'
 import { storeToRefs } from 'pinia'
 
 const articleStore = useArticleStore()
-const { gridArticles, heroArticle } = storeToRefs(articleStore)
+const { gridArticles, heroArticle, categories, selectedCategory, searchQuery } = storeToRefs(articleStore)
 
 // Loading state for initial load
 const isLoading = ref(true)
@@ -16,11 +16,14 @@ onMounted(() => {
   setTimeout(() => {
     isLoading.value = false
   }, 1500)
+  
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
 })
 
 // Infinite Scroll Logic
 const loadMoreTrigger = ref<HTMLElement | null>(null)
-// ... (rest of the code remains the same until template)
 
 const observer = new IntersectionObserver((entries) => {
   const entry = entries[0]
@@ -33,28 +36,20 @@ const observer = new IntersectionObserver((entries) => {
   threshold: 0.1
 })
 
-onMounted(() => {
-  if (loadMoreTrigger.value) {
-    observer.observe(loadMoreTrigger.value)
-  }
-})
-
 onUnmounted(() => {
   observer.disconnect()
 })
 
 // Computed properties for grid layout
-// If we have search results, we don't want a "featured" layout, just a clean grid.
-// If it's the default view, we keep the featured layout.
-const hasSearch = computed(() => articleStore.searchQuery.length > 0)
+const isFiltered = computed(() => searchQuery.value.length > 0 || (selectedCategory.value !== 'All' && selectedCategory.value !== 'For You'))
 
 const featuredGridArticle = computed(() => {
-  if (hasSearch.value) return null
+  if (isFiltered.value) return null
   return gridArticles.value[0]
 })
 
 const standardGridArticles = computed(() => {
-  if (hasSearch.value) return gridArticles.value
+  if (isFiltered.value) return gridArticles.value
   return gridArticles.value.slice(1)
 })
 </script>
@@ -62,7 +57,26 @@ const standardGridArticles = computed(() => {
 <template>
   <div class="bg-black min-h-screen pb-20">
     
-    <!-- Hero Section (Hidden when searching) -->
+    <!-- Category Filter Bar -->
+    <div class="sticky top-[60px] z-40 bg-black/95 border-b border-gray-800 backdrop-blur supports-[backdrop-filter]:bg-black/60">
+       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex space-x-2 overflow-x-auto py-3 no-scrollbar">
+             <button 
+               v-for="cat in categories" 
+               :key="cat"
+               @click="articleStore.setCategory(cat)"
+               class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border"
+               :class="selectedCategory === cat 
+                 ? 'bg-white text-black border-white' 
+                 : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
+             >
+               {{ cat }}
+             </button>
+          </div>
+       </div>
+    </div>
+
+    <!-- Hero Section (Hidden when filtering/searching) -->
     <div class="bg-gray-900 text-white border-b border-gray-800" v-if="heroArticle">
         <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-[500px]">
             <div class="relative h-64 lg:h-auto">
@@ -93,22 +107,22 @@ const standardGridArticles = computed(() => {
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="border-b border-gray-800 mb-8 pb-2 flex items-end justify-between">
           <h2 class="text-4xl font-display font-bold text-white uppercase tracking-tighter">
-            {{ hasSearch ? 'Search Results' : 'For You' }}
+            {{ searchQuery ? 'Search Results' : (selectedCategory === 'All' || selectedCategory === 'For You' ? 'For You' : selectedCategory) }}
           </h2>
-          <a href="#" v-if="!hasSearch" class="text-sm font-bold text-gray-500 hover:text-flipboard-red uppercase tracking-wide mb-1">See All</a>
+          <a href="#" v-if="!isFiltered" class="text-sm font-bold text-gray-500 hover:text-flipboard-red uppercase tracking-wide mb-1">See All</a>
       </div>
 
-      <!-- Grid Layout -->
+      <!-- Skeleton Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" v-if="isLoading">
-         <!-- Skeleton Loading State -->
          <div class="col-span-1 md:col-span-2 row-span-2">
             <SkeletonCard class="h-full" />
          </div>
          <SkeletonCard v-for="n in 8" :key="n" />
       </div>
 
+      <!-- Data Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" v-else-if="gridArticles.length > 0">
-        <!-- Featured Item (Only shown if NOT searching and data exists) -->
+        <!-- Featured Item (Only shown if NOT filtered and data exists) -->
         <div class="col-span-1 md:col-span-2 row-span-2" v-if="featuredGridArticle">
             <ArticleCard :article="featuredGridArticle" class="h-full" />
         </div>
@@ -117,17 +131,29 @@ const standardGridArticles = computed(() => {
         <ArticleCard v-for="article in standardGridArticles" :key="article.id" :article="article" />
       </div>
       
-      <!-- Empty State for Search -->
+      <!-- Empty State -->
       <div v-else class="text-center py-20">
-         <p class="text-gray-500 text-xl">No stories found matching "{{ articleStore.searchQuery }}"</p>
+         <p class="text-gray-500 text-xl">No stories found.</p>
       </div>
 
       <!-- Infinite Scroll Trigger -->
-      <div ref="loadMoreTrigger" class="h-20 w-full flex items-center justify-center mt-12" v-if="!hasSearch">
+      <div ref="loadMoreTrigger" class="h-20 w-full flex items-center justify-center mt-12" v-if="!isFiltered && !isLoading">
          <!-- Loading Spinner -->
          <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-flipboard-red"></div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+</style>
 

@@ -59,7 +59,7 @@ const scrollToTop = () => {
 
         <!-- Center: Logo -->
         <div class="flex-shrink-0 flex items-center justify-center w-1/3">
-            <RouterLink to="/" @click="scrollToTop" class="font-display font-bold text-3xl tracking-tighter text-white">
+            <RouterLink to="/" @click="scrollToTop" class="font-display font-bold text-3xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-flipboard-red">
               FLIPBOARD
             </RouterLink>
         </div>
