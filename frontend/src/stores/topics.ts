@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useToastStore } from './toast'
 
 export interface Topic {
   name: string
@@ -29,6 +30,12 @@ export const useTopicStore = defineStore('topics', {
       const topic = this.topics.find(t => t.name === name)
       if (topic) {
         topic.isFollowed = !topic.isFollowed
+        const toast = useToastStore()
+        if (topic.isFollowed) {
+           toast.show(`Following ${name}`)
+        } else {
+           toast.show(`Unfollowed ${name}`, 'info')
+        }
       }
     }
   }

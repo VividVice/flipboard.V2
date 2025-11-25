@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useToastStore } from './toast'
 
 export interface User {
   id: string
@@ -23,6 +24,8 @@ export const useAuthStore = defineStore('auth', {
         avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
       }
       this.isAuthenticated = true
+      const toast = useToastStore()
+      toast.show(`Welcome back, ${this.user.name}!`)
     },
     
     signup(name: string, email: string) {
@@ -34,11 +37,15 @@ export const useAuthStore = defineStore('auth', {
         avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
       }
       this.isAuthenticated = true
+      const toast = useToastStore()
+      toast.show(`Welcome to Flipboard, ${name}!`)
     },
     
     logout() {
       this.user = null
       this.isAuthenticated = false
+      const toast = useToastStore()
+      toast.show('You have been logged out.', 'info')
     }
   }
 })

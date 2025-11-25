@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useArticleStore } from '../stores/articles'
+import SaveModal from './SaveModal.vue'
 
 const props = defineProps<{
   article: {
@@ -15,6 +17,7 @@ const props = defineProps<{
 }>()
 
 const articleStore = useArticleStore()
+const isSaveModalOpen = ref(false)
 
 const toggleLike = (e: Event) => {
   e.preventDefault()
@@ -22,15 +25,29 @@ const toggleLike = (e: Event) => {
   articleStore.toggleLike(props.article.id)
 }
 
-const toggleSave = (e: Event) => {
+const openSaveModal = (e: Event) => {
   e.preventDefault()
   e.stopPropagation()
-  articleStore.toggleSave(props.article.id)
+  // If already saved, just toggle it off (or could open modal to remove? For simplicity, toggle off directly)
+  if (props.article.saved) {
+    articleStore.toggleSave(props.article.id)
+  } else {
+    isSaveModalOpen.value = true
+  }
 }
 </script>
 
 <template>
   <div class="group flex flex-col bg-gray-900 h-full hover:bg-gray-800 transition-colors duration-200 cursor-pointer border border-gray-800 relative">
+    <!-- Save Modal Portal -->
+    <Teleport to="body">
+      <SaveModal 
+        :is-open="isSaveModalOpen" 
+        :article-id="article.id"
+        @close="isSaveModalOpen = false"
+      />
+    </Teleport>
+
     <!-- Image Container -->
     <div class="relative aspect-[4/3] overflow-hidden bg-gray-800">
       <img 
@@ -79,7 +96,7 @@ const toggleSave = (e: Event) => {
                </svg>
            </button>
         </div>
-        <button @click="toggleSave" class="transition-colors" :class="article.saved ? 'text-white' : 'text-gray-500 hover:text-white'">
+        <button @click="openSaveModal" class="transition-colors" :class="article.saved ? 'text-white' : 'text-gray-500 hover:text-white'">
           <svg xmlns="http://www.w3.org/2000/svg" :fill="article.saved ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
           </svg>
