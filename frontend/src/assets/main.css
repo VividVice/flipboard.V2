@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-flipboard-red: #E12828;
+  --color-flipboard-black: #000000;
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Oswald', sans-serif;
+  --font-serif: 'Merriweather', serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    @apply bg-gray-900 text-gray-100 antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply tracking-tight;
+  }
+}
