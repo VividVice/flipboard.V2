@@ -28,7 +28,16 @@ const router = createRouter({
       name: 'topics',
       component: () => import('../views/TopicView.vue')
     },
-    // Fallback for about if it's still linked somewhere, or just remove it
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue')
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: () => import('../views/SignupView.vue')
+    }
   ]
 })
 

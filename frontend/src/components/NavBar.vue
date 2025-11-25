@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { storeToRefs } from 'pinia'
+
+const authStore = useAuthStore()
+const { isAuthenticated, user } = storeToRefs(authStore)
 
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -35,17 +40,30 @@ const scrollToTop = () => {
             <RouterLink to="/topics" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Topics
             </RouterLink>
-            <RouterLink to="/profile" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
+            <RouterLink v-if="isAuthenticated" to="/profile" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Profile
             </RouterLink>
           </div>
           <div class="flex-shrink-0 border-l border-gray-800 pl-6">
-            <button type="button" class="text-sm font-bold text-gray-300 hover:text-white transition-colors">
-              Log In
-            </button>
-            <button type="button" class="ml-4 px-4 py-2 text-sm font-bold rounded bg-flipboard-red text-white hover:bg-red-700 transition-colors">
-              Sign Up
-            </button>
+            <template v-if="!isAuthenticated">
+              <RouterLink to="/login" class="text-sm font-bold text-gray-300 hover:text-white transition-colors">
+                Log In
+              </RouterLink>
+              <RouterLink to="/signup" class="ml-4 px-4 py-2 text-sm font-bold rounded bg-flipboard-red text-white hover:bg-red-700 transition-colors">
+                Sign Up
+              </RouterLink>
+            </template>
+            <template v-else>
+               <div class="flex items-center space-x-3 group cursor-pointer relative">
+                  <RouterLink to="/profile" class="flex items-center space-x-2">
+                    <img v-if="user?.avatarUrl" :src="user.avatarUrl" class="h-8 w-8 rounded-full border border-gray-600" alt="User Avatar" />
+                    <div v-else class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600 text-white font-bold">
+                        {{ user?.name.charAt(0) }}
+                    </div>
+                  </RouterLink>
+                  <button @click="authStore.logout()" class="text-xs font-bold text-gray-500 hover:text-white uppercase">Logout</button>
+               </div>
+            </template>
           </div>
         </div>
       </div>
