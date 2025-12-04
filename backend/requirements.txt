@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pymongo
+pydantic
+passlib
+python-jose[cryptography]
+motor
+email-validator
+pydantic-settings
+python-multipart
+bcrypt==3.2.0

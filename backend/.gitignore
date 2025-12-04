@@ -1,0 +1,33 @@
+# Virtual environment
+venv/
+.venv/
+env/
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.idea/
+.vscode/
+
+# Other
+.DS_Store
+*.log
+*.pot
+*.pot~
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+htmlcov/
+.coverage
+.tox/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+*.db
+*.sqlite3
