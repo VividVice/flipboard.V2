@@ -56,7 +56,7 @@ const handleCancel = () => {
               </div>
             </div>
           </div>
-          <div class="bg-gray-750 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-700 gap-3">
+          <div class="bg-gray-800 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-700 gap-3">
             <button 
               @click="handleConfirm" 
               type="button" 
