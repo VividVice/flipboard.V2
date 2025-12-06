@@ -84,8 +84,7 @@ export const useCommentsStore = defineStore('comments', {
         return
       }
 
-      const user = authStore.user
-      const { id, name, avatarUrl } = user
+      const { id, name, avatarUrl } = authStore.user
 
       this.loading = true
       this.error = null
