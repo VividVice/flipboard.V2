@@ -1,0 +1,171 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { Comment } from '../data/articles'
+import { useAuthStore } from '../stores/auth'
+import { useCommentsStore } from '../stores/comments'
+import ConfirmModal from './ConfirmModal.vue'
+
+interface Props {
+  comment: Comment
+  articleId: string
+}
+
+const props = defineProps<Props>()
+const authStore = useAuthStore()
+const commentsStore = useCommentsStore()
+
+const isEditing = ref(false)
+const editedContent = ref(props.comment.content)
+const showDeleteConfirm = ref(false)
+const editError = ref('')
+
+const isAuthor = computed(() => {
+  return authStore.user?.id === props.comment.author.id
+})
+
+const formattedDate = computed(() => {
+  const date = new Date(props.comment.createdAt)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString()
+})
+
+const startEdit = () => {
+  isEditing.value = true
+  editedContent.value = props.comment.content
+  editError.value = ''
+}
+
+const cancelEdit = () => {
+  isEditing.value = false
+  editedContent.value = props.comment.content
+  editError.value = ''
+}
+
+const saveEdit = async () => {
+  const trimmedContent = editedContent.value.trim()
+  
+  if (trimmedContent.length === 0) {
+    editError.value = 'Comment cannot be empty'
+    return
+  }
+  
+  editError.value = ''
+  await commentsStore.updateComment(props.comment.id, props.articleId, trimmedContent)
+  isEditing.value = false
+}
+
+const deleteComment = async () => {
+  showDeleteConfirm.value = true
+}
+
+const confirmDelete = async () => {
+  showDeleteConfirm.value = false
+  await commentsStore.deleteComment(props.comment.id, props.articleId)
+}
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
+}
+</script>
+
+<template>
+  <div class="py-4 border-b border-gray-800 last:border-0">
+    <div class="flex items-start space-x-3">
+      <!-- Avatar -->
+      <div class="flex-shrink-0">
+        <div
+          class="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600 text-white font-bold overflow-hidden"
+        >
+          <img
+            v-if="comment.author.avatarUrl"
+            :src="comment.author.avatarUrl"
+            :alt="comment.author.name"
+            class="h-full w-full object-cover"
+          />
+          <span v-else>{{ comment.author.name.charAt(0).toUpperCase() }}</span>
+        </div>
+      </div>
+
+      <!-- Comment Content -->
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-semibold text-gray-100">{{ comment.author.name }}</span>
+            <span class="text-xs text-gray-500">{{ formattedDate }}</span>
+            <span v-if="comment.updatedAt" class="text-xs text-gray-500 italic">(edited)</span>
+          </div>
+
+          <!-- Actions for author -->
+          <div v-if="isAuthor && !isEditing" class="flex items-center space-x-2">
+            <button
+              @click="startEdit"
+              class="text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              @click="deleteComment"
+              class="text-xs text-gray-400 hover:text-flipboard-red transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+
+        <!-- Comment text or edit form -->
+        <div v-if="!isEditing" class="mt-1 text-sm text-gray-300 break-words">
+          {{ comment.content }}
+        </div>
+
+        <div v-else class="mt-2 space-y-2">
+          <textarea
+            v-model="editedContent"
+            :class="[
+              'w-full bg-gray-900 border rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none resize-none',
+              editError ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-flipboard-red'
+            ]"
+            rows="3"
+            placeholder="Edit your comment..."
+          ></textarea>
+          <div v-if="editError" class="text-xs text-red-500">
+            {{ editError }}
+          </div>
+          <div class="flex items-center space-x-2">
+            <button
+              @click="saveEdit"
+              class="px-3 py-1 bg-flipboard-red text-white text-xs font-semibold rounded hover:bg-red-700 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              @click="cancelEdit"
+              class="px-3 py-1 bg-gray-700 text-white text-xs font-semibold rounded hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <ConfirmModal
+    :is-open="showDeleteConfirm"
+    title="Delete Comment"
+    message="Are you sure you want to delete this comment? This action cannot be undone."
+    confirm-text="Delete"
+    cancel-text="Cancel"
+    @confirm="confirmDelete"
+    @cancel="cancelDelete"
+  />
+</template>

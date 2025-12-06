@@ -10,6 +10,19 @@ export interface Article {
   content?: string
 }
 
+export interface Comment {
+  id: string
+  articleId: string
+  author: {
+    id: string
+    name: string
+    avatarUrl: string
+  }
+  content: string
+  createdAt: string
+  updatedAt?: string
+}
+
 export const heroArticle: Article = {
     id: '0',
     title: 'The Future of Artificial Intelligence: What to Expect in 2030',
