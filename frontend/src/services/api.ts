@@ -50,7 +50,7 @@ class ApiService {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to create comment')
+      throw new Error(`Failed to create comment: ${response.status} ${response.statusText}`)
     }
 
     return response.json()
@@ -64,7 +64,7 @@ class ApiService {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to update comment')
+      throw new Error(`Failed to update comment: ${response.status} ${response.statusText}`)
     }
 
     return response.json()
@@ -77,7 +77,7 @@ class ApiService {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to delete comment')
+      throw new Error(`Failed to delete comment: ${response.status} ${response.statusText}`)
     }
   }
 }
