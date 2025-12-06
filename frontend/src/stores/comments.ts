@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { Comment } from '../data/articles'
-import { apiService, ValidationError } from '../services/api'
+import { apiService } from '../services/api'
 import { useToastStore } from './toast'
 import { useAuthStore } from './auth'
 
@@ -119,15 +119,9 @@ export const useCommentsStore = defineStore('comments', {
         console.log('✅ Comment added to store, total comments:', this.commentsByArticle[articleId].length)
         toast.show('Comment added successfully')
       } catch (error) {
-        if (error instanceof ValidationError) {
-          this.error = error.message
-          console.error('❌ Validation error:', error.message)
-          toast.show(error.message, 'error')
-        } else {
-          this.error = 'Failed to create comment'
-          console.error('❌ Error creating comment:', error)
-          toast.show('Failed to add comment', 'error')
-        }
+        this.error = 'Failed to create comment'
+        console.error('❌ Error creating comment:', error)
+        toast.show('Failed to add comment', 'error')
       } finally {
         this.loading = false
       }
@@ -144,9 +138,12 @@ export const useCommentsStore = defineStore('comments', {
         if (this.useMockData) {
           // Update mock comment
           await new Promise(resolve => setTimeout(resolve, 200))
-          if (index !== -1 && comments[index]) {
-            comments[index].content = content
-            comments[index].updatedAt = new Date().toISOString()
+          if (index !== -1) {
+            comments[index] = {
+              ...comments[index],
+              content,
+              updatedAt: new Date().toISOString(),
+            }
           }
         } else {
           const updatedComment = await apiService.updateComment(commentId, { content })
@@ -158,17 +155,11 @@ export const useCommentsStore = defineStore('comments', {
         const toast = useToastStore()
         toast.show('Comment updated successfully')
       } catch (error) {
+        this.error = 'Failed to update comment'
+        console.error('Error updating comment:', error)
+
         const toast = useToastStore()
-        
-        if (error instanceof ValidationError) {
-          this.error = error.message
-          console.error('❌ Validation error:', error.message)
-          toast.show(error.message, 'error')
-        } else {
-          this.error = 'Failed to update comment'
-          console.error('Error updating comment:', error)
-          toast.show('Failed to update comment', 'error')
-        }
+        toast.show('Failed to update comment', 'error')
       } finally {
         this.loading = false
       }
