@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useArticleStore } from '../stores/articles'
+import CommentSection from '../components/CommentSection.vue'
 
 const route = useRoute()
 const articleStore = useArticleStore()
@@ -10,6 +11,18 @@ const articleId = route.params.id as string
 const article = computed(() => {
   return articleStore.getArticleById(articleId)
 })
+
+const showComments = ref(false)
+
+const scrollToComments = () => {
+  showComments.value = true
+  setTimeout(() => {
+    const commentsSection = document.getElementById('comments-section')
+    if (commentsSection) {
+      commentsSection.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, 100)
+}
 </script>
 
 <template>
@@ -51,6 +64,11 @@ const article = computed(() => {
              <div class="prose prose-lg prose-invert prose-red max-w-none font-serif text-gray-300 leading-loose" v-html="article.content"></div>
         </article>
 
+        <!-- Comments Section -->
+        <div id="comments-section">
+          <CommentSection v-if="showComments || article" :article-id="articleId" />
+        </div>
+
         <!-- Interaction Bar -->
         <div class="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 p-4 z-40">
             <div class="max-w-3xl mx-auto flex items-center justify-between">
@@ -65,9 +83,12 @@ const article = computed(() => {
                         </svg>
                         <span class="hidden sm:inline font-bold text-sm">{{ article.liked ? 'Liked' : 'Like' }}</span>
                     </button>
-                    <button class="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
+                    <button
+                      @click="scrollToComments"
+                      class="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.287.696.345 1.084m-3.13 1.61a2.25 2.25 0 1 0 2.25 2.25m-2.25-2.25c.34.056.689.103 1.038.14m5.714-4.567a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.287.696.345 1.084m-3.13 1.61a2.25 2.25 0 1 0 2.25 2.25m-2.25-2.25c.34.056.689.103 1.038.14m5.714-4.567a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.287.696.345 1.084m-3.13 1.61a2.25 2.25 0 1 0 2.25 2.25m-2.25-2.25c.34.056.689.103 1.038.14m5.714-4.567a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.287.696.345 1.084m-3.13 1.61a2.25 2.25 0 1 0 2.25 2.25m-2.25-2.25c.34.056.689.103 1.038.14" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                         </svg>
                         <span class="hidden sm:inline font-bold text-sm">Comment</span>
                     </button>
