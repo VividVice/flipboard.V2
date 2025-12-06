@@ -69,7 +69,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 
           <div class="flex items-center justify-between mt-2">
             <p class="text-xs text-gray-500">
-              Press <kbd class="px-1 py-0.5 bg-gray-800 rounded text-xs">Ctrl+Enter</kbd> to submit
+              Press <kbd class="px-1 py-0.5 bg-gray-800 rounded text-xs">Ctrl+Enter</kbd> or <kbd class="px-1 py-0.5 bg-gray-800 rounded text-xs">Cmd+Enter</kbd> to submit
             </p>
             <button
               @click="submitComment"
