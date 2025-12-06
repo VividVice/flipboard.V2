@@ -3,7 +3,6 @@ import type { Comment } from '../data/articles'
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Comment validation constants
-const MIN_COMMENT_LENGTH = 1
 const MAX_COMMENT_LENGTH = 1000
 
 export interface CreateCommentDto {
@@ -28,10 +27,6 @@ function validateCommentContent(content: string): void {
   
   if (trimmedContent.length === 0) {
     throw new ValidationError('Comment cannot be empty')
-  }
-  
-  if (trimmedContent.length < MIN_COMMENT_LENGTH) {
-    throw new ValidationError(`Comment must be at least ${MIN_COMMENT_LENGTH} character${MIN_COMMENT_LENGTH > 1 ? 's' : ''}`)
   }
   
   if (trimmedContent.length > MAX_COMMENT_LENGTH) {
