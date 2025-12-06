@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { Comment } from '../data/articles'
 import { useAuthStore } from '../stores/auth'
 import { useCommentsStore } from '../stores/comments'
+import ConfirmModal from './ConfirmModal.vue'
 
 interface Props {
   comment: Comment
@@ -15,6 +16,7 @@ const commentsStore = useCommentsStore()
 
 const isEditing = ref(false)
 const editedContent = ref(props.comment.content)
+const showDeleteConfirm = ref(false)
 
 const isAuthor = computed(() => {
   return authStore.user?.id === props.comment.author.id
@@ -53,9 +55,16 @@ const saveEdit = async () => {
 }
 
 const deleteComment = async () => {
-  if (confirm('Are you sure you want to delete this comment?')) {
-    await commentsStore.deleteComment(props.comment.id, props.articleId)
-  }
+  showDeleteConfirm.value = true
+}
+
+const confirmDelete = async () => {
+  showDeleteConfirm.value = false
+  await commentsStore.deleteComment(props.comment.id, props.articleId)
+}
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
 }
 </script>
 
@@ -133,4 +142,15 @@ const deleteComment = async () => {
       </div>
     </div>
   </div>
+
+  <!-- Delete confirmation modal -->
+  <ConfirmModal
+    :is-open="showDeleteConfirm"
+    title="Delete Comment"
+    message="Are you sure you want to delete this comment? This action cannot be undone."
+    confirm-text="Delete"
+    cancel-text="Cancel"
+    @confirm="confirmDelete"
+    @cancel="cancelDelete"
+  />
 </template>
