@@ -12,7 +12,7 @@ const article = computed(() => {
   return articleStore.getArticleById(articleId)
 })
 
-const showComments = ref(false)
+const showComments = ref(true)
 
 const scrollToComments = async () => {
   showComments.value = true
