@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useArticleStore } from '../stores/articles'
 import CommentSection from '../components/CommentSection.vue'
@@ -14,14 +14,13 @@ const article = computed(() => {
 
 const showComments = ref(false)
 
-const scrollToComments = () => {
+const scrollToComments = async () => {
   showComments.value = true
-  setTimeout(() => {
-    const commentsSection = document.getElementById('comments-section')
-    if (commentsSection) {
-      commentsSection.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, 100)
+  await nextTick()
+  const commentsSection = document.getElementById('comments-section')
+  if (commentsSection) {
+    commentsSection.scrollIntoView({ behavior: 'smooth' })
+  }
 }
 </script>
 
