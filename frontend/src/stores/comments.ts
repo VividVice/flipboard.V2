@@ -79,10 +79,12 @@ export const useCommentsStore = defineStore('comments', {
       const authStore = useAuthStore()
       const toast = useToastStore()
 
-      if (!authStore.isAuthenticated) {
+      if (!authStore.user) {
         toast.show('Please login to comment', 'error')
         return
       }
+
+      const { id, name, avatarUrl } = authStore.user
 
       this.loading = true
       this.error = null
@@ -98,9 +100,9 @@ export const useCommentsStore = defineStore('comments', {
             id: `comment-${Date.now()}`,
             articleId,
             author: {
-              id: authStore.user!.id,
-              name: authStore.user!.name,
-              avatarUrl: authStore.user!.avatarUrl,
+              id,
+              name,
+              avatarUrl,
             },
             content,
             createdAt: new Date().toISOString(),
