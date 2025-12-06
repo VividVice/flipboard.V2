@@ -15,6 +15,7 @@ const commentsStore = useCommentsStore()
 
 const isEditing = ref(false)
 const editedContent = ref(props.comment.content)
+const editError = ref('')
 
 const isAuthor = computed(() => {
   return authStore.user?.id === props.comment.author.id
@@ -38,18 +39,26 @@ const formattedDate = computed(() => {
 const startEdit = () => {
   isEditing.value = true
   editedContent.value = props.comment.content
+  editError.value = ''
 }
 
 const cancelEdit = () => {
   isEditing.value = false
   editedContent.value = props.comment.content
+  editError.value = ''
 }
 
 const saveEdit = async () => {
-  if (editedContent.value.trim()) {
-    await commentsStore.updateComment(props.comment.id, props.articleId, editedContent.value.trim())
-    isEditing.value = false
+  const trimmedContent = editedContent.value.trim()
+  
+  if (trimmedContent.length === 0) {
+    editError.value = 'Comment cannot be empty'
+    return
   }
+  
+  editError.value = ''
+  await commentsStore.updateComment(props.comment.id, props.articleId, trimmedContent)
+  isEditing.value = false
 }
 
 const deleteComment = async () => {
@@ -111,10 +120,16 @@ const deleteComment = async () => {
         <div v-else class="mt-2 space-y-2">
           <textarea
             v-model="editedContent"
-            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-flipboard-red resize-none"
+            :class="[
+              'w-full bg-gray-900 border rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none resize-none',
+              editError ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-flipboard-red'
+            ]"
             rows="3"
             placeholder="Edit your comment..."
           ></textarea>
+          <div v-if="editError" class="text-xs text-red-500">
+            {{ editError }}
+          </div>
           <div class="flex items-center space-x-2">
             <button
               @click="saveEdit"
