@@ -66,7 +66,7 @@ const scrollToComments = () => {
 
         <!-- Comments Section -->
         <div id="comments-section">
-          <CommentSection v-if="showComments || article" :article-id="articleId" />
+          <CommentSection v-if="showComments" :article-id="articleId" />
         </div>
 
         <!-- Interaction Bar -->
