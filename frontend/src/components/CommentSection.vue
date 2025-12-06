@@ -6,11 +6,12 @@ import { useCommentsStore } from '../stores/comments'
 
 interface Props {
   articleId: string
+  showComments?: boolean
 }
 
 const props = defineProps<Props>()
 const commentsStore = useCommentsStore()
-const isVisible = ref(true)
+const isVisible = ref(props.showComments !== undefined ? props.showComments : true)
 
 const commentsCount = computed(() => commentsStore.getCommentsCount(props.articleId))
 
