@@ -9,3 +9,4 @@ email-validator
 pydantic-settings
 python-multipart
 bcrypt==3.2.0
+pytest
