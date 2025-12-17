@@ -62,5 +62,5 @@ async def scrape_article_content(url: str) -> str:
             return "<p>Could not extract full content automatically. Please visit the source.</p>"
             
     except Exception as e:
-        logger.error(f"Error scraping {url}: {str(e)}")
-        raise e
+        logger.error(f"Error scraping {url}: {str(e)}", exc_info=True)
+        raise
