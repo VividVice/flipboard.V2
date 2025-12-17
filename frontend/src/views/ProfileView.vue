@@ -13,8 +13,8 @@ const { magazines } = storeToRefs(magazineStore)
 const activeTab = ref('saved') // 'saved', 'magazines', 'comments'
 
 const user = {
-  name: 'Jane Doe',
-  username: '@janedoe',
+  name: 'June Doe',
+  username: '@junedoe',
   bio: 'Tech enthusiast, avid reader, and coffee lover. Curating the best stories on AI and Design.',
   followers: 1205,
   following: 45,

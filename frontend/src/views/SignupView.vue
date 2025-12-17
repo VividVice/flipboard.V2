@@ -14,7 +14,7 @@ const handleSignup = () => {
   // Simulate API call delay
   setTimeout(() => {
     authStore.signup(name.value, email.value)
-    router.push('/')
+    router.push('/welcome/topics')
   }, 500)
 }
 </script>

@@ -25,15 +25,16 @@ const toggleLike = (e: Event) => {
   articleStore.toggleLike(props.article.id)
 }
 
+const toggleSave = (e: Event) => {
+  e.preventDefault()
+  e.stopPropagation()
+  articleStore.toggleSave(props.article.id)
+}
+
 const openSaveModal = (e: Event) => {
   e.preventDefault()
   e.stopPropagation()
-  // If already saved, just toggle it off (or could open modal to remove? For simplicity, toggle off directly)
-  if (props.article.saved) {
-    articleStore.toggleSave(props.article.id)
-  } else {
-    isSaveModalOpen.value = true
-  }
+  isSaveModalOpen.value = true
 }
 </script>
 
@@ -96,11 +97,18 @@ const openSaveModal = (e: Event) => {
                </svg>
            </RouterLink>
         </div>
-        <button @click="openSaveModal" class="transition-colors" :class="article.saved ? 'text-white' : 'text-gray-500 hover:text-white'">
-          <svg xmlns="http://www.w3.org/2000/svg" :fill="article.saved ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-          </svg>
-        </button>
+        <div class="flex items-center space-x-3">
+          <button @click="openSaveModal" class="text-gray-500 hover:text-white transition-colors">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+             </svg>
+          </button>
+          <button @click="toggleSave" class="transition-colors" :class="article.saved ? 'text-white' : 'text-gray-500 hover:text-white'">
+            <svg xmlns="http://www.w3.org/2000/svg" :fill="article.saved ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>

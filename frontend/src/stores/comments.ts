@@ -141,11 +141,14 @@ export const useCommentsStore = defineStore('comments', {
           // Update mock comment
           await new Promise(resolve => setTimeout(resolve, 200))
           if (index !== -1) {
-            comments[index] = {
-              ...comments[index],
-              content,
-              updatedAt: new Date().toISOString(),
-            }
+             const existingComment = comments[index]
+             if (existingComment) {
+                comments[index] = {
+                  ...existingComment,
+                  content,
+                  updatedAt: new Date().toISOString(),
+                }
+             }
           }
         } else {
           const updatedComment = await apiService.updateComment(commentId, { content })
