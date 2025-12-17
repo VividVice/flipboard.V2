@@ -29,6 +29,11 @@ const router = createRouter({
       component: () => import('../views/TopicView.vue')
     },
     {
+      path: '/news',
+      name: 'news',
+      component: () => import('../views/NewsView.vue')
+    },
+    {
       path: '/welcome/topics',
       name: 'topic-selection',
       component: () => import('../views/TopicSelectionView.vue')

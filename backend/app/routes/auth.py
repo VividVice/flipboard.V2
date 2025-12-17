@@ -4,6 +4,7 @@ from app.schemas.user import UserCreate, User
 from app.schemas.token import Token
 from app.crud import user as user_crud
 from app.security import token as security_token
+from app.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -39,3 +40,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         data={"sub": user["username"]}
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/me", response_model=User)
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    return current_user

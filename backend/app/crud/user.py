@@ -29,3 +29,27 @@ async def authenticate_user(username: str, password: str):
     if not verify_password(password, user["hashed_password"]):
         return False
     return user
+
+async def update_followed_topics(user_id: str, topic_ids: list):
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"followed_topics": topic_ids}}
+    )
+    return result.modified_count > 0
+
+async def add_followed_topic(user_id: str, topic_id: str):
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$addToSet": {"followed_topics": topic_id}}
+    )
+    return result.modified_count > 0
+
+async def remove_followed_topic(user_id: str, topic_id: str):
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$pull": {"followed_topics": topic_id}}
+    )
+    return result.modified_count > 0
+
+async def get_user_by_id(user_id: str):
+    return await db.users.find_one({"id": user_id})

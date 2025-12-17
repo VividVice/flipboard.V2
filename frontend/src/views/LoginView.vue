@@ -6,15 +6,28 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('')
+const username = ref('')
 const password = ref('')
+const loading = ref(false)
+const error = ref('')
 
-const handleLogin = () => {
-  // Simulate API call delay
-  setTimeout(() => {
-    authStore.login(email.value)
+const handleLogin = async () => {
+  if (!username.value || !password.value) {
+    error.value = 'Please enter username and password'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    await authStore.login(username.value, password.value)
     router.push('/')
-  }, 500)
+  } catch (err: any) {
+    error.value = err.message || 'Login failed'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -35,10 +48,14 @@ const handleLogin = () => {
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-gray-900 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-800">
         <form class="space-y-6" @submit.prevent="handleLogin">
+          <div v-if="error" class="rounded-md bg-red-900/20 border border-red-800 p-4">
+            <p class="text-sm text-red-400">{{ error }}</p>
+          </div>
+
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-300"> Email address </label>
+            <label for="username" class="block text-sm font-medium text-gray-300"> Username </label>
             <div class="mt-1">
-              <input id="email" name="email" type="email" autocomplete="email" required v-model="email" class="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-flipboard-red focus:border-flipboard-red sm:text-sm" />
+              <input id="username" name="username" type="text" autocomplete="username" required v-model="username" class="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-flipboard-red focus:border-flipboard-red sm:text-sm" placeholder="marie_paris" />
             </div>
           </div>
 
@@ -61,8 +78,8 @@ const handleLogin = () => {
           </div>
 
           <div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-flipboard-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-flipboard-red uppercase tracking-wide transition-colors">
-              Sign in
+            <button type="submit" :disabled="loading" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-flipboard-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-flipboard-red uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ loading ? 'Signing in...' : 'Sign in' }}
             </button>
           </div>
         </form>

@@ -1,5 +1,8 @@
 import { defineStore } from 'pinia'
 import { useToastStore } from './toast'
+import { apiService } from '../services/api'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export interface User {
   id: string
@@ -13,37 +16,63 @@ export const useAuthStore = defineStore('auth', {
     user: null as User | null,
     isAuthenticated: false
   }),
-  
+
   actions: {
-    login(email: string) {
-      // Mock login logic
-      this.user = {
-        id: 'u1',
-        name: 'June Doe',
-        email: email,
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-      }
-      this.isAuthenticated = true
+    async login(username: string, password: string) {
       const toast = useToastStore()
-      toast.show(`Welcome back, ${this.user.name}!`)
-    },
-    
-    signup(name: string, email: string) {
-      // Mock signup logic
-      this.user = {
-        id: 'u1',
-        name: name,
-        email: email,
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+      try {
+        await apiService.login({ username, password })
+
+        const userResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          this.user = {
+            id: userData.id,
+            name: userData.username,
+            email: userData.email,
+            avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+          }
+          this.isAuthenticated = true
+          toast.show(`Welcome back, ${this.user.name}!`)
+        } else {
+          throw new Error('Failed to fetch user data')
+        }
+      } catch (error: any) {
+        toast.show(error.message || 'Login failed', 'error')
+        throw error
       }
-      this.isAuthenticated = true
-      const toast = useToastStore()
-      toast.show(`Welcome to Flipboard, ${name}!`)
     },
-    
+
+    async signup(username: string, email: string, password: string) {
+      const toast = useToastStore()
+      try {
+        const userData = await apiService.signup({ username, email, password })
+
+        await apiService.login({ username, password })
+
+        this.user = {
+          id: userData.id,
+          name: userData.username,
+          email: userData.email,
+          avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+        }
+        this.isAuthenticated = true
+        toast.show(`Welcome to Flipboard, ${username}!`)
+      } catch (error: any) {
+        toast.show(error.message || 'Signup failed', 'error')
+        throw error
+      }
+    },
+
     logout() {
       this.user = null
       this.isAuthenticated = false
+      localStorage.removeItem('token')
       const toast = useToastStore()
       toast.show('You have been logged out.', 'info')
     }

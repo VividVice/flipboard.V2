@@ -7,9 +7,9 @@ const props = defineProps<{
   article: {
     id: string
     title: string
-    description: string
-    imageUrl: string
-    source: string
+    excerpt: string
+    image_url?: string
+    publisher: string
     author: string
     liked?: boolean
     saved?: boolean
@@ -51,10 +51,10 @@ const openSaveModal = (e: Event) => {
 
     <!-- Image Container -->
     <div class="relative aspect-[4/3] overflow-hidden bg-gray-800">
-      <img 
-        class="h-full w-full object-cover transform group-hover:scale-105 transition-transform duration-500 ease-out" 
-        :src="article.imageUrl" 
-        :alt="article.title" 
+      <img
+        class="h-full w-full object-cover transform group-hover:scale-105 transition-transform duration-500 ease-out"
+        :src="article.image_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80'"
+        :alt="article.title"
       />
     </div>
     
@@ -64,9 +64,9 @@ const openSaveModal = (e: Event) => {
       <div class="flex items-center justify-between mb-2">
          <div class="flex items-center space-x-2">
              <div class="h-5 w-5 rounded bg-gray-800 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-700">
-                {{ article.source.charAt(0) }}
+                {{ article.publisher.charAt(0) }}
              </div>
-             <span class="text-xs font-bold text-gray-300 uppercase tracking-wider">{{ article.source }}</span>
+             <span class="text-xs font-bold text-gray-300 uppercase tracking-wider">{{ article.publisher }}</span>
          </div>
          <span class="text-xs text-gray-500">3h</span>
       </div>
@@ -80,7 +80,7 @@ const openSaveModal = (e: Event) => {
 
       <!-- Excerpt -->
       <p class="text-sm text-gray-400 line-clamp-3 mb-4 font-sans leading-relaxed">
-        {{ article.description }}
+        {{ article.excerpt }}
       </p>
 
       <!-- Footer -->
