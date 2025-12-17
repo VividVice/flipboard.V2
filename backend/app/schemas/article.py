@@ -14,7 +14,7 @@ class ArticleBase(BaseModel):
     topics: List[str] = []
 
 class ArticleCreate(ArticleBase):
-    pass
+    id: Optional[str] = None
 
 class ArticleUpdate(BaseModel):
     title: Optional[str] = None
@@ -33,6 +33,8 @@ class Article(ArticleBase):
     like_count: int
     comment_count: int
     created_at: datetime
+    liked: bool = False
+    saved: bool = False
 
     class Config:
         from_attributes = True

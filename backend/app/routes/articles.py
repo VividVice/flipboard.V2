@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import Optional
 from app.schemas.article import Article, ArticleCreate, ArticleUpdate, ArticleList
 from app.crud import article as article_crud
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_optional
+from app.utils.article_enricher import enrich_article, enrich_articles
 
 router = APIRouter()
 
@@ -12,7 +13,8 @@ async def get_articles(
     limit: int = Query(20, ge=1, le=100),
     topic: Optional[str] = None,
     search: Optional[str] = None,
-    sort_by: str = Query("published_at", regex="^(published_at|view_count|like_count)$")
+    sort_by: str = Query("published_at", regex="^(published_at|view_count|like_count)$"),
+    current_user: Optional[dict] = Depends(get_current_user_optional)
 ):
     articles = await article_crud.get_articles(
         skip=skip,
@@ -22,6 +24,8 @@ async def get_articles(
         sort_by=sort_by
     )
     total = await article_crud.get_articles_count(topic=topic, search=search)
+
+    articles = await enrich_articles(articles, current_user)
 
     return ArticleList(
         articles=articles,
@@ -59,6 +63,8 @@ async def get_personalized_feed(
         )
         total = len(articles)
 
+    articles = await enrich_articles(articles, current_user)
+
     return ArticleList(
         articles=articles,
         total=total,
@@ -67,20 +73,37 @@ async def get_personalized_feed(
     )
 
 @router.get("/{article_id}", response_model=Article)
-async def get_article(article_id: str):
+async def get_article(
+    article_id: str,
+    current_user: Optional[dict] = Depends(get_current_user_optional)
+):
     article = await article_crud.get_article_by_id(article_id, increment_view=True)
     if not article:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Article not found"
         )
-    return article
+    return await enrich_article(article, current_user)
 
 @router.post("/", response_model=Article, status_code=status.HTTP_201_CREATED)
 async def create_article(
     article_in: ArticleCreate,
     current_user: dict = Depends(get_current_user)
 ):
+    article = await article_crud.create_article(article_in)
+    return article
+
+@router.post("/import", response_model=Article, status_code=status.HTTP_200_OK)
+async def import_article(
+    article_in: ArticleCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    # Check if exists by URL
+    existing = await article_crud.get_article_by_url(article_in.source_url)
+    if existing:
+        return await enrich_article(existing, current_user)
+    
+    # Create new
     article = await article_crud.create_article(article_in)
     return article
 

@@ -5,6 +5,7 @@ from app.schemas.article import Article
 from app.crud import interaction as interaction_crud
 from app.crud import article as article_crud
 from app.dependencies import get_current_user
+from app.utils.article_enricher import enrich_articles
 
 router = APIRouter()
 
@@ -81,7 +82,7 @@ async def get_liked_articles(
         skip=skip,
         limit=limit
     )
-    return articles
+    return await enrich_articles(articles, current_user)
 
 @router.get("/me/saved", response_model=List[Article])
 async def get_saved_articles(
@@ -94,4 +95,4 @@ async def get_saved_articles(
         skip=skip,
         limit=limit
     )
-    return articles
+    return await enrich_articles(articles, current_user)

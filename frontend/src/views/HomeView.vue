@@ -1,38 +1,90 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import ArticleCard from '../components/ArticleCard.vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
+import NewsCard from '../components/NewsCard.vue'
 import SkeletonCard from '../components/SkeletonCard.vue'
-import SaveModal from '../components/SaveModal.vue'
-import { useArticleStore } from '../stores/articles'
+import { useNewsStore } from '../stores/news'
 import { storeToRefs } from 'pinia'
 
-const articleStore = useArticleStore()
-const { gridArticles, heroArticle, categories, selectedCategory, searchQuery, loading } = storeToRefs(articleStore)
+const newsStore = useNewsStore()
+const { posts, loading, totalResults, requestsLeft, hasMoreResults } = storeToRefs(newsStore)
 
-// Loading state for initial load
-const isLoading = ref(true)
-const isSaveModalOpen = ref(false)
+// Search and filter states
+const searchQuery = ref('')
+const selectedTopic = ref('financial and economic news')
+const selectedSentiment = ref<string | null>(null)
+
+const topics = [
+  'financial and economic news',
+  'technology',
+  'politics',
+  'sports',
+  'entertainment',
+  'health',
+  'science',
+  'weather',
+  'education',
+  'environment',
+  'crime'
+]
+
+const sentiments = [
+  { value: null, label: 'All' },
+  { value: 'positive', label: 'Positive' },
+  { value: 'negative', label: 'Negative' },
+  { value: 'neutral', label: 'Neutral' }
+]
 
 onMounted(async () => {
-  // Fetch articles and hero article
-  await Promise.all([
-    articleStore.fetchArticles({ limit: 20 }),
-    articleStore.fetchHeroArticle()
-  ])
-  isLoading.value = false
-  
+  // Fetch initial news by topic
+  await fetchNews()
+
   if (loadMoreTrigger.value) {
     observer.observe(loadMoreTrigger.value)
   }
 })
+
+// Fetch news based on current filters
+const fetchNews = async () => {
+  if (searchQuery.value.trim()) {
+    // Custom search query
+    await newsStore.fetchNews({ q: searchQuery.value, size: 10 })
+  } else {
+    // Fetch by topic and sentiment
+    await newsStore.fetchNewsByTopic(selectedTopic.value, {
+      sentiment: selectedSentiment.value || undefined,
+      size: 10
+    })
+  }
+}
+
+// Handle search
+const handleSearch = () => {
+  if (searchQuery.value.trim()) {
+    fetchNews()
+  }
+}
+
+// Handle topic change
+const handleTopicChange = (topic: string) => {
+  selectedTopic.value = topic
+  searchQuery.value = '' // Clear search when changing topic
+  fetchNews()
+}
+
+// Handle sentiment change
+const handleSentimentChange = (sentiment: string | null) => {
+  selectedSentiment.value = sentiment
+  searchQuery.value = '' // Clear search when changing sentiment
+  fetchNews()
+}
 
 // Infinite Scroll Logic
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 
 const observer = new IntersectionObserver((entries) => {
   const entry = entries[0]
-  if (entry && entry.isIntersecting && !loading.value) {
-    articleStore.loadMoreArticles()
+  if (entry && entry.isIntersecting && !loading.value && hasMoreResults.value) {
+    newsStore.loadMoreNews()
   }
 }, {
   root: null,
@@ -44,129 +96,147 @@ onUnmounted(() => {
   observer.disconnect()
 })
 
-// Computed properties for grid layout
-const isFiltered = computed(() => searchQuery.value.length > 0 || (selectedCategory.value !== 'All' && selectedCategory.value !== 'For You'))
-
-const featuredGridArticle = computed(() => {
-  if (isFiltered.value) return null
-  return gridArticles.value[0]
-})
-
-const standardGridArticles = computed(() => {
-  if (isFiltered.value) return gridArticles.value
-  return gridArticles.value.slice(1)
+// API usage warning color
+const apiUsageColor = computed(() => {
+  if (requestsLeft.value < 50) return 'text-red-400'
+  if (requestsLeft.value < 200) return 'text-yellow-400'
+  return 'text-green-400'
 })
 </script>
 
 <template>
   <div class="bg-black min-h-screen pb-20">
-    
-    <!-- Category Filter Bar -->
-    <div class="sticky top-[60px] z-40 bg-black/95 border-b border-gray-800 backdrop-blur supports-[backdrop-filter]:bg-black/60">
-       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex space-x-2 overflow-x-auto py-3 no-scrollbar">
-             <button 
-               v-for="cat in categories" 
-               :key="cat"
-               @click="articleStore.setCategory(cat)"
-               class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border"
-               :class="selectedCategory === cat 
-                 ? 'bg-white text-black border-white' 
-                 : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
-             >
-               {{ cat }}
-             </button>
+
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-gray-900 to-black border-b border-gray-800 py-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h1 class="text-4xl font-serif font-bold text-white mb-2">Global News</h1>
           </div>
-       </div>
-    </div>
-
-    <!-- Hero Section (Hidden when filtering/searching) -->
-    <div class="bg-gray-900 text-white border-b border-gray-800" v-if="heroArticle && !isFiltered">
-        <!-- Save Modal Portal for Hero -->
-        <Teleport to="body">
-          <SaveModal 
-            :is-open="isSaveModalOpen" 
-            :article-id="heroArticle.id"
-            @close="isSaveModalOpen = false"
-          />
-        </Teleport>
-
-        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-[500px]">
-            <div class="relative h-64 lg:h-auto">
-                <img :src="heroArticle.image_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80'" class="absolute inset-0 w-full h-full object-cover opacity-80" />
-                <div class="absolute inset-0 bg-gradient-to-r from-gray-900/80 to-transparent lg:hidden"></div>
-            </div>
-            <div class="p-8 lg:p-16 flex flex-col justify-center">
-                <span class="text-flipboard-red font-bold uppercase tracking-widest text-sm mb-4">{{ heroArticle.publisher }}</span>
-                <RouterLink :to="`/article/${heroArticle.id}`">
-                  <h1 class="text-4xl lg:text-6xl font-serif font-bold leading-tight mb-6 text-white hover:text-flipboard-red transition-colors">{{ heroArticle.title }}</h1>
-                </RouterLink>
-                <p class="text-gray-300 text-lg mb-8 line-clamp-3">{{ heroArticle.excerpt }}</p>
-                <div class="flex space-x-4">
-                    <button @click="articleStore.toggleLike(heroArticle.id)" class="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="heroArticle.liked ? 'fill-flipboard-red text-flipboard-red' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span>{{ heroArticle.like_count }}</span>
-                    </button>
-                    <button @click="articleStore.toggleSave(heroArticle.id)" class="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="heroArticle.saved ? 'fill-flipboard-red' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                      </svg>
-                      <span>Save</span>
-                    </button>
-                    <button class="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      <span>{{ heroArticle.comment_count }}</span>
-                    </button>
-                </div>
-            </div>
+          <div class="text-right">
+            <p class="text-sm text-gray-500">API Requests Left</p>
+            <p class="text-2xl font-bold" :class="apiUsageColor">{{ requestsLeft }}</p>
+          </div>
         </div>
+
+        <!-- Search Bar -->
+        <div class="max-w-2xl">
+          <form @submit.prevent="handleSearch" class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search news... (e.g., 'Bitcoin' or 'topic:technology sentiment:positive')"
+              class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-flipboard-red focus:border-transparent"
+            />
+            <button
+              type="submit"
+              class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-flipboard-red text-white rounded-lg font-bold hover:bg-red-700 transition-colors"
+            >
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Filter Bars -->
+    <div class="sticky top-[60px] z-40 bg-black/95 border-b border-gray-800 backdrop-blur supports-[backdrop-filter]:bg-black/60">
+      <!-- Topic Filter -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex space-x-2 overflow-x-auto py-3 no-scrollbar border-b border-gray-800">
+          <button
+            v-for="topic in topics"
+            :key="topic"
+            @click="handleTopicChange(topic)"
+            class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border capitalize"
+            :class="selectedTopic === topic
+              ? 'bg-white text-black border-white'
+              : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
+          >
+            {{ topic }}
+          </button>
+        </div>
+
+        <!-- Sentiment Filter -->
+        <div class="flex space-x-2 overflow-x-auto py-3 no-scrollbar">
+          <button
+            v-for="sentiment in sentiments"
+            :key="sentiment.value || 'all'"
+            @click="handleSentimentChange(sentiment.value)"
+            class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border"
+            :class="selectedSentiment === sentiment.value
+              ? 'bg-flipboard-red text-white border-flipboard-red'
+              : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
+          >
+            {{ sentiment.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" v-if="!loading && totalResults > 0">
+      <p class="text-gray-400 text-sm">
+        Found <span class="text-white font-bold">{{ totalResults.toLocaleString() }}</span> results
+        <span v-if="hasMoreResults" class="text-gray-500"> (showing {{ posts.length }})</span>
+      </p>
+    </div>
+
+    <!-- News Grid -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      
-      <!-- Loading Skeletons for initial load -->
-      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <SkeletonCard v-for="n in 6" :key="n" />
+      <!-- Loading Skeletons -->
+      <div v-if="loading && posts.length === 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <SkeletonCard v-for="n in 9" :key="n" />
       </div>
 
-      <!-- Articles Grid (After Loading) -->
-      <div v-else>
-        
-        <!-- Featured Article (if not filtered) -->
-        <div v-if="featuredGridArticle" class="mb-8">
-          <ArticleCard :article="featuredGridArticle" :is-featured="true" />
-        </div>
+      <!-- News Posts -->
+      <div v-else-if="posts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <NewsCard
+          v-for="post in posts"
+          :key="post.uuid"
+          :post="post"
+        />
+      </div>
 
-        <!-- Standard Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <ArticleCard 
-            v-for="article in standardGridArticles" 
-            :key="article.id" 
-            :article="article"
-          />
-        </div>
+      <!-- No Results -->
+      <div v-else class="text-center py-16">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mx-auto text-gray-600 mb-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+        <h3 class="text-xl font-bold text-gray-400 mb-2">No news found</h3>
+        <p class="text-gray-500">Try adjusting your search or filters</p>
+      </div>
 
-        <!-- Load More Trigger -->
-        <div ref="loadMoreTrigger" class="h-20 flex items-center justify-center mt-8">
-          <div v-if="loading" class="text-gray-400">Loading more articles...</div>
-        </div>
+      <!-- Loading More -->
+      <div v-if="loading && posts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        <SkeletonCard v-for="n in 3" :key="n" />
+      </div>
+
+      <!-- Load More Trigger -->
+      <div ref="loadMoreTrigger" class="h-10"></div>
+    </div>
+
+    <!-- API Info Footer -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-gray-800">
+      <div class="text-center text-gray-500 text-sm">
+        <p class="mb-2">
+          This page uses the Webz.io News API Lite - Free for non-commercial use
+        </p>
+        <p class="text-xs">
+          Limited to 1,000 monthly API calls | Up to 10 results per request | 30 days historical data
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 </style>

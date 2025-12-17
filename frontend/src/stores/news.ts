@@ -39,6 +39,7 @@ export const useNewsStore = defineStore('news', {
       size?: number
     }) {
       this.loading = true
+      this.posts = []
       this.error = null
       const toastStore = useToastStore()
 
@@ -57,7 +58,7 @@ export const useNewsStore = defineStore('news', {
 
         // Warning if running low on API requests
         if (response.requestsLeft < 100) {
-          toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'warning')
+          toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
         }
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch news'
@@ -76,6 +77,7 @@ export const useNewsStore = defineStore('news', {
       }
     ) {
       this.loading = true
+      this.posts = []
       this.error = null
       const toastStore = useToastStore()
 
@@ -92,7 +94,7 @@ export const useNewsStore = defineStore('news', {
         this.currentQuery = `topic:"${topic}"${params?.sentiment ? ` sentiment:${params.sentiment}` : ''}`
 
         if (response.requestsLeft < 100) {
-          toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'warning')
+          toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
         }
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to fetch news by topic'
@@ -122,7 +124,7 @@ export const useNewsStore = defineStore('news', {
         this.requestsLeft = response.requestsLeft
 
         if (response.requestsLeft < 100) {
-          toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'warning')
+          toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
         }
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to load more news'
