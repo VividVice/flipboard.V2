@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import ArticleCard from '../components/ArticleCard.vue'
 import SkeletonCard from '../components/SkeletonCard.vue'
+import SaveModal from '../components/SaveModal.vue'
 import { useArticleStore } from '../stores/articles'
 import { storeToRefs } from 'pinia'
 
@@ -10,6 +11,7 @@ const { gridArticles, heroArticle, categories, selectedCategory, searchQuery } =
 
 // Loading state for initial load
 const isLoading = ref(true)
+const isSaveModalOpen = ref(false)
 
 onMounted(() => {
   // Simulate initial data fetch latency
@@ -78,6 +80,15 @@ const standardGridArticles = computed(() => {
 
     <!-- Hero Section (Hidden when filtering/searching) -->
     <div class="bg-gray-900 text-white border-b border-gray-800" v-if="heroArticle">
+        <!-- Save Modal Portal for Hero -->
+        <Teleport to="body">
+          <SaveModal 
+            :is-open="isSaveModalOpen" 
+            :article-id="heroArticle.id"
+            @close="isSaveModalOpen = false"
+          />
+        </Teleport>
+
         <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-[500px]">
             <div class="relative h-64 lg:h-auto">
                 <img :src="heroArticle.imageUrl" class="absolute inset-0 w-full h-full object-cover opacity-80" />
@@ -97,6 +108,15 @@ const standardGridArticles = computed(() => {
                        :class="heroArticle.saved ? 'bg-white text-black' : 'text-white hover:bg-white hover:text-black'"
                      >
                        {{ heroArticle.saved ? 'Saved' : 'Save' }}
+                     </button>
+                     <button 
+                       @click="isSaveModalOpen = true"
+                       class="border border-gray-600 px-4 py-3 font-bold uppercase tracking-wider text-sm text-white hover:bg-white hover:text-black transition-colors flex items-center justify-center"
+                       title="Add to Magazine"
+                     >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
                      </button>
                 </div>
             </div>

@@ -29,6 +29,11 @@ const router = createRouter({
       component: () => import('../views/TopicView.vue')
     },
     {
+      path: '/welcome/topics',
+      name: 'topic-selection',
+      component: () => import('../views/TopicSelectionView.vue')
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue')

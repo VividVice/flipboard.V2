@@ -23,21 +23,6 @@ const showCreateInput = ref(false)
 const saveToMagazine = (magazineId: string) => {
   magazineStore.addToMagazine(magazineId, props.articleId)
   
-  // Also mark as saved in the article store so the UI updates
-  const article = articleStore.getArticleById(props.articleId)
-  if (article && !article.saved) {
-    articleStore.toggleSave(props.articleId)
-  } else {
-     // If we just wanted to add to a specific magazine but it was already "saved" generally, 
-     // we might not need to toggle, but for now let's ensure visual feedback.
-     // Actually, if we are in this modal, it means we probably clicked save. 
-     // But wait, if it was already saved, the card logic wouldn't open the modal.
-     // So we are safe to just ensure it is set to true.
-     if (article && !article.saved) {
-         articleStore.toggleSave(props.articleId)
-     }
-  }
-
   toastStore.show('Saved to magazine')
   emit('close')
 }
