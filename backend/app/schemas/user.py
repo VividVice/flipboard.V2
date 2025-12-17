@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, HttpUrl
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 import uuid
 
@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     username: str
     bio: Optional[str] = None
     profile_pic: Optional[HttpUrl] = None
+    followed_topics: List[str] = []
 
 class UserCreate(UserBase):
     password: str
@@ -16,6 +17,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     bio: Optional[str] = None
     profile_pic: Optional[HttpUrl] = None
+    followed_topics: Optional[List[str]] = None
 
 class UserInDBBase(UserBase):
     id: uuid.UUID

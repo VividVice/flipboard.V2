@@ -1,233 +1,162 @@
 import { defineStore } from 'pinia'
-import { articles as mockArticles, type Article } from '../data/articles'
+import { apiServiceExtended, type Article, type InteractionStatus } from '../services/api'
 import { useToastStore } from './toast'
 
-// Extend the Article interface to include local state
+// Extend Article with local interaction state
 export interface ArticleState extends Article {
   liked: boolean
   saved: boolean
 }
 
 export const useArticleStore = defineStore('articles', {
-
   state: () => ({
-
-    articles: mockArticles.map(a => ({ ...a, liked: false, saved: false })) as ArticleState[],
-
+    articles: [] as ArticleState[],
+    heroArticle: null as ArticleState | null,
     searchQuery: '',
-
-    selectedCategory: 'All'
-
+    selectedCategory: 'All',
+    loading: false,
+    error: null as string | null
   }),
 
-  
-
   getters: {
-
-    // Get an article by ID
-
     getArticleById: (state) => {
-
       return (id: string) => state.articles.find(a => a.id === id)
-
     },
-
-    // Get all saved articles
 
     savedArticles: (state) => state.articles.filter(a => a.saved),
 
-    
-
-    // Get all unique categories
-
     categories: (state) => {
-
-      const cats = new Set(state.articles.map(a => a.category))
-
-      return ['All', 'For You', ...Array.from(cats)]
-
+      // Get unique topic names from articles
+      const topicSet = new Set<string>()
+      state.articles.forEach(a => a.topics.forEach(t => topicSet.add(t)))
+      return ['All', 'For You', ...Array.from(topicSet)]
     },
-
-    
-
-    // Get filtered articles for the grid
 
     gridArticles: (state) => {
-
       let filtered = state.articles
 
-
-
-      // 1. Filter by Category
-
+      // Filter by category (topic)
       if (state.selectedCategory !== 'All' && state.selectedCategory !== 'For You') {
-
-        filtered = filtered.filter(a => a.category === state.selectedCategory)
-
+        filtered = filtered.filter(a => a.topics.includes(state.selectedCategory))
       }
 
-
-
-      // 2. Filter by Search
-
+      // Filter by search
       if (state.searchQuery.trim()) {
-
         const query = state.searchQuery.toLowerCase()
-
-        return filtered.filter(a => 
-
+        filtered = filtered.filter(a => 
           a.title.toLowerCase().includes(query) || 
-
-          a.description.toLowerCase().includes(query) ||
-
-          a.source.toLowerCase().includes(query)
-
+          a.excerpt.toLowerCase().includes(query) ||
+          a.publisher.toLowerCase().includes(query)
         )
-
       }
-
-      
-
-      // 3. Default view logic (exclude hero if showing "All" or "For You" and not searching)
-
-      // If we filtered by category, we might want to show everything in the grid including the hero article for that category,
-
-      // unless we treat the first one as hero specifically for that category.
-
-      // For simplicity, if we have a category selected, we just show a grid of all matching items.
-
-      // If "All" is selected, we exclude the main Hero (index 0 of total) from the grid because it's shown in the Hero section.
-
-      
-
-      if (state.selectedCategory === 'All' || state.selectedCategory === 'For You') {
-
-         return filtered.slice(1)
-
-      }
-
-      
 
       return filtered
-
-    },
-
-    
-
-    // The hero article is only shown when NOT searching and when in "All" mode (or we could have per-category hero)
-
-    // Let's keep it simple: Global Hero only on "All" / "For You".
-
-    heroArticle: (state) => {
-
-      if (state.searchQuery) return undefined
-
-      if (state.selectedCategory === 'All' || state.selectedCategory === 'For You') {
-
-        return state.articles[0]
-
-      }
-
-      return undefined
-
     }
-
   },
 
-  
-
   actions: {
+    async fetchArticles(params?: {
+      skip?: number
+      limit?: number
+      topic?: string
+      search?: string
+    }) {
+      this.loading = true
+      this.error = null
+      try {
+        const articles = await apiServiceExtended.getArticles(params)
+        this.articles = articles.map(a => ({
+          ...a,
+          liked: false,
+          saved: false
+        }))
+      } catch (error: any) {
+        this.error = error.message || 'Failed to fetch articles'
+        console.error('Error fetching articles:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchHeroArticle() {
+      try {
+        const article = await apiServiceExtended.getHeroArticle()
+        this.heroArticle = {
+          ...article,
+          liked: false,
+          saved: false
+        }
+      } catch (error: any) {
+        console.error('Error fetching hero article:', error)
+      }
+    },
+
+    async fetchFeed(params?: { skip?: number; limit?: number }) {
+      this.loading = true
+      this.error = null
+      try {
+        const articles = await apiServiceExtended.getFeedArticles(params)
+        this.articles = articles.map(a => ({
+          ...a,
+          liked: false,
+          saved: false
+        }))
+      } catch (error: any) {
+        this.error = error.message || 'Failed to fetch feed'
+        console.error('Error fetching feed:', error)
+      } finally {
+        this.loading = false
+      }
+    },
 
     setSearchQuery(query: string) {
-
       this.searchQuery = query
-
     },
-
-    
 
     setCategory(category: string) {
-
       this.selectedCategory = category
-
-      this.searchQuery = '' // Reset search when changing category
-
+      this.searchQuery = ''
     },
 
-    
-
-    toggleLike(id: string) {
-
+    async toggleLike(id: string) {
       const article = this.articles.find(a => a.id === id)
+      if (!article) return
 
-      if (article) {
-
-        article.liked = !article.liked
-
-        const toast = useToastStore()
-
+      const toast = useToastStore()
+      try {
+        const status = await apiServiceExtended.likeArticle(id)
+        article.liked = status.is_liked
+        
         if (article.liked) {
-
-           toast.show('Liked article')
-
+          toast.show('Liked article')
         }
-
+      } catch (error: any) {
+        toast.show(error.message || 'Failed to like article', 'error')
       }
-
     },
 
-    
-
-    toggleSave(id: string) {
-
+    async toggleSave(id: string) {
       const article = this.articles.find(a => a.id === id)
+      if (!article) return
 
-      if (article) {
-
-        article.saved = !article.saved
-
-        const toast = useToastStore()
+      const toast = useToastStore()
+      try {
+        const status = await apiServiceExtended.saveArticle(id)
+        article.saved = status.is_saved
 
         if (article.saved) {
-
-           toast.show('Saved to Profile')
-
+          toast.show('Saved to Profile')
         } else {
-
-           toast.show('Removed from Profile', 'info')
-
+          toast.show('Removed from Profile', 'info')
         }
-
+      } catch (error: any) {
+        toast.show(error.message || 'Failed to save article', 'error')
       }
-
     },
 
-
-
-    loadMoreArticles() {
-
-      // Simulate fetching more data by duplicating existing mock data with new IDs
-
-      const currentLength = this.articles.length
-
-      const moreArticles = mockArticles.map((a, index) => ({
-
-        ...a,
-
-        id: `${currentLength + index}`, // Generate unique string ID
-
-        liked: false,
-
-        saved: false
-
-      }))
-
-      
-
-      this.articles.push(...moreArticles)
-
+    async loadMoreArticles() {
+      const skip = this.articles.length
+      await this.fetchArticles({ skip, limit: 20 })
     }
-
   }
-
 })

@@ -6,16 +6,29 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const name = ref('')
+const username = ref('')
 const email = ref('')
 const password = ref('')
+const loading = ref(false)
+const error = ref('')
 
-const handleSignup = () => {
-  // Simulate API call delay
-  setTimeout(() => {
-    authStore.signup(name.value, email.value)
+const handleSignup = async () => {
+  if (!username.value || !email.value || !password.value) {
+    error.value = 'Please fill in all fields'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    await authStore.signup(username.value, email.value, password.value)
     router.push('/welcome/topics')
-  }, 500)
+  } catch (err: any) {
+    error.value = err.message || 'Signup failed'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -36,10 +49,14 @@ const handleSignup = () => {
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-gray-900 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-800">
         <form class="space-y-6" @submit.prevent="handleSignup">
+          <div v-if="error" class="rounded-md bg-red-900/20 border border-red-800 p-4">
+            <p class="text-sm text-red-400">{{ error }}</p>
+          </div>
+
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-300"> Full Name </label>
+            <label for="username" class="block text-sm font-medium text-gray-300"> Username </label>
             <div class="mt-1">
-              <input id="name" name="name" type="text" autocomplete="name" required v-model="name" class="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-flipboard-red focus:border-flipboard-red sm:text-sm" />
+              <input id="username" name="username" type="text" autocomplete="username" required v-model="username" class="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-flipboard-red focus:border-flipboard-red sm:text-sm" placeholder="marie_paris" />
             </div>
           </div>
 
@@ -65,8 +82,8 @@ const handleSignup = () => {
           </div>
 
           <div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-flipboard-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-flipboard-red uppercase tracking-wide transition-colors">
-              Sign up
+            <button type="submit" :disabled="loading" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-flipboard-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-flipboard-red uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ loading ? 'Creating account...' : 'Sign up' }}
             </button>
           </div>
         </form>

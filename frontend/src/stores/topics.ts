@@ -1,73 +1,98 @@
 import { defineStore } from 'pinia'
 import { useToastStore } from './toast'
-
-export interface Topic {
-  name: string
-  image: string
-  isFollowed: boolean
-}
-
-const rawTopics = [
-  "Actualités", "Carrières", "Défense", "Fact Checking", "Syrie", "Jeux Vidéo", "Agriculture", "Guerre en Ukraine", 
-  "Intelligence Artificielle", "Droits de douane", "Musique", "Environnement", "Désinformation", "Israël", "Vélo", 
-  "Retraite", "Histoire", "Maroc", "Familles Royales", "Espace", "Séries TV", "LGBT", "Livres", "IVG", "Gabon", 
-  "Iran", "Sobriété Énergétique", "Bande Dessinée", "Langue Française", "Condition Féminine", "Immobilier", 
-  "Architecture", "Démocratie", "Jardinage", "Do It Yourself", "Droits de l'Homme", "Parents", "Étudiants", 
-  "Paris", "Métavers", "Voyages", "Marseille", "Nantes", "Strasbourg", "Grenoble", "Rennes", "Le Havre", 
-  "Lille", "Toulouse", "Reims", "Montpellier", "Bordeaux", "Lyon", "Bretagne", "Normandie", "Cuisine", 
-  "Musées", "Manga", "MOOC", "Décoration", "Horlogerie", "Psychologie", "Bruxelles", "Genève", "Montréal", 
-  "Beyrouth", "Sports d'hiver", "Économie", "Sciences", "Technologie", "Idées", "Santé", "Animaux", "Art", 
-  "People", "Politique", "Placements", "Automobile", "Cybersécurité", "Culture", "Sports Extrêmes", "Mode", 
-  "Baskets", "Hip-Hop", "Aéronautique", "Société", "Afrique", "Algérie", "Bénin", "Burkina Faso", 
-  "Côte d'Ivoire", "Guinée", "Liban", "Mali", "Niger", "Sénégal", "Togo", "Tunisie", "Android", "Apple", 
-  "Photographie", "Beauté", "Street art", "Randonnée", "Football", "Cyclisme", "Formule 1", "Blockchain", 
-  "Startup", "Domotique", "Actualités de Belgique", "Actualités de Suisse"
-]
-
-const placeholderImages = [
-  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80'
-]
+import { apiServiceExtended, type Topic } from '../services/api'
 
 export const useTopicStore = defineStore('topics', {
   state: () => ({
-    topics: rawTopics.map((name, index) => ({
-      name,
-      image: placeholderImages[index % placeholderImages.length],
-      isFollowed: false
-    })) as Topic[]
+    topics: [] as Topic[],
+    followedTopics: [] as Topic[],
+    loading: false,
+    error: null as string | null
   }),
   
   getters: {
-    followedTopics: (state) => state.topics.filter(t => t.isFollowed),
-    followedCount: (state) => state.topics.filter(t => t.isFollowed).length
+    followedCount: (state) => state.followedTopics.length,
+    isTopicFollowed: (state) => {
+      return (topicId: string) => {
+        return state.followedTopics.some(t => t.id === topicId)
+      }
+    }
   },
   
   actions: {
-    toggleFollow(name: string) {
-      const topic = this.topics.find(t => t.name === name)
-      if (topic) {
-        topic.isFollowed = !topic.isFollowed
-        const toast = useToastStore()
-        if (topic.isFollowed) {
-           toast.show(`Following ${name}`)
-        } else {
-           toast.show(`Unfollowed ${name}`, 'info')
-        }
+    async fetchTopics() {
+      this.loading = true
+      this.error = null
+      try {
+        this.topics = await apiServiceExtended.getTopics()
+      } catch (error: any) {
+        this.error = error.message || 'Failed to fetch topics'
+        console.error('Error fetching topics:', error)
+      } finally {
+        this.loading = false
       }
     },
 
-    toggleSelection(name: string) {
-        const topic = this.topics.find(t => t.name === name)
-        if (topic) {
-            topic.isFollowed = !topic.isFollowed
+    async fetchFollowedTopics() {
+      this.loading = true
+      this.error = null
+      try {
+        this.followedTopics = await apiServiceExtended.getFollowedTopics()
+      } catch (error: any) {
+        this.error = error.message || 'Failed to fetch followed topics'
+        console.error('Error fetching followed topics:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async toggleFollow(topicId: string) {
+      const toast = useToastStore()
+      const topic = this.topics.find(t => t.id === topicId)
+      if (!topic) return
+
+      try {
+        await apiServiceExtended.followTopic(topicId)
+        
+        // Check if already followed
+        const isFollowed = this.followedTopics.some(t => t.id === topicId)
+        
+        if (isFollowed) {
+          // Unfollow
+          this.followedTopics = this.followedTopics.filter(t => t.id !== topicId)
+          toast.show(`Unfollowed ${topic.name}`, 'info')
+        } else {
+          // Follow
+          this.followedTopics.push(topic)
+          toast.show(`Following ${topic.name}`)
         }
+      } catch (error: any) {
+        toast.show(error.message || 'Failed to toggle topic', 'error')
+      }
+    },
+
+    async bulkFollow(topicIds: string[]) {
+      const toast = useToastStore()
+      try {
+        await apiServiceExtended.bulkFollowTopics(topicIds)
+        await this.fetchFollowedTopics()
+        toast.show(`Following ${topicIds.length} topics`)
+      } catch (error: any) {
+        toast.show(error.message || 'Failed to follow topics', 'error')
+      }
+    },
+
+    toggleSelection(topicId: string) {
+      // For topic selection during signup
+      const topic = this.topics.find(t => t.id === topicId)
+      if (!topic) return
+
+      const isFollowed = this.followedTopics.some(t => t.id === topicId)
+      if (isFollowed) {
+        this.followedTopics = this.followedTopics.filter(t => t.id !== topicId)
+      } else {
+        this.followedTopics.push(topic)
+      }
     }
   }
 })

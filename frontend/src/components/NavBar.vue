@@ -73,6 +73,9 @@ const scrollToTop = () => {
             <RouterLink to="/topics" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Topics
             </RouterLink>
+            <RouterLink to="/news" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
+              News
+            </RouterLink>
             <RouterLink v-if="isAuthenticated" to="/profile" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Profile
             </RouterLink>
@@ -118,6 +121,7 @@ const scrollToTop = () => {
 
            <RouterLink to="/" @click="closeMenu" active-class="bg-gray-800 text-white" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800">Home</RouterLink>
            <RouterLink to="/topics" @click="closeMenu" active-class="bg-gray-800 text-white" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800">Topics</RouterLink>
+           <RouterLink to="/news" @click="closeMenu" active-class="bg-gray-800 text-white" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800">News</RouterLink>
            <RouterLink v-if="isAuthenticated" to="/profile" @click="closeMenu" active-class="bg-gray-800 text-white" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800">Profile</RouterLink>
            
            <div class="border-t border-gray-800 mt-2 pt-2">

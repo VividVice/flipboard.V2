@@ -1,9 +1,23 @@
 from fastapi import FastAPI
-from app.routes import auth
+from fastapi.middleware.cors import CORSMiddleware
+from app.routes import auth, topics, articles, comments, interactions, news
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(topics.router, prefix="/topics", tags=["topics"])
+app.include_router(articles.router, prefix="/articles", tags=["articles"])
+app.include_router(comments.router, tags=["comments"])
+app.include_router(interactions.router, tags=["interactions"])
+app.include_router(news.router, prefix="/news", tags=["news"])
 
 @app.get("/")
 def read_root():
