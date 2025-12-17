@@ -57,7 +57,8 @@ async def get_hero_article():
 
 async def create_article(article: ArticleCreate):
     article_doc = article.dict()
-    article_doc["id"] = str(uuid.uuid4())
+    if not article_doc.get("id"):
+        article_doc["id"] = str(uuid.uuid4())
     article_doc["view_count"] = 0
     article_doc["like_count"] = 0
     article_doc["comment_count"] = 0
@@ -96,3 +97,10 @@ async def get_articles_by_topic_ids(topic_ids: List[str], skip: int = 0, limit: 
     cursor = db.articles.find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
     return articles
+
+async def get_article_by_url(source_url: str):
+    return await db.articles.find_one({"source_url": source_url})
+
+async def get_articles_by_urls(urls: List[str]):
+    cursor = db.articles.find({"source_url": {"$in": urls}})
+    return await cursor.to_list(length=len(urls))

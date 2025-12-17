@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useArticleStore } from '../stores/articles'
 import { useMagazineStore } from '../stores/magazines'
 import ArticleCard from '../components/ArticleCard.vue'
@@ -9,6 +9,10 @@ const articleStore = useArticleStore()
 const magazineStore = useMagazineStore()
 const { savedArticles } = storeToRefs(articleStore)
 const { magazines } = storeToRefs(magazineStore)
+
+onMounted(() => {
+  articleStore.fetchSavedArticles()
+})
 
 const activeTab = ref('saved') // 'saved', 'magazines', 'comments'
 
@@ -27,7 +31,7 @@ const getMagazineCover = (articleIds: string[]) => {
   if (!firstId) return 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80' // Default gradient
   
   const firstArticle = articleStore.getArticleById(firstId)
-  return firstArticle?.imageUrl || 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80'
+  return firstArticle?.image_url || 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80'
 }
 </script>
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { apiServiceExtended, type Article, type InteractionStatus } from '../services/api'
+import { apiServiceExtended, type Article } from '../services/api'
 import { useToastStore } from './toast'
 
 // Extend Article with local interaction state
@@ -67,8 +67,8 @@ export const useArticleStore = defineStore('articles', {
         const articles = await apiServiceExtended.getArticles(params)
         this.articles = articles.map(a => ({
           ...a,
-          liked: false,
-          saved: false
+          liked: a.liked ?? false,
+          saved: a.saved ?? false
         }))
       } catch (error: any) {
         this.error = error.message || 'Failed to fetch articles'
@@ -83,8 +83,8 @@ export const useArticleStore = defineStore('articles', {
         const article = await apiServiceExtended.getHeroArticle()
         this.heroArticle = {
           ...article,
-          liked: false,
-          saved: false
+          liked: article.liked ?? false,
+          saved: article.saved ?? false
         }
       } catch (error: any) {
         console.error('Error fetching hero article:', error)
@@ -98,8 +98,8 @@ export const useArticleStore = defineStore('articles', {
         const articles = await apiServiceExtended.getFeedArticles(params)
         this.articles = articles.map(a => ({
           ...a,
-          liked: false,
-          saved: false
+          liked: a.liked ?? false,
+          saved: a.saved ?? false
         }))
       } catch (error: any) {
         this.error = error.message || 'Failed to fetch feed'
@@ -151,6 +151,37 @@ export const useArticleStore = defineStore('articles', {
         }
       } catch (error: any) {
         toast.show(error.message || 'Failed to save article', 'error')
+      }
+    },
+
+    async fetchSavedArticles() {
+      this.loading = true
+      try {
+        const articles = await apiServiceExtended.getSavedArticles()
+        
+        // Merge with existing articles
+        const newArticles = articles.map(a => ({
+          ...a,
+          liked: a.liked ?? false,
+          saved: true // Explicitly true as they came from saved endpoint
+        }))
+        
+        // Update existing ones
+        newArticles.forEach(na => {
+            const existing = this.articles.find(a => a.id === na.id)
+            if (existing) {
+                existing.saved = true
+                // Don't overwrite other fields to preserve state if needed, 
+                // but usually API data is fresher.
+                Object.assign(existing, na) 
+            } else {
+                this.articles.push(na)
+            }
+        })
+      } catch (error: any) {
+        console.error('Error fetching saved articles:', error)
+      } finally {
+        this.loading = false
       }
     },
 

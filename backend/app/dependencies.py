@@ -4,6 +4,7 @@ from app.security.token import verify_token
 from app.crud.user import get_user_by_username
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     payload = verify_token(token)
@@ -28,7 +29,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         )
     return user
 
-async def get_current_user_optional(token: str = Depends(oauth2_scheme)) -> dict:
+async def get_current_user_optional(token: str = Depends(oauth2_scheme_optional)) -> dict:
+    if not token:
+        return None
     try:
         return await get_current_user(token)
     except HTTPException:

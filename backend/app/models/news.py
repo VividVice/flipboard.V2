@@ -88,6 +88,8 @@ class NewsPost(BaseModel):
     rating: Optional[float] = None
     crawled: str
     updated: Optional[str] = None
+    liked: bool = False
+    saved: bool = False
 
 
 class NewsResponse(BaseModel):

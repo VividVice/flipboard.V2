@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useMagazineStore } from '../stores/magazines'
-import { useArticleStore } from '../stores/articles'
 import { useToastStore } from '../stores/toast'
 import { storeToRefs } from 'pinia'
 
@@ -13,7 +12,6 @@ const props = defineProps<{
 const emit = defineEmits(['close'])
 
 const magazineStore = useMagazineStore()
-const articleStore = useArticleStore()
 const toastStore = useToastStore()
 const { magazines } = storeToRefs(magazineStore)
 

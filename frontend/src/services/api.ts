@@ -41,7 +41,7 @@ class ApiService {
     return localStorage.getItem('token')
   }
 
-  private getHeaders(includeAuth = false): HeadersInit {
+  protected getHeaders(includeAuth = false): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     }
@@ -173,6 +173,8 @@ export interface Article {
   like_count: number
   comment_count: number
   created_at: string
+  liked?: boolean
+  saved?: boolean
 }
 
 export interface InteractionStatus {
@@ -252,6 +254,8 @@ export interface NewsPost {
   rating?: number
   crawled: string
   updated?: string
+  liked?: boolean
+  saved?: boolean
 }
 
 export interface NewsResponse {
@@ -312,14 +316,14 @@ class ApiServiceExtended extends ApiService {
     if (params?.search) queryParams.append('search', params.search)
 
     const url = `${API_BASE_URL}/articles?${queryParams.toString()}`
-    const response = await fetch(url, { headers: this.getHeaders() })
+    const response = await fetch(url, { headers: this.getHeaders(true) })
     if (!response.ok) throw new Error('Failed to fetch articles')
     return response.json()
   }
 
   async getArticle(articleId: string): Promise<Article> {
     const response = await fetch(`${API_BASE_URL}/articles/${articleId}`, {
-      headers: this.getHeaders(),
+      headers: this.getHeaders(true),
     })
     if (!response.ok) throw new Error('Failed to fetch article')
     return response.json()
@@ -327,7 +331,7 @@ class ApiServiceExtended extends ApiService {
 
   async getHeroArticle(): Promise<Article> {
     const response = await fetch(`${API_BASE_URL}/articles/hero`, {
-      headers: this.getHeaders(),
+      headers: this.getHeaders(true),
     })
     if (!response.ok) throw new Error('Failed to fetch hero article')
     return response.json()
@@ -399,7 +403,7 @@ class ApiServiceExtended extends ApiService {
     if (params?.size) queryParams.append('size', params.size.toString())
 
     const url = `${API_BASE_URL}/news?${queryParams.toString()}`
-    const response = await fetch(url, { headers: this.getHeaders() })
+    const response = await fetch(url, { headers: this.getHeaders(true) })
     if (!response.ok) throw new Error('Failed to fetch news')
     return response.json()
   }
@@ -418,15 +422,33 @@ class ApiServiceExtended extends ApiService {
     if (params?.size) queryParams.append('size', params.size.toString())
 
     const url = `${API_BASE_URL}/news/topic/${encodeURIComponent(topic)}?${queryParams.toString()}`
-    const response = await fetch(url, { headers: this.getHeaders() })
+    const response = await fetch(url, { headers: this.getHeaders(true) })
     if (!response.ok) throw new Error('Failed to fetch news by topic')
     return response.json()
   }
 
   async getNextNewsPage(nextUrl: string): Promise<NewsResponse> {
     const url = `${API_BASE_URL}/news/next?next_url=${encodeURIComponent(nextUrl)}`
-    const response = await fetch(url, { headers: this.getHeaders() })
+    const response = await fetch(url, { headers: this.getHeaders(true) })
     if (!response.ok) throw new Error('Failed to fetch next news page')
+    return response.json()
+  }
+
+  async getArticleContent(url: string): Promise<{ content: string }> {
+    const response = await fetch(`${API_BASE_URL}/news/content?url=${encodeURIComponent(url)}`, {
+      headers: this.getHeaders(),
+    })
+    if (!response.ok) throw new Error('Failed to fetch article content')
+    return response.json()
+  }
+
+  async importArticle(articleData: any): Promise<Article> {
+    const response = await fetch(`${API_BASE_URL}/articles/import`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(articleData),
+    })
+    if (!response.ok) throw new Error('Failed to import article')
     return response.json()
   }
 }
