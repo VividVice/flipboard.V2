@@ -52,24 +52,25 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    // Check if there's a token in localStorage to potentially re-authenticate
-    const token = localStorage.getItem('token')
-    if (token) {
-      // If we have a token but aren't "authenticated" in the store yet,
-      // it might be an initial page load. 
-      // For simplicity here, we assume if isAuthenticated is false, we need login.
-      // A more robust app might try to fetch /me here.
-      next({ name: 'login', query: { redirect: to.fullPath } })
-    } else {
-      next({ name: 'login', query: { redirect: to.fullPath } })
+
+  if (to.meta.requiresAuth) {
+    // Ensure the auth store has had a chance to initialize (e.g., from localStorage)
+    try {
+      if (typeof (authStore as any).initialize === 'function') {
+        await (authStore as any).initialize()
+      }
+    } catch (e) {
+      // If initialization fails, fall through to the authentication check below
     }
-  } else {
-    next()
+
+    if (!authStore.isAuthenticated) {
+      return next({ name: 'login', query: { redirect: to.fullPath } })
+    }
   }
+
+  next()
 })
 
 export default router
