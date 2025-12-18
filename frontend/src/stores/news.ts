@@ -13,7 +13,9 @@ export const useNewsStore = defineStore('news', {
     error: null as string | null,
     currentQuery: 'news',
     currentTopic: null as string | null,
-    currentSentiment: null as string | null
+    currentSentiment: null as string | null,
+    isPersonalizedFeed: false,
+    currentCountry: 'US' as string // Default to US
   }),
 
   getters: {
@@ -44,7 +46,10 @@ export const useNewsStore = defineStore('news', {
       const toastStore = useToastStore()
 
       try {
-        const response: NewsResponse = await apiServiceExtended.getNews(params)
+        const response: NewsResponse = await apiServiceExtended.getNews({
+          ...params,
+          country: this.currentCountry
+        })
 
         // Reset posts when fetching new query
         this.posts = response.posts
@@ -55,6 +60,7 @@ export const useNewsStore = defineStore('news', {
         this.currentQuery = params?.q || 'news'
         this.currentTopic = null
         this.currentSentiment = null
+        this.isPersonalizedFeed = false
 
         // Warning if running low on API requests
         if (response.requestsLeft < 100) {
@@ -82,7 +88,10 @@ export const useNewsStore = defineStore('news', {
       const toastStore = useToastStore()
 
       try {
-        const response: NewsResponse = await apiServiceExtended.getNewsByTopic(topic, params)
+        const response: NewsResponse = await apiServiceExtended.getNewsByTopic(topic, {
+          ...params,
+          country: this.currentCountry
+        })
 
         this.posts = response.posts
         this.totalResults = response.totalResults
@@ -92,6 +101,7 @@ export const useNewsStore = defineStore('news', {
         this.currentTopic = topic
         this.currentSentiment = params?.sentiment || null
         this.currentQuery = `topic:"${topic}"${params?.sentiment ? ` sentiment:${params.sentiment}` : ''}`
+        this.isPersonalizedFeed = false
 
         if (response.requestsLeft < 100) {
           toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
@@ -102,6 +112,46 @@ export const useNewsStore = defineStore('news', {
       } finally {
         this.loading = false
       }
+    },
+
+    async fetchNewsFeed(params?: {
+      ts?: number
+      size?: number
+    }) {
+      this.loading = true
+      this.posts = []
+      this.error = null
+      const toastStore = useToastStore()
+
+      try {
+        const response: NewsResponse = await apiServiceExtended.getNewsFeed({
+          ...params,
+          country: this.currentCountry
+        })
+
+        this.posts = response.posts
+        this.totalResults = response.totalResults
+        this.moreResultsAvailable = response.moreResultsAvailable
+        this.nextUrl = response.next || null
+        this.requestsLeft = response.requestsLeft
+        this.currentTopic = null
+        this.currentSentiment = null
+        this.currentQuery = 'personalized-feed'
+        this.isPersonalizedFeed = true
+
+        if (response.requestsLeft < 100) {
+          toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
+        }
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : 'Failed to fetch news feed'
+        toastStore.show(this.error, 'error')
+      } finally {
+        this.loading = false
+      }
+    },
+
+    setCountry(country: string) {
+      this.currentCountry = country
     },
 
     async loadMoreNews() {

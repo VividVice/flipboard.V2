@@ -396,11 +396,13 @@ class ApiServiceExtended extends ApiService {
     q?: string
     ts?: number
     size?: number
+    country?: string
   }): Promise<NewsResponse> {
     const queryParams = new URLSearchParams()
     queryParams.append('q', params?.q || 'news')
     if (params?.ts) queryParams.append('ts', params.ts.toString())
     if (params?.size) queryParams.append('size', params.size.toString())
+    if (params?.country) queryParams.append('country', params.country)
 
     const url = `${API_BASE_URL}/news?${queryParams.toString()}`
     const response = await fetch(url, { headers: this.getHeaders(true) })
@@ -414,12 +416,14 @@ class ApiServiceExtended extends ApiService {
       sentiment?: string
       ts?: number
       size?: number
+      country?: string
     }
   ): Promise<NewsResponse> {
     const queryParams = new URLSearchParams()
     if (params?.sentiment) queryParams.append('sentiment', params.sentiment)
     if (params?.ts) queryParams.append('ts', params.ts.toString())
     if (params?.size) queryParams.append('size', params.size.toString())
+    if (params?.country) queryParams.append('country', params.country)
 
     const url = `${API_BASE_URL}/news/topic/${encodeURIComponent(topic)}?${queryParams.toString()}`
     const response = await fetch(url, { headers: this.getHeaders(true) })
@@ -431,6 +435,22 @@ class ApiServiceExtended extends ApiService {
     const url = `${API_BASE_URL}/news/next?next_url=${encodeURIComponent(nextUrl)}`
     const response = await fetch(url, { headers: this.getHeaders(true) })
     if (!response.ok) throw new Error('Failed to fetch next news page')
+    return response.json()
+  }
+
+  async getNewsFeed(params?: {
+    ts?: number
+    size?: number
+    country?: string
+  }): Promise<NewsResponse> {
+    const queryParams = new URLSearchParams()
+    if (params?.ts) queryParams.append('ts', params.ts.toString())
+    if (params?.size) queryParams.append('size', params.size.toString())
+    if (params?.country) queryParams.append('country', params.country)
+
+    const url = `${API_BASE_URL}/news/feed?${queryParams.toString()}`
+    const response = await fetch(url, { headers: this.getHeaders(true) })
+    if (!response.ok) throw new Error('Failed to fetch news feed')
     return response.json()
   }
 
