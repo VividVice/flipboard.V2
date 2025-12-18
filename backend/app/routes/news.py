@@ -10,7 +10,7 @@ from app.dependencies import get_current_user, get_current_user_optional
 router = APIRouter()
 
 
-async def enrich_news_response(response: NewsResponse, user: dict):
+async def enrich_news_response(response: NewsResponse, user: Optional[dict]):
     if not user or not response.posts:
         return response
     
