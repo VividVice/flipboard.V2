@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import Optional, List
-from app.schemas.topic import Topic, TopicCreate, TopicUpdate, TopicBulkFollow
+from app.schemas.topic import Topic, TopicCreate, TopicBulkFollow
 from app.crud import topic as topic_crud
 from app.crud import user as user_crud
 from app.dependencies import get_current_user
