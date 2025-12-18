@@ -27,7 +27,7 @@ const scrollToTop = () => {
 </script>
 
 <template>
-  <nav class="bg-black border-b border-gray-800 sticky top-0 z-50 h-[60px]">
+  <nav class="bg-black border-b border-gray-800 fixed top-0 left-0 w-full z-50 h-[60px]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
       <div class="flex justify-between items-center h-full">
         <!-- Left: Search & Mobile Menu Button -->

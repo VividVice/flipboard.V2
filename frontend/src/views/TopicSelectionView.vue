@@ -63,13 +63,20 @@ onMounted(async () => {
           class="relative aspect-square rounded-lg overflow-hidden cursor-pointer group border-2 transition-all duration-200 bg-gray-800"
           :class="isTopicFollowed(topic.id) ? 'border-flipboard-red ring-2 ring-flipboard-red ring-opacity-50' : 'border-transparent hover:border-gray-600'"
         >
-          <!-- Icon if available -->
-          <div v-if="topic.icon" class="absolute inset-0 flex items-center justify-center text-6xl opacity-20">
+          <!-- Background Image -->
+          <img 
+            v-if="topic.icon && topic.icon.startsWith('http')" 
+            :src="topic.icon" 
+            :alt="topic.name"
+            class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-60"
+          />
+          <!-- Fallback Icon if not a URL (though we seeded URLs) -->
+          <div v-else-if="topic.icon" class="absolute inset-0 flex items-center justify-center text-6xl opacity-20">
             {{ topic.icon }}
           </div>
           
           <!-- Overlay -->
-          <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
           
           <!-- Content -->
           <div class="absolute inset-0 flex flex-col justify-end p-4">

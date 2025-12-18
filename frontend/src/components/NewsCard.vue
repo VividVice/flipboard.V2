@@ -3,9 +3,12 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiServiceExtended, type NewsPost } from '../services/api'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   post: NewsPost
-}>()
+  variant?: 'default' | 'featured' | 'horizontal' | 'compact'
+}>(), {
+  variant: 'default'
+})
 
 const router = useRouter()
 const isLiked = ref(props.post.liked ?? false)
@@ -109,10 +112,21 @@ const toggleSave = async () => {
 <template>
   <div
     @click="openArticle"
-    class="group flex flex-col bg-gray-900 h-full hover:bg-gray-800 transition-colors duration-200 cursor-pointer border border-gray-800 relative"
+    class="group bg-gray-900 overflow-hidden hover:bg-gray-800 transition-colors duration-200 cursor-pointer border border-gray-800 relative h-full flex"
+    :class="{
+      'flex-col': variant !== 'horizontal',
+      'flex-row': variant === 'horizontal'
+    }"
   >
     <!-- Image Container -->
-    <div class="relative aspect-[4/3] overflow-hidden bg-gray-800">
+    <div 
+      class="relative overflow-hidden bg-gray-800"
+      :class="{
+        'aspect-[4/3] w-full': variant === 'default' || variant === 'compact',
+        'aspect-video w-full h-2/3': variant === 'featured',
+        'w-1/3 h-full aspect-[3/4]': variant === 'horizontal'
+      }"
+    >
       <img
         class="h-full w-full object-cover transform group-hover:scale-105 transition-transform duration-500 ease-out"
         :src="post.thread.main_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80'"
@@ -129,35 +143,46 @@ const toggleSave = async () => {
     </div>
 
     <!-- Content -->
-    <div class="flex-1 p-4 flex flex-col">
+    <div 
+      class="flex flex-col p-4"
+      :class="{
+        'flex-1': true,
+        'justify-between': variant === 'featured' || variant === 'horizontal'
+      }"
+    >
       <!-- Source & Time -->
       <div class="flex items-center justify-between mb-2">
          <div class="flex items-center space-x-2">
              <div class="h-5 w-5 rounded bg-gray-800 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-700">
                 {{ post.thread.site.charAt(0).toUpperCase() }}
              </div>
-             <span class="text-xs font-bold text-gray-300 uppercase tracking-wider">{{ post.thread.site }}</span>
+             <span class="text-xs font-bold text-gray-300 uppercase tracking-wider truncate max-w-[150px]">{{ post.thread.site }}</span>
          </div>
-         <span class="text-xs text-gray-500">{{ formatPublishedDate(post.published) }}</span>
+         <span class="text-xs text-gray-500 whitespace-nowrap">{{ formatPublishedDate(post.published) }}</span>
       </div>
 
       <!-- Title -->
-      <h3 class="text-xl font-serif font-bold text-white leading-tight group-hover:text-flipboard-red transition-colors mb-2">
+      <h3 
+        class="font-serif font-bold text-white leading-tight group-hover:text-flipboard-red transition-colors mb-2"
+        :class="{
+          'text-xl': variant === 'default' || variant === 'horizontal',
+          'text-3xl md:text-4xl': variant === 'featured',
+          'text-lg': variant === 'compact'
+        }"
+      >
         {{ post.title }}
       </h3>
 
-      <!-- Excerpt with HTML highlighting -->
+      <!-- Excerpt -->
       <div
-        v-if="post.highlightText"
-        class="text-sm text-gray-400 line-clamp-3 mb-4 font-sans leading-relaxed"
-        v-html="post.highlightText.replace(/<em>/g, '<em class=&quot;text-yellow-400 not-italic font-semibold&quot;>')"
+        v-if="variant !== 'compact'"
+        class="text-sm text-gray-400 mb-4 font-sans leading-relaxed"
+        :class="{ 'line-clamp-2': variant === 'horizontal', 'line-clamp-3': variant === 'default', 'line-clamp-4 text-base': variant === 'featured' }"
+        v-html="post.highlightText ? post.highlightText.replace(/<em>/g, '<em class=&quot;text-yellow-400 not-italic font-semibold&quot;>') : excerpt"
       />
-      <p v-else class="text-sm text-gray-400 line-clamp-3 mb-4 font-sans leading-relaxed">
-        {{ excerpt }}
-      </p>
 
       <!-- Categories/Topics -->
-      <div v-if="post.categories.length > 0" class="flex flex-wrap gap-1 mb-3">
+      <div v-if="post.categories.length > 0 && variant !== 'compact'" class="flex flex-wrap gap-1 mb-3">
         <span
           v-for="category in post.categories.slice(0, 2)"
           :key="category"
@@ -185,15 +210,15 @@ const toggleSave = async () => {
              </svg>
              <span class="text-xs">{{ post.thread.social?.facebook?.comments || 0 }}</span>
            </button>
-           
+        </div>
+        <div class="flex items-center space-x-4">
            <!-- Save Button -->
            <button @click.stop="toggleSave" class="flex items-center space-x-1 hover:text-white transition-colors" :class="{'text-white': isSaved}">
              <svg xmlns="http://www.w3.org/2000/svg" :fill="isSaved ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
              </svg>
            </button>
-        </div>
-        <div class="flex items-center space-x-2">
+           
           <!-- Country flag or indicator -->
           <span v-if="post.thread.country" class="text-xs text-gray-500 uppercase font-bold">
             {{ post.thread.country }}

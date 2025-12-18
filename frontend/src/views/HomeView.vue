@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import NewsCard from '../components/NewsCard.vue'
 import SkeletonCard from '../components/SkeletonCard.vue'
 import { useNewsStore } from '../stores/news'
+import { useArticleStore } from '../stores/articles'
 import { storeToRefs } from 'pinia'
 
 const newsStore = useNewsStore()
+const articleStore = useArticleStore()
 const { posts, loading, totalResults, requestsLeft, hasMoreResults } = storeToRefs(newsStore)
+const { searchQuery } = storeToRefs(articleStore)
 
 // Search and filter states
-const searchQuery = ref('')
 const selectedTopic = ref('financial and economic news')
 const selectedSentiment = ref<string | null>(null)
 
@@ -43,6 +45,11 @@ onMounted(async () => {
   }
 })
 
+// Watch for global search query changes
+watch(searchQuery, async (newQuery) => {
+  await fetchNews()
+})
+
 // Fetch news based on current filters
 const fetchNews = async () => {
   if (searchQuery.value.trim()) {
@@ -57,24 +64,17 @@ const fetchNews = async () => {
   }
 }
 
-// Handle search
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    fetchNews()
-  }
-}
-
 // Handle topic change
 const handleTopicChange = (topic: string) => {
   selectedTopic.value = topic
-  searchQuery.value = '' // Clear search when changing topic
+  articleStore.setSearchQuery('') // Clear global search when changing topic
   fetchNews()
 }
 
 // Handle sentiment change
 const handleSentimentChange = (sentiment: string | null) => {
   selectedSentiment.value = sentiment
-  searchQuery.value = '' // Clear search when changing sentiment
+  articleStore.setSearchQuery('') // Clear global search when changing sentiment
   fetchNews()
 }
 
@@ -102,43 +102,34 @@ const apiUsageColor = computed(() => {
   if (requestsLeft.value < 200) return 'text-yellow-400'
   return 'text-green-400'
 })
+
+// Grid layout configuration
+const getCardConfig = (index: number) => {
+  const i = index % 10 // Repeat pattern every 10 items
+  
+  // 3-column grid pattern (lg)
+  // Row 1-2: [Featured 2x2] [Default] / [Default]
+  // Row 3:   [Horizontal 2x1] [Default]
+  // Row 4:   [Default] [Horizontal 2x1]
+  // Row 5:   [Default] [Default] [Default]
+  
+  if (i === 0) return { variant: 'featured', class: 'lg:col-span-2 lg:row-span-2' }
+  if (i === 1) return { variant: 'default', class: 'lg:col-span-1 lg:row-span-1' }
+  if (i === 2) return { variant: 'default', class: 'lg:col-span-1 lg:row-span-1' }
+  
+  if (i === 3) return { variant: 'horizontal', class: 'lg:col-span-2' }
+  if (i === 4) return { variant: 'compact', class: 'lg:col-span-1' }
+  
+  if (i === 5) return { variant: 'default', class: 'lg:col-span-1' }
+  if (i === 6) return { variant: 'horizontal', class: 'lg:col-span-2' }
+
+  // Remaining 3 items (7, 8, 9) fill a row
+  return { variant: 'default', class: 'lg:col-span-1' }
+}
 </script>
 
 <template>
   <div class="bg-black min-h-screen pb-20">
-
-    <!-- Header Section -->
-    <div class="bg-gradient-to-r from-gray-900 to-black border-b border-gray-800 py-8">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h1 class="text-4xl font-serif font-bold text-white mb-2">Global News</h1>
-          </div>
-          <div class="text-right">
-            <p class="text-sm text-gray-500">API Requests Left</p>
-            <p class="text-2xl font-bold" :class="apiUsageColor">{{ requestsLeft }}</p>
-          </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="max-w-2xl">
-          <form @submit.prevent="handleSearch" class="relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search news... (e.g., 'Bitcoin' or 'topic:technology sentiment:positive')"
-              class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-flipboard-red focus:border-transparent"
-            />
-            <button
-              type="submit"
-              class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-flipboard-red text-white rounded-lg font-bold hover:bg-red-700 transition-colors"
-            >
-              Search
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
 
     <!-- Filter Bars -->
     <div class="sticky top-[60px] z-40 bg-black/95 border-b border-gray-800 backdrop-blur supports-[backdrop-filter]:bg-black/60">
@@ -191,11 +182,13 @@ const apiUsageColor = computed(() => {
       </div>
 
       <!-- News Posts -->
-      <div v-else-if="posts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-else-if="posts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr" style="grid-auto-flow: dense;">
         <NewsCard
-          v-for="post in posts"
+          v-for="(post, index) in posts"
           :key="post.uuid"
           :post="post"
+          :variant="getCardConfig(index).variant"
+          :class="getCardConfig(index).class"
         />
       </div>
 

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,27 +12,32 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/article/:id',
       name: 'article',
-      component: () => import('../views/ArticleView.vue')
+      component: () => import('../views/ArticleView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/profile',
       name: 'profile',
-      component: () => import('../views/ProfileView.vue')
+      component: () => import('../views/ProfileView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/topics',
       name: 'topics',
-      component: () => import('../views/TopicView.vue')
+      component: () => import('../views/TopicView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/welcome/topics',
       name: 'topic-selection',
-      component: () => import('../views/TopicSelectionView.vue')
+      component: () => import('../views/TopicSelectionView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/login',
@@ -44,6 +50,27 @@ const router = createRouter({
       component: () => import('../views/SignupView.vue')
     }
   ]
+})
+
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+
+  if (to.meta.requiresAuth) {
+    // Ensure the auth store has had a chance to initialize (e.g., from localStorage)
+    try {
+      if (typeof (authStore as any).initialize === 'function') {
+        await (authStore as any).initialize()
+      }
+    } catch (e) {
+      // If initialization fails, fall through to the authentication check below
+    }
+
+    if (!authStore.isAuthenticated) {
+      return next({ name: 'login', query: { redirect: to.fullPath } })
+    }
+  }
+
+  next()
 })
 
 export default router

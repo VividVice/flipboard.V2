@@ -1,8 +1,10 @@
 import asyncio
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 sys.path.append(str(Path(__file__).parent.parent))
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 from app.db.database import db
 from app.security.password import get_password_hash
@@ -11,36 +13,31 @@ import uuid
 import random
 
 TOPICS_FR = [
-    {"name": "Actualités", "description": "Les dernières nouvelles", "icon": "📰"},
-    {"name": "Technologie", "description": "Innovation et tech", "icon": "💻"},
-    {"name": "Science", "description": "Découvertes scientifiques", "icon": "🔬"},
-    {"name": "Sport", "description": "Actualités sportives", "icon": "⚽"},
-    {"name": "Culture", "description": "Arts et culture", "icon": "🎭"},
-    {"name": "Économie", "description": "Business et finance", "icon": "💼"},
-    {"name": "Santé", "description": "Santé et bien-être", "icon": "🏥"},
-    {"name": "Environnement", "description": "Écologie et climat", "icon": "🌍"},
-    {"name": "Politique", "description": "Actualité politique", "icon": "🏛️"},
-    {"name": "Gastronomie", "description": "Cuisine et restaurants", "icon": "🍽️"},
-    {"name": "Voyage", "description": "Tourisme et destinations", "icon": "✈️"},
-    {"name": "Mode", "description": "Tendances et style", "icon": "👗"},
-    {"name": "Automobile", "description": "Voitures et mobilité", "icon": "🚗"},
-    {"name": "Immobilier", "description": "Marché immobilier", "icon": "🏠"},
-    {"name": "Éducation", "description": "Enseignement et formation", "icon": "📚"},
-    {"name": "Musique", "description": "Actualité musicale", "icon": "🎵"},
-    {"name": "Cinéma", "description": "Films et séries", "icon": "🎬"},
-    {"name": "Jeux vidéo", "description": "Gaming et esports", "icon": "🎮"},
-    {"name": "Livres", "description": "Littérature et lecture", "icon": "📖"},
-    {"name": "Photographie", "description": "Art photographique", "icon": "📷"},
-    {"name": "Design", "description": "Design et créativité", "icon": "🎨"},
-    {"name": "Architecture", "description": "Architecture moderne", "icon": "🏗️"},
-    {"name": "Intelligence Artificielle", "description": "IA et machine learning", "icon": "🤖"},
-    {"name": "Cryptomonnaie", "description": "Bitcoin et blockchain", "icon": "💰"},
-    {"name": "Startups", "description": "Entrepreneuriat", "icon": "🚀"},
-    {"name": "Marketing", "description": "Stratégies marketing", "icon": "📊"},
-    {"name": "Réseaux sociaux", "description": "Social media", "icon": "📱"},
-    {"name": "Cybersécurité", "description": "Sécurité informatique", "icon": "🔒"},
-    {"name": "Espace", "description": "Exploration spatiale", "icon": "🚀"},
-    {"name": "Histoire", "description": "Événements historiques", "icon": "📜"},
+    {"name": "Actualités", "description": "Les dernières nouvelles", "icon": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Technologie", "description": "Innovation et tech", "icon": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Science", "description": "Découvertes scientifiques", "icon": "https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Sport", "description": "Actualités sportives", "icon": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Culture", "description": "Arts et culture", "icon": "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Économie", "description": "Business et finance", "icon": "https://images.unsplash.com/photo-1591696205602-2f950c417cb9?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Santé", "description": "Santé et bien-être", "icon": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Environnement", "description": "Écologie et climat", "icon": "https://images.unsplash.com/photo-1500829243541-74b677fecc30?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Politique", "description": "Actualité politique", "icon": "https://images.unsplash.com/photo-1555848962-6e79363ec58f?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Gastronomie", "description": "Cuisine et restaurants", "icon": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Voyage", "description": "Tourisme et destinations", "icon": "https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Mode", "description": "Tendances et style", "icon": "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Automobile", "description": "Voitures et mobilité", "icon": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Immobilier", "description": "Marché immobilier", "icon": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Éducation", "description": "Enseignement et formation", "icon": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Musique", "description": "Actualité musicale", "icon": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Cinéma", "description": "Films et séries", "icon": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Jeux vidéo", "description": "Gaming et esports", "icon": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Livres", "description": "Littérature et lecture", "icon": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Photographie", "description": "Art photographique", "icon": "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Design", "description": "Design et créativité", "icon": "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Architecture", "description": "Architecture moderne", "icon": "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Intelligence Artificielle", "description": "IA et machine learning", "icon": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Cryptomonnaie", "description": "Bitcoin et blockchain", "icon": "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=800&q=80"},
+    {"name": "Startups", "description": "Entrepreneuriat", "icon": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80"},
 ]
 
 ARTICLES_FR = [

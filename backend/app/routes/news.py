@@ -5,7 +5,7 @@ from app.crud import article as article_crud
 from app.crud import interaction as interaction_crud
 from app.models.news import NewsResponse
 from app.utils.scraper import scrape_article_content
-from app.dependencies import get_current_user_optional
+from app.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -40,7 +40,8 @@ async def enrich_news_response(response: NewsResponse, user: Optional[dict]):
 
 @router.get("/content")
 async def get_article_content(
-    url: str = Query(..., description="The URL of the article to scrape")
+    url: str = Query(..., description="The URL of the article to scrape"),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Scrape the full content of an article from a given URL.
@@ -60,7 +61,7 @@ async def get_news(
     q: str = Query("news", description="Search query. Supports advanced filters like 'topic:' and 'sentiment:'"),
     ts: Optional[int] = Query(None, description="Unix timestamp in milliseconds for historical data (up to 30 days)"),
     size: int = Query(10, ge=1, le=10, description="Number of results to return (max 10)"),
-    current_user: Optional[dict] = Depends(get_current_user_optional)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Fetch news from webz.io News API Lite
@@ -84,7 +85,7 @@ async def get_news_by_topic(
     sentiment: Optional[str] = Query(None, description="Filter by sentiment: positive, negative, or neutral"),
     ts: Optional[int] = Query(None, description="Unix timestamp in milliseconds"),
     size: int = Query(10, ge=1, le=10),
-    current_user: Optional[dict] = Depends(get_current_user_optional)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Fetch news filtered by topic and optionally sentiment
@@ -117,7 +118,7 @@ async def get_news_by_topic(
 @router.get("/next", response_model=NewsResponse)
 async def get_next_news_page(
     next_url: str = Query(..., description="The 'next' URL path from a previous NewsResponse"),
-    current_user: Optional[dict] = Depends(get_current_user_optional)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Fetch the next page of news results

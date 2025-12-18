@@ -21,6 +21,10 @@ onMounted(async () => {
   if (localArticle) {
     article.value = localArticle
     loading.value = false
+    // If content is short (likely a snippet), try to fetch full content
+    if (localArticle.source_url && (!localArticle.content || localArticle.content.length < 2000)) {
+        fetchFullContent(localArticle.source_url)
+    }
     return
   }
 
@@ -29,6 +33,10 @@ onMounted(async () => {
     const fetchedArticle = await apiServiceExtended.getArticle(articleId)
     article.value = { ...fetchedArticle, liked: false, saved: false }
     loading.value = false
+    // If content is short, try to fetch full content
+    if (fetchedArticle.source_url && (!fetchedArticle.content || fetchedArticle.content.length < 2000)) {
+        fetchFullContent(fetchedArticle.source_url)
+    }
     return
   } catch {
     // Ignore error, try external
@@ -80,9 +88,19 @@ onMounted(async () => {
       .catch(e => console.error('Import failed', e))
 
     // 3. Fetch Full Content (Async)
+    fetchFullContent(newsPost.url)
+    return
+  }
+  
+  loading.value = false
+})
+
+const fetchFullContent = async (url: string) => {
+    if (!article.value) return
+    article.value.isContentLoading = true
     try {
-      const fullContent = await apiServiceExtended.getArticleContent(newsPost.url)
-      if (article.value) {
+      const fullContent = await apiServiceExtended.getArticleContent(url)
+      if (article.value && fullContent.content && fullContent.content.length > (article.value.content?.length || 0)) {
         article.value.content = fullContent.content
       }
     } catch (e) {
@@ -92,11 +110,8 @@ onMounted(async () => {
         article.value.isContentLoading = false
       }
     }
-    return
-  }
-  
-  loading.value = false
-})
+}
+
 
 const scrollToComments = async () => {
   showComments.value = true
@@ -140,10 +155,10 @@ const handleSave = async () => {
   <div class="bg-black min-h-screen text-gray-100 pb-20">
     <div v-if="article" class="animate-fade-in">
         <!-- Article Hero -->
-        <div class="relative h-[50vh] w-full">
-            <img :src="article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80'" :alt="article.title" class="w-full h-full object-cover" />
+        <div class="relative h-[60vh] w-full">
+            <img :src="article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80'" :alt="article.title" class="w-full h-full object-cover absolute inset-0" />
             <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-            <div class="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-4xl mx-auto">
+            <div class="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-4xl mx-auto animate-fade-in-up">
                 <span class="bg-flipboard-red text-white px-3 py-1 text-xs font-bold uppercase tracking-widest mb-4 inline-block">
                     {{ article.publisher }}
                 </span>
@@ -164,7 +179,7 @@ const handleSave = async () => {
         </div>
 
         <!-- Article Content -->
-        <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in-up delay-200">
              <p class="text-xl md:text-2xl text-gray-300 font-serif italic leading-relaxed mb-10 border-l-4 border-flipboard-red pl-6">
                  {{ article.excerpt }}
              </p>
@@ -174,7 +189,7 @@ const handleSave = async () => {
              </div>
              
              <!-- Content / Snippet -->
-             <div class="prose prose-lg prose-invert prose-red max-w-none font-serif text-gray-300 leading-loose mb-8" v-html="article.content"></div>
+             <div class="prose prose-lg prose-invert prose-red max-w-none font-serif text-gray-300 leading-loose mb-8 drop-cap" v-html="article.content"></div>
 
              <!-- Read Full Story Link for External News -->
              <div v-if="article.isExternal" class="mt-8 text-center border-t border-gray-800 pt-8">

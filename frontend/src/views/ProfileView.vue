@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useArticleStore } from '../stores/articles'
 import { useMagazineStore } from '../stores/magazines'
+import { useAuthStore } from '../stores/auth'
 import ArticleCard from '../components/ArticleCard.vue'
 import { storeToRefs } from 'pinia'
 
 const articleStore = useArticleStore()
 const magazineStore = useMagazineStore()
+const authStore = useAuthStore()
 const { savedArticles } = storeToRefs(articleStore)
 const { magazines } = storeToRefs(magazineStore)
+const { user } = storeToRefs(authStore)
 
 onMounted(() => {
   articleStore.fetchSavedArticles()
@@ -16,14 +19,17 @@ onMounted(() => {
 
 const activeTab = ref('saved') // 'saved', 'magazines', 'comments'
 
-const user = {
-  name: 'June Doe',
-  username: '@junedoe',
-  bio: 'Tech enthusiast, avid reader, and coffee lover. Curating the best stories on AI and Design.',
-  followers: 1205,
-  following: 45,
-  avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-}
+const displayUser = computed(() => {
+  return {
+    name: user.value?.name || 'June Doe',
+    username: `@${user.value?.name?.toLowerCase().replace(/\s+/g, '')}` || '@junedoe',
+    bio: 'Salut tout le monde.',
+    followers: 1205,
+    following: 45,
+    avatarUrl: user.value?.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+  }
+})
+
 
 // Helper to get cover image for a magazine (first article image)
 const getMagazineCover = (articleIds: string[]) => {
@@ -41,24 +47,24 @@ const getMagazineCover = (articleIds: string[]) => {
     <div class="bg-gray-900 border-b border-gray-800">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
         <div class="relative inline-block">
-           <img class="h-32 w-32 rounded-full border-4 border-gray-800 object-cover mx-auto" :src="user.avatarUrl" alt="" />
+           <img class="h-32 w-32 rounded-full border-4 border-gray-800 object-cover mx-auto" :src="displayUser.avatarUrl" alt="" />
            <div class="absolute bottom-2 right-2 h-6 w-6 rounded-full bg-green-500 border-4 border-gray-900"></div>
         </div>
         
-        <h1 class="mt-4 text-4xl font-display font-bold text-white uppercase tracking-tight">{{ user.name }}</h1>
-        <p class="text-gray-500 font-medium">{{ user.username }}</p>
+        <h1 class="mt-4 text-4xl font-display font-bold text-white uppercase tracking-tight">{{ displayUser.name }}</h1>
+        <p class="text-gray-500 font-medium">{{ displayUser.username }}</p>
         
         <p class="mt-4 max-w-lg mx-auto text-lg text-gray-300 font-serif leading-relaxed">
-          {{ user.bio }}
+          {{ displayUser.bio }}
         </p>
         
         <div class="mt-8 flex justify-center space-x-8 text-sm font-bold uppercase tracking-widest">
            <div class="text-center">
-             <span class="block text-2xl text-white font-display">{{ user.followers }}</span>
+             <span class="block text-2xl text-white font-display">{{ displayUser.followers }}</span>
              <span class="text-gray-500">Followers</span>
            </div>
            <div class="text-center">
-             <span class="block text-2xl text-white font-display">{{ user.following }}</span>
+             <span class="block text-2xl text-white font-display">{{ displayUser.following }}</span>
              <span class="text-gray-500">Following</span>
            </div>
         </div>

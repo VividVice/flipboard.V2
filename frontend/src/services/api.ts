@@ -436,7 +436,7 @@ class ApiServiceExtended extends ApiService {
 
   async getArticleContent(url: string): Promise<{ content: string }> {
     const response = await fetch(`${API_BASE_URL}/news/content?url=${encodeURIComponent(url)}`, {
-      headers: this.getHeaders(),
+      headers: this.getHeaders(true),
     })
     if (!response.ok) throw new Error('Failed to fetch article content')
     return response.json()

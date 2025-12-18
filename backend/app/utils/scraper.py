@@ -37,7 +37,7 @@ async def scrape_article_content(url: str) -> str:
             ]
             
             for cls in common_classes:
-                content_div = soup.find(div={"class": lambda x: x and cls in x})
+                content_div = soup.find('div', class_=lambda x: x and cls in x)
                 if content_div:
                     return str(content_div)
             
