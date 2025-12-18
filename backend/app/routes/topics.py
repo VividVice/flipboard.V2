@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import Optional, List
-from app.schemas.topic import Topic, TopicCreate, TopicUpdate
+from app.schemas.topic import Topic, TopicCreate, TopicUpdate, TopicBulkFollow
 from app.crud import topic as topic_crud
 from app.crud import user as user_crud
 from app.dependencies import get_current_user
@@ -39,9 +39,10 @@ async def create_topic(topic_in: TopicCreate):
 
 @router.post("/bulk-follow")
 async def bulk_follow_topics(
-    topic_ids: List[str],
+    input_data: TopicBulkFollow,
     current_user: dict = Depends(get_current_user)
 ):
+    topic_ids = input_data.topic_ids
     if len(topic_ids) < 3:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

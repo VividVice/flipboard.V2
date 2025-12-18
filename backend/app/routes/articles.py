@@ -14,7 +14,7 @@ async def get_articles(
     topic: Optional[str] = None,
     search: Optional[str] = None,
     sort_by: str = Query("published_at", regex="^(published_at|view_count|like_count)$"),
-    current_user: Optional[dict] = Depends(get_current_user_optional)
+    current_user: dict = Depends(get_current_user)
 ):
     articles = await article_crud.get_articles(
         skip=skip,
@@ -35,14 +35,16 @@ async def get_articles(
     )
 
 @router.get("/hero", response_model=Article)
-async def get_hero_article():
+async def get_hero_article(
+    current_user: dict = Depends(get_current_user)
+):
     article = await article_crud.get_hero_article()
     if not article:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No articles found"
         )
-    return article
+    return await enrich_article(article, current_user)
 
 @router.get("/feed", response_model=ArticleList)
 async def get_personalized_feed(
@@ -75,7 +77,7 @@ async def get_personalized_feed(
 @router.get("/{article_id}", response_model=Article)
 async def get_article(
     article_id: str,
-    current_user: Optional[dict] = Depends(get_current_user_optional)
+    current_user: dict = Depends(get_current_user)
 ):
     article = await article_crud.get_article_by_id(article_id, increment_view=True)
     if not article:

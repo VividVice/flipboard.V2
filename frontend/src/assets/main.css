@@ -13,10 +13,62 @@
   body {
     font-family: var(--font-sans);
     @apply bg-gray-900 text-gray-100 antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     @apply tracking-tight;
   }
+}
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+
+  /* Drop Cap for Articles */
+  .drop-cap::first-letter {
+    float: left;
+    font-size: 3.5rem;
+    line-height: 0.8;
+    font-weight: bold;
+    margin-right: 0.5rem;
+    margin-top: 0.2rem;
+    color: var(--color-flipboard-red);
+    font-family: var(--font-display);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page Transitions */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
 }

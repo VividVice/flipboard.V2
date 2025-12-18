@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { useTopicStore } from '../stores/topics'
 import { storeToRefs } from 'pinia'
+import { onMounted } from 'vue'
 
 const topicStore = useTopicStore()
 const { topics } = storeToRefs(topicStore)
+
+onMounted(async () => {
+  await Promise.all([
+    topicStore.fetchTopics(),
+    topicStore.fetchFollowedTopics()
+  ])
+})
 </script>
 
 <template>
@@ -19,7 +27,7 @@ const { topics } = storeToRefs(topicStore)
                 v-for="topic in topics" 
                 :key="topic.name" 
                 class="group relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer"
-                @click="topicStore.toggleFollow(topic.name)"
+                @click="topicStore.toggleFollow(topic.id)"
               >
                   <!-- Background Image -->
                   <img :src="topic.icon" :alt="topic.name" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

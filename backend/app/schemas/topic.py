@@ -15,6 +15,9 @@ class TopicUpdate(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
 
+class TopicBulkFollow(BaseModel):
+    topic_ids: list[str]
+
 class Topic(TopicBase):
     id: str
     follower_count: int
