@@ -4,30 +4,19 @@ import NewsCard from '../components/NewsCard.vue'
 import SkeletonCard from '../components/SkeletonCard.vue'
 import { useNewsStore } from '../stores/news'
 import { useArticleStore } from '../stores/articles'
+import { useTopicStore } from '../stores/topics'
 import { storeToRefs } from 'pinia'
 
 const newsStore = useNewsStore()
 const articleStore = useArticleStore()
-const { posts, loading, totalResults, requestsLeft, hasMoreResults } = storeToRefs(newsStore)
+const topicStore = useTopicStore()
+const { posts, loading, totalResults, requestsLeft, hasMoreResults, isPersonalizedFeed, currentCountry } = storeToRefs(newsStore)
 const { searchQuery } = storeToRefs(articleStore)
+const { followedTopics } = storeToRefs(topicStore)
 
 // Search and filter states
-const selectedTopic = ref('financial and economic news')
+const selectedTopic = ref<string | null>(null)
 const selectedSentiment = ref<string | null>(null)
-
-const topics = [
-  'financial and economic news',
-  'technology',
-  'politics',
-  'sports',
-  'entertainment',
-  'health',
-  'science',
-  'weather',
-  'education',
-  'environment',
-  'crime'
-]
 
 const sentiments = [
   { value: null, label: 'All' },
@@ -36,18 +25,45 @@ const sentiments = [
   { value: 'neutral', label: 'Neutral' }
 ]
 
+const countries = [
+  { code: 'US', label: 'US' },
+  { code: 'FR', label: 'FR' },
+  { code: 'GB', label: 'UK' },
+  { code: 'DE', label: 'DE' },
+  { code: 'IT', label: 'IT' },
+  { code: 'ES', label: 'ES' },
+  { code: 'CA', label: 'CA' }
+]
+
 onMounted(async () => {
-  // Fetch initial news by topic
-  await fetchNews()
+  // Fetch followed topics first
+  await topicStore.fetchFollowedTopics()
+  
+  // Set initial topic if available, otherwise fetch for-you feed
+  if (followedTopics.value.length > 0) {
+    await fetchNews()
+  } else {
+    // Default fallback if no topics followed
+    selectedTopic.value = 'technology'
+    await fetchNews()
+  }
 
   if (loadMoreTrigger.value) {
     observer.observe(loadMoreTrigger.value)
   }
 })
 
-// Watch for global search query changes
-watch(searchQuery, async (newQuery) => {
-  await fetchNews()
+// Watch for global search query changes with debounce
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, (newQuery) => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  
+  debounceTimer = setTimeout(async () => {
+    if (newQuery.trim()) {
+      selectedTopic.value = null
+    }
+    await fetchNews()
+  }, 500)
 })
 
 // Fetch news based on current filters
@@ -55,18 +71,21 @@ const fetchNews = async () => {
   if (searchQuery.value.trim()) {
     // Custom search query
     await newsStore.fetchNews({ q: searchQuery.value, size: 10 })
-  } else {
+  } else if (selectedTopic.value) {
     // Fetch by topic and sentiment
     await newsStore.fetchNewsByTopic(selectedTopic.value, {
       sentiment: selectedSentiment.value || undefined,
       size: 10
     })
+  } else {
+    // Fetch personalized feed
+    await newsStore.fetchNewsFeed({ size: 10 })
   }
 }
 
 // Handle topic change
-const handleTopicChange = (topic: string) => {
-  selectedTopic.value = topic
+const handleTopicChange = (topicName: string | null) => {
+  selectedTopic.value = topicName
   articleStore.setSearchQuery('') // Clear global search when changing topic
   fetchNews()
 }
@@ -74,8 +93,26 @@ const handleTopicChange = (topic: string) => {
 // Handle sentiment change
 const handleSentimentChange = (sentiment: string | null) => {
   selectedSentiment.value = sentiment
-  articleStore.setSearchQuery('') // Clear global search when changing sentiment
+  // We don't clear search query here to allow sentiment filtering on search
   fetchNews()
+}
+
+// Handle country change
+const handleCountryChange = (countryCode: string) => {
+  newsStore.setCountry(countryCode)
+  fetchNews()
+}
+
+// Dropdown state
+const isCountryDropdownOpen = ref(false)
+
+const toggleCountryDropdown = () => {
+  isCountryDropdownOpen.value = !isCountryDropdownOpen.value
+}
+
+const handleCountrySelect = (countryCode: string) => {
+  handleCountryChange(countryCode)
+  isCountryDropdownOpen.value = false
 }
 
 // Infinite Scroll Logic
@@ -94,6 +131,7 @@ const observer = new IntersectionObserver((entries) => {
 
 onUnmounted(() => {
   observer.disconnect()
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 
 // API usage warning color
@@ -136,32 +174,94 @@ const getCardConfig = (index: number) => {
       <!-- Topic Filter -->
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex space-x-2 overflow-x-auto py-3 no-scrollbar border-b border-gray-800">
+          <!-- Personalized Feed Button -->
           <button
-            v-for="topic in topics"
-            :key="topic"
-            @click="handleTopicChange(topic)"
-            class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border capitalize"
-            :class="selectedTopic === topic
-              ? 'bg-white text-black border-white'
-              : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
-          >
-            {{ topic }}
-          </button>
-        </div>
-
-        <!-- Sentiment Filter -->
-        <div class="flex space-x-2 overflow-x-auto py-3 no-scrollbar">
-          <button
-            v-for="sentiment in sentiments"
-            :key="sentiment.value || 'all'"
-            @click="handleSentimentChange(sentiment.value)"
-            class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border"
-            :class="selectedSentiment === sentiment.value
+            type="button"
+            @click="() => handleTopicChange(null)"
+            class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border flex items-center cursor-pointer select-none"
+            :class="isPersonalizedFeed
               ? 'bg-flipboard-red text-white border-flipboard-red'
               : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
           >
-            {{ sentiment.label }}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1">
+              <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clip-rule="evenodd" />
+            </svg>
+            For You
           </button>
+
+          <button
+            type="button"
+            v-for="topic in followedTopics"
+            :key="topic.id"
+            @click="() => handleTopicChange(topic.name)"
+            class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border capitalize cursor-pointer select-none"
+            :class="selectedTopic === topic.name
+              ? 'bg-white text-black border-white'
+              : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
+          >
+            {{ topic.name }}
+          </button>
+
+          <!-- Fallback if no followed topics -->
+          <router-link 
+            v-if="followedTopics.length === 0"
+            to="/topics" 
+            class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap bg-gray-900 text-flipboard-red border border-gray-700 hover:border-flipboard-red transition-all"
+          >
+            + Add Topics
+          </router-link>
+        </div>
+
+        <!-- Sentiment & Country Filter -->
+        <div class="flex items-center justify-between py-3">
+          <div class="flex space-x-2 overflow-x-auto no-scrollbar flex-grow mr-4">
+            <button
+              v-for="sentiment in sentiments"
+              :key="sentiment.value || 'all'"
+              @click="handleSentimentChange(sentiment.value)"
+              class="px-4 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all border cursor-pointer"
+              :class="selectedSentiment === sentiment.value
+                ? 'bg-flipboard-red text-white border-flipboard-red'
+                : 'bg-gray-900 text-gray-400 border-gray-700 hover:border-gray-500 hover:text-gray-200'"
+            >
+              {{ sentiment.label }}
+            </button>
+          </div>
+
+          <!-- Country Dropdown -->
+          <div class="relative flex-shrink-0">
+            <button
+              @click="toggleCountryDropdown"
+              class="flex items-center space-x-2 px-4 py-1 rounded-full text-sm font-bold bg-gray-900 text-white border border-gray-700 hover:border-gray-500 transition-all cursor-pointer"
+            >
+              <span>{{ countries.find(c => c.code === currentCountry)?.label || 'Select Country' }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isCountryDropdownOpen }">
+                <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            
+            <transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <div v-if="isCountryDropdownOpen" class="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-gray-900 border border-gray-800 z-50">
+                <div class="py-1">
+                  <button
+                    v-for="country in countries"
+                    :key="country.code"
+                    @click="handleCountrySelect(country.code)"
+                    class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                  >
+                    {{ country.label }}
+                  </button>
+                </div>
+              </div>
+            </transition>
+          </div>
         </div>
       </div>
     </div>
