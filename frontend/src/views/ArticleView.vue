@@ -96,6 +96,7 @@ onMounted(async () => {
 })
 
 const fetchFullContent = async (url: string) => {
+    if (!article.value) return
     article.value.isContentLoading = true
     try {
       const fullContent = await apiServiceExtended.getArticleContent(url)
