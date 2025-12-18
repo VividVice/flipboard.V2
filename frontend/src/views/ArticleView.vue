@@ -154,7 +154,7 @@ const handleSave = async () => {
   <div class="bg-black min-h-screen text-gray-100 pb-20">
     <div v-if="article" class="animate-fade-in">
         <!-- Article Hero -->
-        <div class="relative min-h-[60vh] w-full">
+        <div class="relative h-[60vh] w-full">
             <img :src="article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80'" :alt="article.title" class="w-full h-full object-cover absolute inset-0" />
             <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
             <div class="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-4xl mx-auto animate-fade-in-up">
