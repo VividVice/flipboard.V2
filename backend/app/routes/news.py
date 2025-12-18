@@ -5,7 +5,7 @@ from app.crud import article as article_crud
 from app.crud import interaction as interaction_crud
 from app.models.news import NewsResponse
 from app.utils.scraper import scrape_article_content
-from app.dependencies import get_current_user, get_current_user_optional
+from app.dependencies import get_current_user
 
 router = APIRouter()
 
