@@ -52,7 +52,15 @@ async def remove_followed_topic(user_id: str, topic_id: str):
     return result.modified_count > 0
 
 async def update_user(user_id: str, user_update: dict):
+    """
+    Update user fields.
+    
+    Filters out None values to avoid overwriting fields that were not provided.
+    Note: Boolean False values are preserved and will be updated correctly.
+    This allows users to explicitly set newsletter_subscribed to False to unsubscribe.
+    """
     # Filter out None values to avoid overwriting with nulls if not provided
+    # Note: False is not None, so boolean False values are preserved
     update_data = {k: v for k, v in user_update.items() if v is not None}
     if not update_data:
         return False
