@@ -13,8 +13,8 @@ async def send_newsletter_email(email: str, news_items: List[NewsPost]):
     Sends a real email using SMTP configuration from settings.
     """
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        logger.warning(f"SMTP credentials not set. Mocking email to {email}")
-        print(f"--- MOCK EMAIL TO {email} (No SMTP config) ---")
+        logger.warning("SMTP credentials not set. Mocking email send (recipient redacted).")
+        print("--- MOCK EMAIL SEND (No SMTP config; recipient redacted) ---")
         return True
 
     logger.info(f"Sending real newsletter to {email} via {settings.SMTP_HOST}")
