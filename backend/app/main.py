@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, topics, articles, comments, interactions, news
+from app.routes import auth, topics, articles, comments, interactions, news, users
 
 app = FastAPI()
 
@@ -13,6 +13,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(topics.router, prefix="/topics", tags=["topics"])
 app.include_router(articles.router, prefix="/articles", tags=["articles"])
 app.include_router(comments.router, tags=["comments"])

@@ -15,6 +15,7 @@ class Comment(CommentBase):
     id: str
     article_id: str
     user_id: str
+    article_title: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

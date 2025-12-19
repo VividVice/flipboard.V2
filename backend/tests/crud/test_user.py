@@ -125,3 +125,100 @@ async def test_authenticate_user_wrong_password(mock_get_user_by_username, mock_
 
     # THEN the result is False
     assert result is False
+
+@patch('app.crud.user.db')
+async def test_update_user_with_newsletter_false(mock_db):
+    # GIVEN a user wants to unsubscribe from newsletter by setting it to False
+    mock_db.users = MagicMock()
+    mock_update_result = MagicMock()
+    mock_update_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
+    
+    # WHEN update_user is called with newsletter_subscribed=False
+    user_update = {"newsletter_subscribed": False}
+    result = await user_crud.update_user("user123", user_update)
+    
+    # THEN the update should succeed and False should NOT be filtered out
+    assert result is True
+    mock_db.users.update_one.assert_awaited_once()
+    call_args = mock_db.users.update_one.call_args
+    assert call_args[0][0] == {"id": "user123"}
+    # Verify that False is included in the update (not filtered out)
+    assert call_args[0][1] == {"$set": {"newsletter_subscribed": False}}
+
+@patch('app.crud.user.db')
+async def test_update_user_with_newsletter_true(mock_db):
+    # GIVEN a user wants to subscribe to newsletter by setting it to True
+    mock_db.users = MagicMock()
+    mock_update_result = MagicMock()
+    mock_update_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
+    
+    # WHEN update_user is called with newsletter_subscribed=True
+    user_update = {"newsletter_subscribed": True}
+    result = await user_crud.update_user("user123", user_update)
+    
+    # THEN the update should succeed
+    assert result is True
+    mock_db.users.update_one.assert_awaited_once()
+    call_args = mock_db.users.update_one.call_args
+    assert call_args[0][0] == {"id": "user123"}
+    assert call_args[0][1] == {"$set": {"newsletter_subscribed": True}}
+
+@patch('app.crud.user.db')
+async def test_update_user_filters_none_values(mock_db):
+    # GIVEN a user update with explicit None values
+    mock_db.users = MagicMock()
+    mock_update_result = MagicMock()
+    mock_update_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
+    
+    # WHEN update_user is called with None values
+    user_update = {"username": "newname", "bio": None}
+    result = await user_crud.update_user("user123", user_update)
+    
+    # THEN None values should be filtered out but other values remain
+    assert result is True
+    mock_db.users.update_one.assert_awaited_once()
+    call_args = mock_db.users.update_one.call_args
+    # Only username should be in the update, bio should be filtered out
+    assert call_args[0][1] == {"$set": {"username": "newname"}}
+
+@patch('app.crud.user.db')
+async def test_update_user_with_mixed_values(mock_db):
+    # GIVEN a user update with mixed values including False, None, and regular values
+    mock_db.users = MagicMock()
+    mock_update_result = MagicMock()
+    mock_update_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
+    
+    # WHEN update_user is called with mixed values
+    user_update = {
+        "username": "newname",
+        "bio": None,  # Should be filtered out
+        "newsletter_subscribed": False  # Should NOT be filtered out
+    }
+    result = await user_crud.update_user("user123", user_update)
+    
+    # THEN only non-None values should be updated (False is not None)
+    assert result is True
+    mock_db.users.update_one.assert_awaited_once()
+    call_args = mock_db.users.update_one.call_args
+    update_dict = call_args[0][1]["$set"]
+    assert "username" in update_dict
+    assert "newsletter_subscribed" in update_dict
+    assert update_dict["newsletter_subscribed"] is False
+    assert "bio" not in update_dict
+
+@patch('app.crud.user.db')
+async def test_update_user_with_no_valid_data(mock_db):
+    # GIVEN a user update with only None values
+    mock_db.users = MagicMock()
+    
+    # WHEN update_user is called with only None values
+    user_update = {"bio": None, "username": None}
+    result = await user_crud.update_user("user123", user_update)
+    
+    # THEN no update should be performed and False should be returned
+    assert result is False
+    mock_db.users.update_one.assert_not_called()

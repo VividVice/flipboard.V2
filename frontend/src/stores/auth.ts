@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { useToastStore } from './toast'
-import { apiService } from '../services/api'
+import { apiService, apiServiceExtended } from '../services/api'
 import router from '../router'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -11,6 +11,7 @@ export interface User {
   name: string
   email: string
   avatarUrl: string
+  newsletter_subscribed: boolean
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -37,7 +38,8 @@ export const useAuthStore = defineStore('auth', {
             id: userData.id,
             name: userData.username,
             email: userData.email,
-            avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+            avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            newsletter_subscribed: userData.newsletter_subscribed || false
           }
           this.isAuthenticated = true
         } else {
@@ -66,7 +68,8 @@ export const useAuthStore = defineStore('auth', {
             id: userData.id,
             name: userData.username,
             email: userData.email,
-            avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+            avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            newsletter_subscribed: userData.newsletter_subscribed || false
           }
           this.isAuthenticated = true
           toast.show(`Welcome back, ${this.user.name}!`)
@@ -90,13 +93,38 @@ export const useAuthStore = defineStore('auth', {
           id: userData.id,
           name: userData.username,
           email: userData.email,
-          avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+          avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+          newsletter_subscribed: userData.newsletter_subscribed || false
         }
         this.isAuthenticated = true
         toast.show(`Welcome to Flipboard, ${username}!`)
       } catch (error: any) {
         toast.show(error.message || 'Signup failed', 'error')
         throw error
+      }
+    },
+
+    async updateNewsletterSubscription(subscribed: boolean) {
+      const toast = useToastStore()
+      try {
+        const userData = await apiServiceExtended.updateUserMe({ newsletter_subscribed: subscribed })
+        if (this.user) {
+          this.user.newsletter_subscribed = userData.newsletter_subscribed
+        }
+        toast.show(subscribed ? 'Subscribed to newsletter!' : 'Unsubscribed from newsletter.', 'success')
+      } catch (error: any) {
+        toast.show('Failed to update newsletter subscription', 'error')
+        throw error
+      }
+    },
+
+    async triggerNewsletter() {
+      const toast = useToastStore()
+      try {
+        await apiServiceExtended.triggerNewsletter()
+        toast.show('Newsletter processing triggered!', 'success')
+      } catch (error: any) {
+        toast.show('Failed to trigger newsletter', 'error')
       }
     },
 

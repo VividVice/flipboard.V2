@@ -32,6 +32,34 @@ async def get_comments_by_article(article_id: str, skip: int = 0, limit: int = 1
 async def get_comments_count(article_id: str):
     return await db.comments.count_documents({"article_id": article_id})
 
+async def get_comments_by_user(user_id: str, skip: int = 0, limit: int = 100):
+    cursor = db.comments.find({"user_id": user_id}).sort("created_at", -1).skip(skip).limit(limit)
+    comments = await cursor.to_list(length=limit)
+    
+    user = await user_crud.get_user_by_id(user_id)
+    user_info = {
+        "id": user.get("id"),
+        "username": user.get("username"),
+        "profile_pic": user.get("profile_pic")
+    } if user else {
+        "id": user_id,
+        "username": "Unknown User",
+        "profile_pic": None
+    }
+
+    for comment in comments:
+        # Add article info
+        article = await db.articles.find_one({"id": comment["article_id"]})
+        if article:
+            comment["article_title"] = article.get("title")
+        else:
+            comment["article_title"] = "Deleted Article"
+        
+        # Add user info
+        comment["user"] = user_info
+            
+    return comments
+
 async def create_comment(article_id: str, user_id: str, comment: CommentCreate):
     comment_doc = comment.dict()
     comment_doc["id"] = str(uuid.uuid4())

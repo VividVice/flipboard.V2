@@ -8,6 +8,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     WEBZ_IO_API_KEY: str
 
+    # Email Settings
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAILS_FROM_EMAIL: str = "noreply@flipboard-clone.com"
+    EMAILS_FROM_NAME: str = "Flipboard Clone"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
