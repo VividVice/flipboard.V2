@@ -15,6 +15,13 @@ class UserCreate(UserBase):
     password: str
 
 class UserUpdate(BaseModel):
+    """
+    Schema for updating user information.
+    
+    All fields are optional to allow partial updates. When updating via the API,
+    only provided fields will be updated. Note that boolean fields like
+    newsletter_subscribed can be explicitly set to False to disable the feature.
+    """
     username: Optional[str] = None
     bio: Optional[str] = None
     profile_pic: Optional[HttpUrl] = None
