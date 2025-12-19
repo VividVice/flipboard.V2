@@ -33,7 +33,16 @@ export interface User {
   bio?: string
   profile_pic?: string
   followed_topics: string[]
+  newsletter_subscribed: boolean
   created_at: string
+}
+
+export interface UserUpdateDto {
+  username?: string
+  bio?: string
+  profile_pic?: string
+  followed_topics?: string[]
+  newsletter_subscribed?: boolean
 }
 
 class ApiService {
@@ -101,6 +110,18 @@ class ApiService {
 
     if (!response.ok) {
       throw new Error('Failed to fetch comments')
+    }
+
+    return response.json()
+  }
+
+  async getUserComments(): Promise<Comment[]> {
+    const response = await fetch(`${API_BASE_URL}/users/me/comments`, {
+      headers: this.getHeaders(true),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user comments')
     }
 
     return response.json()
@@ -470,6 +491,25 @@ class ApiServiceExtended extends ApiService {
     })
     if (!response.ok) throw new Error('Failed to import article')
     return response.json()
+  }
+
+  // User settings
+  async updateUserMe(data: UserUpdateDto): Promise<User> {
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) throw new Error('Failed to update user settings')
+    return response.json()
+  }
+
+  async triggerNewsletter(): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/users/newsletter/trigger`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to trigger newsletter')
   }
 }
 

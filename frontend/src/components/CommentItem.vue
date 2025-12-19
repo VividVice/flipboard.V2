@@ -97,35 +97,48 @@ const cancelDelete = () => {
 
       <!-- Comment Content -->
       <div class="flex-1 min-w-0">
-        <div class="flex items-center justify-between">
+        <!-- Article Context (shown in profile) -->
+        <div v-if="comment.articleTitle" class="mb-4 bg-gray-900/50 p-3 rounded border border-gray-800">
+          <span class="text-[9px] text-flipboard-red uppercase font-black tracking-[0.2em] block mb-1">Publié dans</span>
+          <RouterLink :to="`/article/${comment.articleId}`" class="text-base font-serif font-bold text-white hover:text-flipboard-red transition-colors leading-tight block">
+            {{ comment.articleTitle }}
+          </RouterLink>
+        </div>
+
+        <!-- Meta Info (Name & Date) - Top for article view, Bottom for profile view -->
+        <div v-if="!comment.articleTitle" class="flex items-center justify-between mb-1">
           <div class="flex items-center space-x-2">
-            <span class="text-sm font-semibold text-gray-100">{{ comment.author.name }}</span>
+            <span class="text-sm font-bold text-gray-100">{{ comment.author.name }}</span>
             <span class="text-xs text-gray-500">{{ formattedDate }}</span>
-            <span v-if="comment.updatedAt" class="text-xs text-gray-500 italic">(edited)</span>
+            <span v-if="comment.updatedAt" class="text-xs text-gray-500 italic">(modifié)</span>
           </div>
 
           <!-- Actions for author -->
           <div v-if="isAuthor && !isEditing" class="flex items-center space-x-2">
             <button
               @click="startEdit"
-              class="text-xs text-gray-400 hover:text-white transition-colors"
+              class="text-xs text-gray-500 hover:text-white transition-colors"
             >
-              Edit
+              Modifier
             </button>
             <button
               @click="deleteComment"
-              class="text-xs text-gray-400 hover:text-flipboard-red transition-colors"
+              class="text-xs text-gray-500 hover:text-flipboard-red transition-colors"
             >
-              Delete
+              Supprimer
             </button>
           </div>
         </div>
 
         <!-- Comment text or edit form -->
-        <div v-if="!isEditing" class="mt-1 text-sm text-gray-300 break-words">
-          {{ comment.content }}
+        <div v-if="!isEditing" :class="[
+          'text-gray-300 break-words',
+          comment.articleTitle ? 'text-lg font-serif italic py-1' : 'text-sm'
+        ]">
+          "{{ comment.content }}"
         </div>
 
+        <!-- Edit form -->
         <div v-else class="mt-2 space-y-2">
           <textarea
             v-model="editedContent"
@@ -134,7 +147,7 @@ const cancelDelete = () => {
               editError ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-flipboard-red'
             ]"
             rows="3"
-            placeholder="Edit your comment..."
+            placeholder="Modifier votre commentaire..."
           ></textarea>
           <div v-if="editError" class="text-xs text-red-500">
             {{ editError }}
@@ -144,14 +157,28 @@ const cancelDelete = () => {
               @click="saveEdit"
               class="px-3 py-1 bg-flipboard-red text-white text-xs font-semibold rounded hover:bg-red-700 transition-colors"
             >
-              Save
+              Enregistrer
             </button>
             <button
               @click="cancelEdit"
               class="px-3 py-1 bg-gray-700 text-white text-xs font-semibold rounded hover:bg-gray-600 transition-colors"
             >
-              Cancel
+              Annuler
             </button>
+          </div>
+        </div>
+
+        <!-- Profile view footer meta -->
+        <div v-if="comment.articleTitle && !isEditing" class="mt-3 flex items-center justify-between border-t border-gray-800/50 pt-2">
+          <div class="flex items-center space-x-2">
+            <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">{{ comment.author.name }}</span>
+            <span class="text-gray-700">•</span>
+            <span class="text-[10px] text-gray-600 uppercase font-bold">{{ formattedDate }}</span>
+          </div>
+          
+          <div v-if="isAuthor && !isEditing" class="flex items-center space-x-3">
+            <button @click="startEdit" class="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-wider">Modifier</button>
+            <button @click="deleteComment" class="text-[10px] font-bold text-gray-500 hover:text-flipboard-red uppercase tracking-wider">Supprimer</button>
           </div>
         </div>
       </div>

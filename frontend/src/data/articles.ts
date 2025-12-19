@@ -13,6 +13,7 @@ export interface Article {
 export interface Comment {
   id: string
   articleId: string
+  articleTitle?: string
   author: {
     id: string
     name: string

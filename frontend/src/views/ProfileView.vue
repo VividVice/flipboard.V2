@@ -3,21 +3,42 @@ import { ref, onMounted, computed } from 'vue'
 import { useArticleStore } from '../stores/articles'
 import { useMagazineStore } from '../stores/magazines'
 import { useAuthStore } from '../stores/auth'
+import { useCommentsStore } from '../stores/comments'
 import ArticleCard from '../components/ArticleCard.vue'
+import CommentItem from '../components/CommentItem.vue'
 import { storeToRefs } from 'pinia'
 
 const articleStore = useArticleStore()
 const magazineStore = useMagazineStore()
 const authStore = useAuthStore()
+const commentsStore = useCommentsStore()
 const { savedArticles } = storeToRefs(articleStore)
 const { magazines } = storeToRefs(magazineStore)
 const { user } = storeToRefs(authStore)
+const { userComments, loading: commentsLoading } = storeToRefs(commentsStore)
+
+const toggleNewsletter = async () => {
+  if (user.value) {
+    await authStore.updateNewsletterSubscription(!user.value.newsletter_subscribed)
+  }
+}
+
+const triggerNewsletter = async () => {
+  await authStore.triggerNewsletter()
+}
 
 onMounted(() => {
   articleStore.fetchSavedArticles()
 })
 
-const activeTab = ref('saved') // 'saved', 'magazines', 'comments'
+const activeTab = ref('saved') // 'saved', 'magazines', 'comments', 'settings'
+
+const handleTabChange = (tab: string) => {
+  activeTab.value = tab
+  if (tab === 'comments') {
+    commentsStore.fetchUserComments()
+  }
+}
 
 const displayUser = computed(() => {
   return {
@@ -81,25 +102,32 @@ const getMagazineCover = (articleIds: string[]) => {
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
        <div class="flex space-x-8 border-b border-gray-800 mb-8">
           <button 
-            @click="activeTab = 'saved'"
+            @click="handleTabChange('saved')"
             class="pb-4 border-b-2 font-bold uppercase tracking-wide text-sm transition-colors"
             :class="activeTab === 'saved' ? 'border-flipboard-red text-white' : 'border-transparent text-gray-500 hover:text-gray-300'"
           >
             Saved Stories
           </button>
           <button 
-            @click="activeTab = 'magazines'"
+            @click="handleTabChange('magazines')"
             class="pb-4 border-b-2 font-bold uppercase tracking-wide text-sm transition-colors"
             :class="activeTab === 'magazines' ? 'border-flipboard-red text-white' : 'border-transparent text-gray-500 hover:text-gray-300'"
           >
             Magazines
           </button>
           <button 
-            @click="activeTab = 'comments'"
+            @click="handleTabChange('comments')"
             class="pb-4 border-b-2 font-bold uppercase tracking-wide text-sm transition-colors"
             :class="activeTab === 'comments' ? 'border-flipboard-red text-white' : 'border-transparent text-gray-500 hover:text-gray-300'"
           >
             Comments
+          </button>
+          <button 
+            @click="handleTabChange('settings')"
+            class="pb-4 border-b-2 font-bold uppercase tracking-wide text-sm transition-colors"
+            :class="activeTab === 'settings' ? 'border-flipboard-red text-white' : 'border-transparent text-gray-500 hover:text-gray-300'"
+          >
+            Settings
           </button>
        </div>
        
@@ -139,9 +167,54 @@ const getMagazineCover = (articleIds: string[]) => {
           </div>
        </div>
        
-       <!-- Comments Placeholder -->
-       <div v-if="activeTab === 'comments'" class="text-center py-20 text-gray-500">
-          <p>No comments yet.</p>
+       <!-- Comments List -->
+       <div v-if="activeTab === 'comments'">
+          <div v-if="commentsLoading" class="text-center py-20 text-gray-500">
+             <p>Loading comments...</p>
+          </div>
+          <div v-else-if="userComments.length > 0" class="max-w-3xl mx-auto">
+             <CommentItem 
+               v-for="comment in userComments" 
+               :key="comment.id" 
+               :comment="comment" 
+               :article-id="comment.articleId" 
+             />
+          </div>
+          <div v-else class="text-center py-20 text-gray-500">
+             <p>No comments yet.</p>
+          </div>
+       </div>
+
+       <!-- Settings Tab -->
+       <div v-if="activeTab === 'settings'" class="max-w-2xl mx-auto">
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-8">
+             <h2 class="text-2xl font-display font-bold text-white uppercase tracking-tight mb-6">Email Preferences</h2>
+             
+             <div class="flex items-center justify-between py-4 border-b border-gray-800">
+                <div>
+                   <h3 class="text-white font-bold uppercase tracking-wide text-sm">Weekly Newsletter</h3>
+                   <p class="text-gray-500 text-sm mt-1">Receive a digest of the best stories from your followed topics every week.</p>
+                </div>
+                <button 
+                  @click="toggleNewsletter"
+                  :class="user?.newsletter_subscribed ? 'bg-green-600 border-green-500' : 'bg-gray-800 border-gray-700'"
+                  class="border text-white px-6 py-2 text-xs font-bold uppercase tracking-wider rounded hover:opacity-90 transition-colors whitespace-nowrap"
+                >
+                  {{ user?.newsletter_subscribed ? 'Subscribed' : 'Subscribe' }}
+                </button>
+             </div>
+
+             <div class="mt-8 pt-8 border-t border-gray-800">
+                <h3 class="text-white font-bold uppercase tracking-wide text-sm mb-4">Development Tools</h3>
+                <p class="text-gray-500 text-sm mb-4">Use this button to immediately trigger a newsletter based on your current preferences.</p>
+                <button 
+                  @click="triggerNewsletter"
+                  class="bg-flipboard-red border border-flipboard-red text-white px-6 py-2 text-xs font-bold uppercase tracking-wider rounded hover:bg-red-700 transition-colors"
+                >
+                  Send Test Newsletter Now
+                </button>
+             </div>
+          </div>
        </div>
     </div>
   </div>

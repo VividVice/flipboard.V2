@@ -9,6 +9,7 @@ class UserBase(BaseModel):
     bio: Optional[str] = None
     profile_pic: Optional[HttpUrl] = None
     followed_topics: List[str] = []
+    newsletter_subscribed: bool = False
 
 class UserCreate(UserBase):
     password: str
@@ -18,6 +19,7 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = None
     profile_pic: Optional[HttpUrl] = None
     followed_topics: Optional[List[str]] = None
+    newsletter_subscribed: Optional[bool] = None
 
 class UserInDBBase(UserBase):
     id: uuid.UUID

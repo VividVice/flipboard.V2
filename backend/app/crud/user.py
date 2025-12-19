@@ -51,5 +51,17 @@ async def remove_followed_topic(user_id: str, topic_id: str):
     )
     return result.modified_count > 0
 
+async def update_user(user_id: str, user_update: dict):
+    # Filter out None values to avoid overwriting with nulls if not provided
+    update_data = {k: v for k, v in user_update.items() if v is not None}
+    if not update_data:
+        return False
+        
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": update_data}
+    )
+    return result.modified_count > 0
+
 async def get_user_by_id(user_id: str):
     return await db.users.find_one({"id": user_id})

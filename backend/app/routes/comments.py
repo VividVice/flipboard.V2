@@ -23,6 +23,15 @@ async def get_article_comments(
     comments = await comment_crud.get_comments_by_article(article_id, skip=skip, limit=limit)
     return comments
 
+@router.get("/users/me/comments", response_model=List[CommentWithUser])
+async def get_my_comments(
+    current_user: dict = Depends(get_current_user),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100)
+):
+    comments = await comment_crud.get_comments_by_user(current_user["id"], skip=skip, limit=limit)
+    return comments
+
 @router.post("/articles/{article_id}/comments", response_model=CommentWithUser, status_code=status.HTTP_201_CREATED)
 async def create_comment(
     article_id: str,
