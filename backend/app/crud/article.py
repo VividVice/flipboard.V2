@@ -104,3 +104,7 @@ async def get_article_by_url(source_url: str):
 async def get_articles_by_urls(urls: List[str]):
     cursor = db.articles.find({"source_url": {"$in": urls}})
     return await cursor.to_list(length=len(urls))
+
+async def get_articles_by_ids(article_ids: List[str]):
+    cursor = db.articles.find({"id": {"$in": article_ids}})
+    return await cursor.to_list(length=len(article_ids))

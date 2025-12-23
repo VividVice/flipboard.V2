@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiServiceExtended, type NewsPost } from '../services/api'
+import { useMagazineStore } from '../stores/magazines'
+import SaveModal from './SaveModal.vue'
 
 const props = withDefaults(defineProps<{
   post: NewsPost
@@ -11,8 +13,15 @@ const props = withDefaults(defineProps<{
 })
 
 const router = useRouter()
+const magazineStore = useMagazineStore()
 const isLiked = ref(props.post.liked ?? false)
 const isSaved = ref(props.post.saved ?? false)
+const isSaveModalOpen = ref(false)
+
+const openSaveModal = () => {
+  magazineStore.fetchUserMagazines()
+  isSaveModalOpen.value = true
+}
 
 // Format date to relative time
 const formatPublishedDate = (dateString: string) => {
@@ -50,6 +59,19 @@ const excerpt = computed(() => {
   return text
 })
 
+const articleData = computed(() => ({
+  id: props.post.uuid,
+  title: props.post.title,
+  excerpt: (props.post.highlightText || props.post.text).substring(0, 300),
+  content: props.post.text,
+  author: props.post.author || props.post.thread.site,
+  publisher: props.post.thread.site,
+  source_url: props.post.url,
+  image_url: props.post.thread.main_image,
+  published_at: props.post.published,
+  topics: props.post.categories
+}))
+
 const openArticle = () => {
   router.push({ name: 'article', params: { id: props.post.uuid } })
 }
@@ -59,20 +81,7 @@ const toggleLike = async () => {
   isLiked.value = !isLiked.value
 
   try {
-    const articleToImport = {
-      id: props.post.uuid,
-      title: props.post.title,
-      excerpt: (props.post.highlightText || props.post.text).substring(0, 300),
-      content: props.post.text,
-      author: props.post.author || props.post.thread.site,
-      publisher: props.post.thread.site,
-      source_url: props.post.url,
-      image_url: props.post.thread.main_image,
-      published_at: props.post.published,
-      topics: props.post.categories
-    }
-
-    const article = await apiServiceExtended.importArticle(articleToImport)
+    const article = await apiServiceExtended.importArticle(articleData.value)
     const status = await apiServiceExtended.likeArticle(article.id)
     isLiked.value = status.is_liked
   } catch (e) {
@@ -86,20 +95,7 @@ const toggleSave = async () => {
   isSaved.value = !isSaved.value
 
   try {
-    const articleToImport = {
-      id: props.post.uuid,
-      title: props.post.title,
-      excerpt: (props.post.highlightText || props.post.text).substring(0, 300),
-      content: props.post.text,
-      author: props.post.author || props.post.thread.site,
-      publisher: props.post.thread.site,
-      source_url: props.post.url,
-      image_url: props.post.thread.main_image,
-      published_at: props.post.published,
-      topics: props.post.categories
-    }
-
-    const article = await apiServiceExtended.importArticle(articleToImport)
+    const article = await apiServiceExtended.importArticle(articleData.value)
     const status = await apiServiceExtended.saveArticle(article.id)
     isSaved.value = status.is_saved
   } catch (e) {
@@ -211,11 +207,18 @@ const toggleSave = async () => {
              <span class="text-xs">{{ post.thread.social?.facebook?.comments || 0 }}</span>
            </button>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-4 text-gray-500">
            <!-- Save Button -->
            <button @click.stop="toggleSave" class="flex items-center space-x-1 hover:text-white transition-colors" :class="{'text-white': isSaved}">
              <svg xmlns="http://www.w3.org/2000/svg" :fill="isSaved ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+             </svg>
+           </button>
+
+           <!-- Add to Magazine Button -->
+           <button @click.stop="openSaveModal" class="flex items-center space-x-1 hover:text-white transition-colors" title="Add to Magazine">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
              </svg>
            </button>
            
@@ -226,5 +229,11 @@ const toggleSave = async () => {
         </div>
       </div>
     </div>
+    
+    <SaveModal 
+      :is-open="isSaveModalOpen" 
+      :article-data="articleData" 
+      @close="isSaveModalOpen = false" 
+    />
   </div>
 </template>

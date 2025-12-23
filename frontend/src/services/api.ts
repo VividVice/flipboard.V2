@@ -222,6 +222,16 @@ export interface InteractionStatus {
   is_saved: boolean
 }
 
+export interface Magazine {
+  id: string
+  user_id: string
+  name: string
+  description?: string
+  article_ids: string[]
+  created_at: string
+  updated_at: string
+}
+
 // News API Types
 export interface FacebookStats {
   likes: number
@@ -532,6 +542,57 @@ class ApiServiceExtended extends ApiService {
       headers: this.getHeaders(true),
     })
     if (!response.ok) throw new Error('Failed to trigger newsletter')
+  }
+
+  // Magazines
+  async getMagazines(): Promise<Magazine[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to fetch magazines')
+    return response.json()
+  }
+
+  async createMagazine(name: string, description?: string): Promise<Magazine> {
+    const response = await fetch(`${API_BASE_URL}/magazines/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ name, description }),
+    })
+    if (!response.ok) throw new Error('Failed to create magazine')
+    return response.json()
+  }
+
+  async deleteMagazine(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to delete magazine')
+  }
+
+  async addArticleToMagazine(magazineId: string, articleId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/articles/${articleId}`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to add article to magazine')
+  }
+
+  async removeArticleFromMagazine(magazineId: string, articleId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/articles/${articleId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to remove article from magazine')
+  }
+
+  async getMagazineArticles(magazineId: string): Promise<Article[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/articles`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to fetch magazine articles')
+    return response.json()
   }
 }
 

@@ -1,5 +1,10 @@
 import { defineStore } from 'pinia'
 import { useToastStore } from './toast'
+import { useArticleStore } from './articles'
+import { useMagazineStore } from './magazines'
+import { useCommentsStore } from './comments'
+import { useTopicStore } from './topics'
+import { useNewsStore } from './news'
 import { apiService, apiServiceExtended } from '../services/api'
 import router from '../router'
 
@@ -194,6 +199,20 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.isAuthenticated = false
       localStorage.removeItem('token')
+      
+      // Reset all other stores to clear user-specific data
+      const articleStore = useArticleStore()
+      const magazineStore = useMagazineStore()
+      const commentsStore = useCommentsStore()
+      const topicStore = useTopicStore()
+      const newsStore = useNewsStore()
+
+      articleStore.$reset()
+      magazineStore.$reset()
+      commentsStore.$reset()
+      topicStore.$reset()
+      newsStore.$reset()
+      
       const toast = useToastStore()
       toast.show('You have been logged out.', 'info')
       router.push({ name: 'login' })

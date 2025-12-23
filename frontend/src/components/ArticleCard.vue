@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useArticleStore } from '../stores/articles'
+import { useMagazineStore } from '../stores/magazines'
 import SaveModal from './SaveModal.vue'
 
 const props = defineProps<{
@@ -17,6 +18,7 @@ const props = defineProps<{
 }>()
 
 const articleStore = useArticleStore()
+const magazineStore = useMagazineStore()
 const isSaveModalOpen = ref(false)
 
 const toggleLike = (e: Event) => {
@@ -34,6 +36,7 @@ const toggleSave = (e: Event) => {
 const openSaveModal = (e: Event) => {
   e.preventDefault()
   e.stopPropagation()
+  magazineStore.fetchUserMagazines()
   isSaveModalOpen.value = true
 }
 </script>
@@ -44,7 +47,8 @@ const openSaveModal = (e: Event) => {
     <Teleport to="body">
       <SaveModal 
         :is-open="isSaveModalOpen" 
-        :article-id="article.id"
+        :article-data="{ id: article.id }"
+        :should-import="false"
         @close="isSaveModalOpen = false"
       />
     </Teleport>
