@@ -178,6 +178,8 @@ const getMagazineCover = (articleIds: string[]) => {
               type="url" 
               class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors"
               placeholder="https://..."
+              pattern="https?://.+"
+              title="Please enter a valid URL starting with http:// or https://"
             />
           </div>
           
