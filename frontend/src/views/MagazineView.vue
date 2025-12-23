@@ -29,7 +29,15 @@ const fetchMagazineData = async () => {
     // 1. Get Magazine Details
     // We need to add getMagazineById to apiServiceExtended first or use the list if already loaded? 
     // Best to fetch fresh.
-    const magResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/magazines/${magazineId.value}`, {
+    const apiBaseUrl =
+      import.meta.env.VITE_API_URL ||
+      (import.meta.env.DEV ? 'http://localhost:8000' : null)
+    
+    if (!apiBaseUrl) {
+      throw new Error('API base URL is not configured (VITE_API_URL is missing)')
+    }
+    
+    const magResponse = await fetch(`${apiBaseUrl}/magazines/${magazineId.value}`, {
        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     })
     
