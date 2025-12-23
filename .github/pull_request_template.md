@@ -1,0 +1,25 @@
+## 📝 Description
+<!-- Explain what this PR does and why it is needed. -->
+
+## 🔗 Related Issue
+<!-- Link to the issue this PR resolves, e.g., "Closes #42" -->
+
+## 🛠 Type of Change
+- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
+- [ ] ✨ New feature (non-breaking change which adds functionality)
+- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] 📚 Documentation update
+- [ ] 🔧 Refactoring (no functional change)
+
+## 🧪 How Has This Been Tested?
+<!-- Describe the tests you ran to verify your changes. -->
+- [ ] Frontend Unit Tests (`npm run test`)
+- [ ] Backend Unit Tests (`pytest`)
+- [ ] Manual Verification
+
+## ✅ Checklist:
+- [ ] My code follows the style guidelines of this project
+- [ ] I have performed a self-review of my own code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] New and existing unit tests pass locally with my changes
