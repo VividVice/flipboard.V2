@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { apiServiceExtended, type Magazine, type Article } from '../services/api'
 import ArticleCard from '../components/ArticleCard.vue'
 
@@ -83,9 +83,22 @@ const goBack = () => {
         <ArticleCard v-for="article in articles" :key="article.id" :article="article" />
       </div>
       
-      <div v-else class="text-center py-20 border border-dashed border-gray-800 rounded-lg">
-        <p class="text-gray-500 text-lg">No stories in this magazine yet.</p>
-        <p class="text-gray-600 mt-2">Add stories from your feed or search.</p>
+      <div v-else class="text-center py-20 border border-dashed border-gray-800 rounded-lg max-w-2xl mx-auto px-6">
+        <div class="h-16 w-16 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </div>
+        <h2 class="text-2xl text-white font-display font-bold mb-4 uppercase tracking-tight">Add your first story</h2>
+        <p class="text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
+          This magazine is currently empty. Start curating by adding stories from your personalized feed or search for topics that interest you.
+        </p>
+        <RouterLink 
+          to="/" 
+          class="inline-block bg-flipboard-red text-white px-8 py-3 font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-flipboard-red/20"
+        >
+          Go to Home Feed
+        </RouterLink>
       </div>
     </div>
   </div>
