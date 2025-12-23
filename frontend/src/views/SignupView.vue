@@ -35,7 +35,7 @@ const handleSignup = async () => {
 const handleGoogleLogin = async (response: CallbackTypes.CredentialCallback) => {
   try {
     loading.value = true
-    if(response.credential) {
+    if (response.credential) {
         await authStore.loginWithGoogle(response.credential)
         router.push('/welcome/topics')
     }
