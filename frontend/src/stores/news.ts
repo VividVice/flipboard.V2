@@ -193,6 +193,14 @@ export const useNewsStore = defineStore('news', {
       this.currentTopic = null
       this.currentSentiment = null
       this.error = null
+    },
+
+    updatePostStatus(uuid: string, status: { liked?: boolean; saved?: boolean }) {
+      const post = this.posts.find(p => p.uuid === uuid)
+      if (post) {
+        if (status.liked !== undefined) post.liked = status.liked
+        if (status.saved !== undefined) post.saved = status.saved
+      }
     }
   }
 })

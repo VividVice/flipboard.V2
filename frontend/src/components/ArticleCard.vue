@@ -47,8 +47,8 @@ const openSaveModal = (e: Event) => {
     <Teleport to="body">
       <SaveModal 
         :is-open="isSaveModalOpen" 
-        :article-data="{ id: article.id }"
-        :should-import="false"
+        :article-data="{ id: article.id, ...article }"
+        :should-import="true"
         @close="isSaveModalOpen = false"
       />
     </Teleport>

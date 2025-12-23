@@ -27,10 +27,51 @@ async def scrape_article_content(url: str) -> str:
             soup = BeautifulSoup(response.text, "lxml")
 
             # Remove unwanted elements
-            for tag in soup(
-                ["script", "style", "nav", "header", "footer", "iframe", "noscript"]
-            ):
+            unwanted_selectors = [
+                "script", "style", "nav", "header", "footer", "iframe", "noscript",
+                "aside", "form", ".social-share", ".related-posts", ".newsletter-signup",
+                ".ad-container", ".advertisement", ".sidebar", ".comments-section",
+                ".tags", ".categories", ".author-bio", "#sidebar", "#comments",
+                ".promo-box", ".related-links", ".more-from", ".suggested-stories",
+                ".article-footer", ".article-sidebar", ".social-icons", ".share-bar",
+                ".topic-list", ".tags-list", ".article-sharing", ".related-topics",
+                ".topics-container", ".topics-header", ".follow-button", ".see-all-topics"
+            ]
+            for selector in unwanted_selectors:
+                if selector.startswith("."):
+                    for tag in soup.find_all(class_=lambda x: x and selector[1:] in x):
+                        tag.decompose()
+                elif selector.startswith("#"):
+                    for tag in soup.find_all(id=selector[1:]):
+                        tag.decompose()
+                else:
+                    for tag in soup.find_all(selector):
+                        tag.decompose()
+
+            # Remove captions and credits that are often junk
+            for tag in soup.find_all(["span", "div", "p", "figcaption"], class_=lambda x: x and any(c in x.lower() for c in ["credit", "caption", "source", "image-label"])):
                 tag.decompose()
+
+            # Remove text-based related content (common in news sites)
+            for div in soup.find_all(["div", "section", "p", "span", "button"]):
+                text = div.get_text().strip()
+                text_lower = text.lower()
+                
+                # Check for social/topic junk patterns
+                junk_patterns = [
+                    "more from", "go deeper", "related stories", "read more", 
+                    "suggested for you", "latest news", "sign up for our newsletter",
+                    "follow us on", "in:", "tags:", "see all topics", "facebook tweetemail",
+                    "link copied!", "follow", "share this", "republished from"
+                ]
+                
+                if any(phrase in text_lower for phrase in junk_patterns):
+                    # Only decompose if it's a short element (likely a header or button)
+                    if len(text) < 150:
+                        div.decompose()
+                    # Specific check for social bars which might have longer text but specific patterns
+                    elif "facebook" in text_lower and "tweet" in text_lower and "email" in text_lower:
+                        div.decompose()
 
             # Heuristics to find the main content
             # 1. Look for <article> tag
