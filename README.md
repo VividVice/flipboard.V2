@@ -80,7 +80,6 @@ A professional, high-fidelity web application that replicates the core experienc
 │   │   └── services/       # API Integration
 │   ├── package.json        # NPM Dependencies
 │   └── vite.config.ts      # Vite Configuration
-├── GEMINI.md               # AI Context File
 ├── Specification_Book.md   # Detailed Specs
 └── README.md               # Project Documentation
 ```

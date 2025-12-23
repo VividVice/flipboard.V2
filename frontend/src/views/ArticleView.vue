@@ -155,10 +155,10 @@ const handleSave = async () => {
   <div class="bg-black min-h-screen text-gray-100 pb-20">
     <div v-if="article" class="animate-fade-in">
         <!-- Article Hero -->
-        <div class="relative h-[60vh] w-full">
+        <div class="relative min-h-[60vh] md:min-h-[70vh] w-full flex flex-col justify-end">
             <img :src="article.image_url || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80'" :alt="article.title" class="w-full h-full object-cover absolute inset-0" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-            <div class="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-4xl mx-auto animate-fade-in-up">
+            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+            <div class="relative w-full p-6 md:p-12 pt-24 pb-16 md:pb-24 max-w-4xl mx-auto animate-fade-in-up">
                 <span class="bg-flipboard-red text-white px-3 py-1 text-xs font-bold uppercase tracking-widest mb-4 inline-block">
                     {{ article.publisher }}
                 </span>
@@ -189,13 +189,23 @@ const handleSave = async () => {
              </div>
              
              <!-- Content / Snippet -->
-             <div class="prose prose-lg prose-invert prose-red max-w-none font-serif text-gray-300 leading-loose mb-8 drop-cap" v-html="article.content"></div>
+             <div class="prose prose-lg prose-invert prose-red max-w-none font-serif text-gray-300 leading-loose mb-12 drop-cap" v-html="article.content"></div>
 
-             <!-- Read Full Story Link for External News -->
-             <div v-if="article.isExternal" class="mt-8 text-center border-t border-gray-800 pt-8">
-                <p class="text-gray-400 mb-4">This is a preview. Read the full story at the source.</p>
-                <a :href="article.url" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-colors">
-                  Read Full Story on {{ article.publisher }}
+             <!-- View Original Source Button -->
+             <div v-if="article.source_url" class="mt-12 text-center border-t border-gray-800 pt-10">
+                <p v-if="article.isExternal" class="text-gray-400 mb-6 italic">This is a preview. Read the full story at the source.</p>
+                <p v-else class="text-gray-400 mb-6 italic">Enjoyed this? View the original article on {{ article.publisher }}</p>
+                
+                <a 
+                  :href="article.source_url" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="inline-flex items-center space-x-2 px-8 py-4 bg-white text-black hover:bg-gray-200 font-bold rounded-full transition-all transform hover:scale-105 shadow-xl"
+                >
+                  <span>{{ article.isExternal ? 'Read Full Story' : 'View Original' }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
                 </a>
              </div>
         </article>
