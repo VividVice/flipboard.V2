@@ -166,9 +166,13 @@ const getMagazineCover = (articleIds: string[]) => {
             <textarea 
               v-model="editForm.bio" 
               rows="3"
+              maxlength="300"
               class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors resize-none"
               placeholder="Tell us about yourself"
             ></textarea>
+            <div class="mt-1 text-xs text-gray-500 text-right">
+              {{ (editForm.bio ? editForm.bio.length : 0) }} / 300
+            </div>
           </div>
           
           <div>
