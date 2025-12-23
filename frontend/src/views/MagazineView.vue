@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { apiServiceExtended, type Magazine, type Article } from '../services/api'
 import ArticleCard from '../components/ArticleCard.vue'
 
@@ -93,12 +93,12 @@ const goBack = () => {
         <p class="text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
           This magazine is currently empty. Start curating by adding stories from your personalized feed or search for topics that interest you.
         </p>
-        <router-link 
+        <RouterLink 
           to="/" 
           class="inline-block bg-flipboard-red text-white px-8 py-3 font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-flipboard-red/20"
         >
           Go to Home Feed
-        </router-link>
+        </RouterLink>
       </div>
     </div>
   </div>
