@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiServiceExtended, type NewsPost } from '../services/api'
 import { useMagazineStore } from '../stores/magazines'
+import { useNewsStore } from '../stores/news'
 import SaveModal from './SaveModal.vue'
 
 const props = withDefaults(defineProps<{
@@ -79,11 +80,13 @@ const openArticle = () => {
 const toggleLike = async () => {
   const previousState = isLiked.value
   isLiked.value = !isLiked.value
+  const newsStore = useNewsStore()
 
   try {
     const article = await apiServiceExtended.importArticle(articleData.value)
     const status = await apiServiceExtended.likeArticle(article.id)
     isLiked.value = status.is_liked
+    newsStore.updatePostStatus(props.post.uuid, { liked: status.is_liked })
   } catch (e) {
     console.error('Failed to like', e)
     isLiked.value = previousState
@@ -93,11 +96,13 @@ const toggleLike = async () => {
 const toggleSave = async () => {
   const previousState = isSaved.value
   isSaved.value = !isSaved.value
+  const newsStore = useNewsStore()
 
   try {
     const article = await apiServiceExtended.importArticle(articleData.value)
     const status = await apiServiceExtended.saveArticle(article.id)
     isSaved.value = status.is_saved
+    newsStore.updatePostStatus(props.post.uuid, { saved: status.is_saved })
   } catch (e) {
     console.error('Failed to save', e)
     isSaved.value = previousState
