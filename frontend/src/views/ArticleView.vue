@@ -27,6 +27,12 @@ const isSaveModalOpen = ref(false)
 const updateScrollProgress = () => {
   const winScroll = document.documentElement.scrollTop
   const height = document.documentElement.scrollHeight - document.documentElement.clientHeight
+
+  if (height <= 0) {
+    // No scrollable content; avoid division by zero and treat progress as 0%
+    scrollProgress.value = 0
+    return
+  }
   scrollProgress.value = (winScroll / height) * 100
 }
 
