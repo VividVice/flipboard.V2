@@ -100,13 +100,13 @@ A web application that allows users to browse, curate, and share news, articles,
 
 | Layer          | Technology/Framework                 |
 | -------------- | ------------------------------------ |
-| Frontend       | React.js, TypeScript, Tailwind CSS   |
-| Backend        | Node.js (Express) / Python (FastAPI) |
-| Database       | PostgreSQL / MongoDB                 |
-| Authentication | JWT, OAuth 2.0                       |
-| Caching        | Redis                                |
-| Search         | Elasticsearch / Algolia              |
-| Deployment     | Docker, Nginx, AWS / DigitalOcean    |
+| Frontend       | Vue 3 (Composition API), TypeScript, Tailwind CSS v4 |
+| Backend        | Python (FastAPI)                     |
+| Database       | MongoDB (Async via Motor)            |
+| Authentication | JWT, OAuth 2.0 (Google)              |
+| Caching        | In-memory / MongoDB                  |
+| Search         | Webz.io News API (External), MongoDB Text Search (Internal) |
+| Deployment     | Docker, GitHub Actions (CI/CD)       |
 
 ---
 
@@ -114,37 +114,48 @@ A web application that allows users to browse, curate, and share news, articles,
 
 ### Users
 
-* `id` (UUID)
-* `username` (string)
-* `email` (string)
-* `password_hash` (string)
-* `bio` (text)
+* `id` (String/UUID)
+* `username` (String)
+* `email` (String)
+* `hashed_password` (String)
+* `bio` (String)
 * `profile_pic` (URL)
-* `created_at` (timestamp)
+* `followed_topics` (List[String])
+* `newsletter_subscribed` (Boolean)
+* `created_at` (Datetime)
 
 ### Articles
 
-* `id` (UUID)
-* `title` (string)
-* `description` (text)
-* `url` (string)
-* `image_url` (string)
-* `source` (string)
-* `created_at` (timestamp)
+* `id` (String/UUID)
+* `title` (String)
+* `excerpt` (String)
+* `content` (String)
+* `author` (String)
+* `publisher` (String)
+* `source_url` (String)
+* `image_url` (String)
+* `topics` (List[String])
+* `created_at` (Datetime)
+* `view_count` (Integer)
 
-### Topics
+### Magazines
 
-* `id` (UUID)
-* `name` (string)
-* `description` (text)
+* `id` (String/UUID)
+* `user_id` (String/UUID)
+* `name` (String)
+* `description` (String)
+* `article_ids` (List[String])
+* `created_at` (Datetime)
+* `updated_at` (Datetime)
 
-### User-Article Interactions
+### Interactions
 
-* `user_id` (UUID)
-* `article_id` (UUID)
-* `liked` (boolean)
-* `bookmarked` (boolean)
-* `comment` (text)
+* `id` (String/UUID)
+* `user_id` (String/UUID)
+* `article_id` (String/UUID)
+* `interaction_type` (Enum: like, save, comment)
+* `created_at` (Datetime)
+* `comment_text` (String - optional)
 
 ---
 
@@ -154,28 +165,37 @@ A web application that allows users to browse, curate, and share news, articles,
 
 * `POST /auth/signup`
 * `POST /auth/login`
-* `POST /auth/oauth`
+* `POST /auth/google`
 
 ### Users
 
-* `GET /users/:id`
-* `PUT /users/:id`
+* `GET /users/me`
+* `PUT /users/me`
+* `GET /users/{id}`
 
 ### Articles
 
-* `GET /articles`
-* `GET /articles/:id`
-* `POST /articles`
+* `GET /articles/`
+* `GET /articles/{id}`
+* `POST /articles/import` (Import external news)
+
+### News (External)
+
+* `GET /news/feed` (Personalized)
+* `GET /news/search`
+* `GET /news/topic/{topic}`
+
+### Magazines
+
+* `GET /magazines/`
+* `POST /magazines/`
+* `GET /magazines/{id}`
+* `POST /magazines/{id}/articles/{article_id}`
 
 ### Topics
 
-* `GET /topics`
-* `POST /topics/:id/follow`
-
-### Interactions
-
-* `POST /articles/:id/like`
-* `POST /articles/:id/comment`
+* `GET /topics/`
+* `POST /topics/{id}/follow`
 
 ---
 
