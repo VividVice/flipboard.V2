@@ -45,6 +45,8 @@ A professional, high-fidelity web application that replicates the core experienc
 - **Routing:** Vue Router
 - **Build Tool:** Vite
 - **Language:** TypeScript
+- **Linting:** ESLint, Prettier
+- **Testing:** Vitest
 
 ### Backend
 - **Framework:** FastAPI (Python 3.10+)
@@ -56,6 +58,7 @@ A professional, high-fidelity web application that replicates the core experienc
   - `google-auth` (OAuth token verification)
 - **Validation:** Pydantic models
 - **Testing:** Pytest
+- **Linting & Formatting:** Ruff
 
 ## 📂 Project Structure
 
@@ -152,6 +155,24 @@ To enable "Sign in with Google", you need a Client ID:
     ```
 
 5.  Open `http://localhost:5173` in your browser.
+
+## 🧪 Quality Assurance
+
+### Frontend Checks
+Run these commands in the `frontend/` directory:
+```bash
+npm run lint         # Check for code quality issues
+npm run type-check   # Validate TypeScript types
+npm run test         # Run unit tests with Vitest
+```
+
+### Backend Checks
+Run these commands in the `backend/` directory (ensure venv is active):
+```bash
+ruff check .         # Check for linting errors
+ruff format --check . # Verify code formatting
+pytest               # Run the test suite
+```
 
 ## 📝 Usage Guide
 
