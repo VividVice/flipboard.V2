@@ -62,7 +62,7 @@ const cleanContent = computed(() => {
     /See all topics/gi,
     /Facebook TweetEmail Link/gi,
     /Link Copied!/gi,
-    /\bFollow\b/g,
+    /Follow\s+(us|me)\s+on\s+(Facebook|Twitter|X|Instagram)[^<\n]*/gi,
     /.*\/Getty Images/gi,
     /.*\/Universal Images Group/gi,
     /.*\/GHI\/UCG/gi,
