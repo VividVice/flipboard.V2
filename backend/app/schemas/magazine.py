@@ -1,16 +1,16 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
 class MagazineBase(BaseModel):
-    name: str
+    name: str = Field(..., min_length=2, max_length=100)
     description: Optional[str] = None
 
 class MagazineCreate(MagazineBase):
     pass
 
 class MagazineUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
     description: Optional[str] = None
 
 class Magazine(MagazineBase):
