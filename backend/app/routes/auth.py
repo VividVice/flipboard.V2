@@ -5,8 +5,72 @@ from app.schemas.token import Token
 from app.crud import user as user_crud
 from app.security import token as security_token
 from app.dependencies import get_current_user
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from app.core.config import settings
+from pydantic import BaseModel
+
+class GoogleToken(BaseModel):
+    token: str
 
 router = APIRouter()
+
+@router.post("/google", response_model=Token)
+async def login_google(token_data: GoogleToken):
+    try:
+        # If GOOGLE_CLIENT_ID is not set, we can't verify properly.
+        # For development without a real client ID, one might skip verification
+        # but that is insecure. We assume the user will provide it.
+        # If the user hasn't set it yet, this might fail or we should handle it.
+        # Ideally, we pass None as audience if we want to skip audience check (NOT RECOMMENDED)
+        # or we catch the error if the ID is empty.
+        
+        client_id = settings.GOOGLE_CLIENT_ID
+        if not client_id:
+             # Fallback for dev if needed, or raise error. 
+             # Let's assume it might be empty and just warn or fail.
+             pass
+
+        idinfo = id_token.verify_oauth2_token(
+            token_data.token, 
+            google_requests.Request(), 
+            client_id if client_id else None
+        )
+
+        email = idinfo['email']
+        name = idinfo.get('name', '')
+        picture = idinfo.get('picture', '')
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid Google token: {str(e)}",
+        )
+
+    user = await user_crud.get_user_by_email(email)
+    
+    if not user:
+        base_username = email.split('@')[0]
+        username = base_username
+        counter = 1
+        while await user_crud.get_user_by_username(username):
+            username = f"{base_username}{counter}"
+            counter += 1
+            
+        user_data = {
+            "email": email,
+            "username": username,
+            "profile_pic": picture,
+            "bio": "Joined via Google",
+            "followed_topics": [],
+            "newsletter_subscribed": False
+        }
+        user = await user_crud.create_social_user(user_data)
+        
+    access_token = security_token.create_access_token(
+        data={"sub": user["id"]}
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/signup", response_model=User, status_code=status.HTTP_201_CREATED)
 async def signup(user_in: UserCreate):

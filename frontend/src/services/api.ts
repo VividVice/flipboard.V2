@@ -103,6 +103,25 @@ class ApiService {
     return tokenData
   }
 
+  async loginGoogle(token: string): Promise<TokenResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Failed to log in with Google')
+    }
+
+    const tokenData = await response.json()
+    localStorage.setItem('token', tokenData.access_token)
+    return tokenData
+  }
+
   async getComments(articleId: string): Promise<Comment[]> {
     const response = await fetch(`${API_BASE_URL}/articles/${articleId}/comments`, {
       headers: this.getHeaders(),
