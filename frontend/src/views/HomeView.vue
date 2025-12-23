@@ -142,7 +142,9 @@ const apiUsageColor = computed(() => {
 })
 
 // Grid layout configuration
-const getCardConfig = (index: number) => {
+type CardVariant = 'default' | 'featured' | 'horizontal' | 'compact'
+
+const getCardConfig = (index: number): { variant: CardVariant, class: string } => {
   const i = index % 10 // Repeat pattern every 10 items
   
   // 3-column grid pattern (lg)

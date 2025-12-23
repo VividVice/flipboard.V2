@@ -3,11 +3,15 @@ import { ref } from 'vue'
 import { useMagazineStore } from '../stores/magazines'
 import { useToastStore } from '../stores/toast'
 import { storeToRefs } from 'pinia'
+import { apiServiceExtended } from '../services/api'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   isOpen: boolean
-  articleId: string
-}>()
+  articleData: any
+  shouldImport?: boolean
+}>(), {
+  shouldImport: true
+})
 
 const emit = defineEmits(['close'])
 
@@ -17,30 +21,53 @@ const { magazines } = storeToRefs(magazineStore)
 
 const newMagazineName = ref('')
 const showCreateInput = ref(false)
+const isSaving = ref(false)
 
-const saveToMagazine = (magazineId: string) => {
-  magazineStore.addToMagazine(magazineId, props.articleId)
-  
-  toastStore.show('Saved to magazine')
-  emit('close')
+const saveToMagazine = async (magazineId: string) => {
+  if (isSaving.value) return
+  isSaving.value = true
+  try {
+    let articleId = props.articleData.id
+    
+    // Ensure article is imported first if needed
+    if (props.shouldImport) {
+      const article = await apiServiceExtended.importArticle(props.articleData)
+      articleId = article.id
+    }
+    
+    await magazineStore.addToMagazine(magazineId, articleId)
+    toastStore.show('Saved to magazine')
+    emit('close')
+  } catch (e) {
+    console.error(e)
+    toastStore.show('Failed to save to magazine')
+  } finally {
+    isSaving.value = false
+  }
 }
 
-const createAndSave = () => {
+const createAndSave = async () => {
   if (newMagazineName.value.trim()) {
-    magazineStore.createMagazine(newMagazineName.value)
-    // Get the newly created magazine (last one)
-    const newMag = magazines.value[magazines.value.length - 1]
-    if (newMag) {
-      saveToMagazine(newMag.id)
+    isSaving.value = true
+    try {
+      const newMag = await magazineStore.createMagazine(newMagazineName.value.trim())
+      if (newMag) {
+        isSaving.value = false // Reset so saveToMagazine can run
+        await saveToMagazine(newMag.id)
+      }
+      newMagazineName.value = ''
+      showCreateInput.value = false
+    } catch (e) {
+      console.error(e)
+      toastStore.show('Failed to create magazine')
+      isSaving.value = false
     }
-    newMagazineName.value = ''
-    showCreateInput.value = false
   }
 }
 </script>
 
 <template>
-  <div v-if="isOpen" class="relative z-[200]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div v-if="isOpen" @click.stop class="relative z-[200]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <!-- Background overlay -->
     <div class="fixed inset-0 bg-gray-900/80 transition-opacity backdrop-blur-sm" aria-hidden="true" @click="emit('close')"></div>
 
@@ -60,11 +87,16 @@ const createAndSave = () => {
                      v-for="mag in magazines" 
                      :key="mag.id"
                      @click="saveToMagazine(mag.id)"
-                     class="w-full text-left px-4 py-3 bg-gray-700 hover:bg-gray-600 rounded text-gray-200 font-medium transition-colors flex justify-between items-center group"
+                     :disabled="isSaving"
+                     class="w-full text-left px-4 py-3 bg-gray-700 hover:bg-gray-600 rounded text-gray-200 font-medium transition-colors flex justify-between items-center group disabled:opacity-50 disabled:cursor-not-allowed"
                    >
                      <span>{{ mag.name }}</span>
-                     <span class="text-xs text-gray-500 group-hover:text-gray-300">{{ mag.articleIds.length }} stories</span>
+                     <span class="text-xs text-gray-500 group-hover:text-gray-300">{{ mag.article_ids.length }} stories</span>
                    </button>
+                   
+                   <div v-if="magazines.length === 0" class="text-gray-500 text-sm text-center py-4">
+                      No magazines found. Create one below!
+                   </div>
                 </div>
   
                 <!-- Create New Magazine -->
@@ -90,9 +122,10 @@ const createAndSave = () => {
                       />
                       <button 
                         @click="createAndSave"
-                        class="bg-flipboard-red text-white px-3 py-2 rounded text-sm font-bold hover:bg-red-700 transition-colors"
+                        :disabled="isSaving"
+                        class="bg-flipboard-red text-white px-3 py-2 rounded text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
                       >
-                        Create
+                        {{ isSaving ? '...' : 'Create' }}
                       </button>
                    </div>
                 </div>

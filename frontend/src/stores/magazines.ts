@@ -1,37 +1,59 @@
 import { defineStore } from 'pinia'
-
-export interface Magazine {
-  id: string
-  name: string
-  articleIds: string[]
-}
+import { apiServiceExtended, type Magazine } from '../services/api'
 
 export const useMagazineStore = defineStore('magazines', {
   state: () => ({
-    magazines: [
-      { id: 'm1', name: 'Read Later', articleIds: [] },
-      { id: 'm2', name: 'Tech News', articleIds: [] },
-      { id: 'm3', name: 'Design Inspiration', articleIds: [] }
-    ] as Magazine[]
+    magazines: [] as Magazine[],
+    loading: false,
+    error: null as string | null
   }),
   
   actions: {
-    createMagazine(name: string) {
-      const id = Date.now().toString()
-      this.magazines.push({ id, name, articleIds: [] })
+    async fetchUserMagazines() {
+      this.loading = true
+      try {
+        this.magazines = await apiServiceExtended.getMagazines()
+      } catch (err: any) {
+        this.error = err.message || 'Failed to fetch magazines'
+      } finally {
+        this.loading = false
+      }
     },
-    
-    addToMagazine(magazineId: string, articleId: string) {
-      const mag = this.magazines.find(m => m.id === magazineId)
-      if (mag && !mag.articleIds.includes(articleId)) {
-        mag.articleIds.push(articleId)
+
+    async createMagazine(name: string, description?: string) {
+      try {
+        const newMagazine = await apiServiceExtended.createMagazine(name, description)
+        this.magazines.push(newMagazine)
+        return newMagazine
+      } catch (err: any) {
+        this.error = err.message || 'Failed to create magazine'
+        throw err
       }
     },
     
-    removeFromMagazine(magazineId: string, articleId: string) {
-      const mag = this.magazines.find(m => m.id === magazineId)
-      if (mag) {
-        mag.articleIds = mag.articleIds.filter(id => id !== articleId)
+    async addToMagazine(magazineId: string, articleId: string) {
+      try {
+        await apiServiceExtended.addArticleToMagazine(magazineId, articleId)
+        const mag = this.magazines.find(m => m.id === magazineId)
+        if (mag && !mag.article_ids.includes(articleId)) {
+          mag.article_ids.push(articleId)
+        }
+      } catch (err: any) {
+        this.error = err.message || 'Failed to add article to magazine'
+        throw err
+      }
+    },
+    
+    async removeFromMagazine(magazineId: string, articleId: string) {
+      try {
+        await apiServiceExtended.removeArticleFromMagazine(magazineId, articleId)
+        const mag = this.magazines.find(m => m.id === magazineId)
+        if (mag) {
+          mag.article_ids = mag.article_ids.filter(id => id !== articleId)
+        }
+      } catch (err: any) {
+        this.error = err.message || 'Failed to remove article from magazine'
+        throw err
       }
     }
   }
