@@ -82,7 +82,8 @@ export const useCommentsStore = defineStore('comments', {
         // If using real API and it fails, fall back to mock mode
         if (!this.useMockData) {
           console.log('Falling back to mock data mode')
-          // Optionally handle real API error without falling back
+          this.useMockData = true
+          this.commentsByArticle[articleId] = []
         }
       } finally {
         this.loading = false

@@ -44,7 +44,7 @@ describe('Comments Store', () => {
       expect(store.commentsByArticle).toEqual({})
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
-      expect(store.useMockData).toBe(true)
+      expect(store.useMockData).toBe(false)
     })
   })
 
@@ -132,13 +132,23 @@ describe('Comments Store', () => {
         const store = useCommentsStore()
         store.useMockData = false
 
-        const mockComments = [mockComment]
-        vi.mocked(apiService.getComments).mockResolvedValue(mockComments)
+        const mockApiComments = [{
+          id: 'comment-1',
+          article_id: 'article-1',
+          user: {
+            id: 'user-1',
+            username: 'Test User',
+            profile_pic: 'https://example.com/avatar.jpg'
+          },
+          content: 'Test comment content',
+          created_at: '2024-01-01T00:00:00Z'
+        }]
+        vi.mocked(apiService.getComments).mockResolvedValue(mockApiComments as any)
 
         await store.fetchComments('article-1')
 
         expect(apiService.getComments).toHaveBeenCalledWith('article-1')
-        expect(store.commentsByArticle['article-1']).toEqual(mockComments)
+        expect(store.commentsByArticle['article-1']).toEqual([mockComment])
       })
 
       it('should fall back to mock mode on API error', async () => {
@@ -239,20 +249,37 @@ describe('Comments Store', () => {
           name: 'Test User',
           email: 'test@example.com',
           avatarUrl: 'https://example.com/avatar.jpg',
+          bio: undefined,
+          newsletter_subscribed: false
         }
 
         const store = useCommentsStore()
         store.useMockData = false
 
-        const newComment = { ...mockComment, content: 'API comment' }
-        vi.mocked(apiService.createComment).mockResolvedValue(newComment)
+        const newCommentContent = 'API comment'
+        const mockApiComment = {
+          id: 'comment-1',
+          article_id: 'article-1',
+          user: {
+            id: 'user-1',
+            username: 'Test User',
+            profile_pic: 'https://example.com/avatar.jpg'
+          },
+          content: newCommentContent,
+          created_at: '2024-01-01T00:00:00Z'
+        }
+        
+        vi.mocked(apiService.createComment).mockResolvedValue(mockApiComment as any)
 
-        await store.createComment('article-1', 'API comment')
+        await store.createComment('article-1', newCommentContent)
 
         expect(apiService.createComment).toHaveBeenCalledWith('article-1', {
-          content: 'API comment',
+          content: newCommentContent,
         })
-        expect(store.commentsByArticle['article-1'][0]).toEqual(newComment)
+        expect(store.commentsByArticle['article-1'][0]).toEqual({
+             ...mockComment,
+             content: newCommentContent 
+        })
       })
 
       it('should show error toast on API failure', async () => {

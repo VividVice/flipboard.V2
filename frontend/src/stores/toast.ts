@@ -13,7 +13,7 @@ export const useToastStore = defineStore('toast', {
   
   actions: {
     show(message: string, type: 'success' | 'error' | 'info' = 'success') {
-      const id = Date.now().toString()
+      const id = Date.now().toString() + Math.random().toString()
       const toast = { id, message, type }
       this.toasts.push(toast)
       

@@ -79,6 +79,8 @@ describe('Auth Store', () => {
         name: 'testuser',
         email: 'test@example.com',
         avatarUrl: 'https://example.com/pic.jpg',
+        bio: undefined,
+        newsletter_subscribed: false,
       })
       expect(store.isAuthenticated).toBe(true)
     })
@@ -190,6 +192,8 @@ describe('Auth Store', () => {
         name: 'newuser',
         email: 'new@example.com',
         avatarUrl: expect.stringContaining('unsplash.com'),
+        bio: undefined,
+        newsletter_subscribed: false,
       })
       expect(store.isAuthenticated).toBe(true)
     })
