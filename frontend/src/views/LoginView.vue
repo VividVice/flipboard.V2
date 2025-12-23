@@ -130,5 +130,3 @@ const handleGoogleLogin = async (response: CallbackTypes.CredentialCallback) => 
   border-radius: 0 !important;
 }
 </style>
-
-
