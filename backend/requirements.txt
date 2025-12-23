@@ -14,4 +14,5 @@ httpx
 beautifulsoup4
 lxml
 google-auth
-requestsruff
+requests
+ruff
