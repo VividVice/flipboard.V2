@@ -43,11 +43,10 @@ const openSaveModal = (e: Event) => {
 
 <template>
   <div class="group flex flex-col bg-gray-900 h-full hover:bg-gray-800 transition-colors duration-200 cursor-pointer border border-gray-800 relative">
-    <!-- Save Modal Portal -->
     <Teleport to="body">
       <SaveModal 
         :is-open="isSaveModalOpen" 
-        :article-data="{ id: article.id, ...article }"
+        :article-data="article"
         :should-import="true"
         @close="isSaveModalOpen = false"
       />

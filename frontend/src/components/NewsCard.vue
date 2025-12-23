@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiServiceExtended, type NewsPost } from '../services/api'
 import { useMagazineStore } from '../stores/magazines'
+import { useNewsStore } from '../stores/news'
 import SaveModal from './SaveModal.vue'
 
 const props = withDefaults(defineProps<{
