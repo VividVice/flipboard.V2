@@ -158,6 +158,8 @@ const getMagazineCover = (articleIds: string[]) => {
               class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors"
               placeholder="Your name"
               required
+              minlength="2"
+              maxlength="100"
             />
           </div>
           
