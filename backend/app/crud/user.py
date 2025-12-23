@@ -22,6 +22,16 @@ async def create_user(user: UserCreate):
     await db.users.insert_one(user_doc)
     return await get_user_by_username(user.username)
 
+async def create_social_user(user_data: dict):
+    user_doc = user_data.copy()
+    user_doc["id"] = str(uuid.uuid4())
+    user_doc["created_at"] = datetime.utcnow()
+    # Set an unusable password for social users using a random, hashed value
+    user_doc["hashed_password"] = get_password_hash(str(uuid.uuid4()))
+    
+    await db.users.insert_one(user_doc)
+    return await get_user_by_username(user_data["username"])
+
 async def authenticate_user(username: str, password: str):
     user = await get_user_by_username(username)
     if not user:

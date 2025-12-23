@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { GoogleLogin, type CallbackTypes } from 'vue3-google-login'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -30,64 +31,124 @@ const handleSignup = async () => {
     loading.value = false
   }
 }
+
+const handleGoogleLogin = async (response: CallbackTypes.CredentialCallback) => {
+  try {
+    loading.value = true
+    if (response.credential) {
+        await authStore.loginWithGoogle(response.credential)
+        router.push('/welcome/topics')
+    }
+  } catch (err: any) {
+     error.value = err.message || 'Google Login failed'
+  } finally {
+     loading.value = false
+  }
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-black flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <h2 class="mt-6 text-center text-3xl font-display font-bold text-white uppercase tracking-tight">
-        Create your account
-      </h2>
-      <p class="mt-2 text-center text-sm text-gray-400">
-        Or
-        <RouterLink to="/login" class="font-medium text-flipboard-red hover:text-red-500 transition-colors">
-          sign in to your existing account
-        </RouterLink>
-      </p>
-    </div>
+  <div class="min-h-screen bg-black flex items-center justify-center p-4">
+    <div class="w-full max-w-[400px]">
+      <div class="mb-12 text-center">
+        <h1 class="text-white text-6xl font-display font-bold tracking-tighter uppercase mb-2">
+          Flipboard
+        </h1>
+        <p class="text-gray-400 text-lg font-medium">Create your account</p>
+      </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="bg-gray-900 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-800">
-        <form class="space-y-6" @submit.prevent="handleSignup">
-          <div v-if="error" class="rounded-md bg-red-900/20 border border-red-800 p-4">
-            <p class="text-sm text-red-400">{{ error }}</p>
+      <div class="space-y-6">
+        <form class="space-y-4" @submit.prevent="handleSignup">
+          <div v-if="error" class="bg-red-500/10 border border-red-500/50 text-red-500 p-3 text-sm rounded-sm text-center">
+            {{ error }}
           </div>
 
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-300"> Username </label>
-            <div class="mt-1">
-              <input id="username" name="username" type="text" autocomplete="username" required v-model="username" class="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-flipboard-red focus:border-flipboard-red sm:text-sm" placeholder="marie_paris" />
-            </div>
+            <input 
+              id="username" 
+              name="username" 
+              type="text" 
+              required 
+              v-model="username" 
+              class="w-full bg-transparent border-b border-gray-700 py-3 px-1 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors" 
+              placeholder="Username" 
+            />
           </div>
 
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-300"> Email address </label>
-            <div class="mt-1">
-              <input id="email" name="email" type="email" autocomplete="email" required v-model="email" class="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-flipboard-red focus:border-flipboard-red sm:text-sm" />
-            </div>
+            <input 
+              id="email" 
+              name="email" 
+              type="email" 
+              required 
+              v-model="email" 
+              class="w-full bg-transparent border-b border-gray-700 py-3 px-1 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors" 
+              placeholder="Email address"
+            />
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-300"> Password </label>
-            <div class="mt-1">
-              <input id="password" name="password" type="password" autocomplete="new-password" required v-model="password" class="appearance-none block w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 bg-gray-800 text-white focus:outline-none focus:ring-flipboard-red focus:border-flipboard-red sm:text-sm" />
-            </div>
+            <input 
+              id="password" 
+              name="password" 
+              type="password" 
+              required 
+              v-model="password" 
+              class="w-full bg-transparent border-b border-gray-700 py-3 px-1 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors" 
+              placeholder="Password"
+            />
           </div>
 
-          <div class="flex items-center">
-            <input id="terms" name="terms" type="checkbox" required class="h-4 w-4 text-flipboard-red focus:ring-flipboard-red border-gray-700 rounded bg-gray-800" />
-            <label for="terms" class="ml-2 block text-sm text-gray-300">
-              I agree to the <a href="#" class="text-flipboard-red hover:text-red-500">Terms</a> and <a href="#" class="text-flipboard-red hover:text-red-500">Privacy Policy</a>
+          <div class="flex items-start pt-2">
+            <input id="terms" name="terms" type="checkbox" required class="mt-1 h-4 w-4 text-flipboard-red focus:ring-flipboard-red border-gray-700 rounded bg-gray-800" />
+            <label for="terms" class="ml-2 block text-xs text-gray-500 leading-relaxed">
+              By signing up, you agree to Flipboard's 
+              <a href="#" class="text-white hover:underline font-medium">Terms of Service</a> and 
+              <a href="#" class="text-white hover:underline font-medium">Privacy Policy</a>.
             </label>
           </div>
 
-          <div>
-            <button type="submit" :disabled="loading" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-flipboard-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-flipboard-red uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <div class="pt-4">
+            <button 
+              type="submit" 
+              :disabled="loading" 
+              class="w-full bg-flipboard-red text-white py-3 px-4 font-bold uppercase tracking-widest text-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+            >
               {{ loading ? 'Creating account...' : 'Sign up' }}
             </button>
           </div>
         </form>
+
+        <div class="relative py-4">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-800"></div>
+          </div>
+          <div class="relative flex justify-center text-xs uppercase tracking-widest">
+            <span class="px-4 bg-black text-gray-500">Or</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col space-y-3">
+          <GoogleLogin :callback="handleGoogleLogin" class="google-login-button" />
+          
+          <p class="text-center text-sm text-gray-500 mt-8">
+            Already have an account? 
+            <RouterLink to="/login" class="text-white font-bold hover:underline">
+              Log in
+            </RouterLink>
+          </p>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+:deep(.S67o3) {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  border-radius: 0 !important;
+}
+</style>
+

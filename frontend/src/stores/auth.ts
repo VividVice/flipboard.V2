@@ -85,6 +85,38 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async loginWithGoogle(token: string) {
+      const toast = useToastStore()
+      try {
+        await apiService.loginGoogle(token)
+
+        const userResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          this.user = {
+            id: userData.id,
+            name: userData.username,
+            email: userData.email,
+            avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            bio: userData.bio,
+            newsletter_subscribed: userData.newsletter_subscribed || false
+          }
+          this.isAuthenticated = true
+          toast.show(`Welcome back, ${this.user.name}!`)
+        } else {
+          throw new Error('Failed to fetch user data')
+        }
+      } catch (error: any) {
+        toast.show(error.message || 'Google login failed', 'error')
+        throw error
+      }
+    },
+
     async signup(username: string, email: string, password: string) {
       const toast = useToastStore()
       try {

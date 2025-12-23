@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     EMAILS_FROM_EMAIL: str = "noreply@flipboard-clone.com"
     EMAILS_FROM_NAME: str = "Flipboard Clone"
+    GOOGLE_CLIENT_ID: str = ""
 
     class Config:
         env_file = ".env"
