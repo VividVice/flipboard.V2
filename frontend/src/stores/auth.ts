@@ -11,6 +11,7 @@ export interface User {
   name: string
   email: string
   avatarUrl: string
+  bio?: string
   newsletter_subscribed: boolean
 }
 
@@ -39,6 +40,7 @@ export const useAuthStore = defineStore('auth', {
             name: userData.username,
             email: userData.email,
             avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            bio: userData.bio,
             newsletter_subscribed: userData.newsletter_subscribed || false
           }
           this.isAuthenticated = true
@@ -69,6 +71,7 @@ export const useAuthStore = defineStore('auth', {
             name: userData.username,
             email: userData.email,
             avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            bio: userData.bio,
             newsletter_subscribed: userData.newsletter_subscribed || false
           }
           this.isAuthenticated = true
@@ -94,6 +97,7 @@ export const useAuthStore = defineStore('auth', {
           name: userData.username,
           email: userData.email,
           avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+          bio: userData.bio,
           newsletter_subscribed: userData.newsletter_subscribed || false
         }
         this.isAuthenticated = true
@@ -114,6 +118,32 @@ export const useAuthStore = defineStore('auth', {
         toast.show(subscribed ? 'Subscribed to newsletter!' : 'Unsubscribed from newsletter.', 'success')
       } catch (error: any) {
         toast.show('Failed to update newsletter subscription', 'error')
+        throw error
+      }
+    },
+
+    async updateProfile(data: { name?: string; bio?: string; avatarUrl?: string }) {
+      const toast = useToastStore()
+      try {
+        const userData = await apiServiceExtended.updateUserMe({
+          username: data.name,
+          bio: data.bio,
+          profile_pic: data.avatarUrl
+        })
+
+        if (this.user) {
+          this.user = {
+            ...this.user,
+            name: userData.username,
+            email: userData.email,
+            avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            bio: userData.bio,
+            newsletter_subscribed: userData.newsletter_subscribed
+          }
+        }
+        toast.show('Profile updated successfully!', 'success')
+      } catch (error: any) {
+        toast.show(error.message || 'Failed to update profile', 'error')
         throw error
       }
     },
