@@ -202,10 +202,20 @@ const handleShare = async () => {
   }
 }
 
-const copyToClipboard = (text: string) => {
-  navigator.clipboard.writeText(text).then(() => {
+const copyToClipboard = async (text: string) => {
+  if (!navigator.clipboard || !navigator.clipboard.writeText) {
+    console.error('Clipboard API is not available')
+    toastStore.show('Unable to access clipboard')
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(text)
     toastStore.show('Link copied to clipboard')
-  })
+  } catch (err) {
+    console.error('Failed to copy to clipboard', err)
+    toastStore.show('Unable to copy link to clipboard')
+  }
 }
 
 const scrollToComments = async () => {
