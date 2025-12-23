@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from app.schemas.magazine import Magazine, MagazineCreate, MagazineUpdate
 from app.schemas.article import Article
