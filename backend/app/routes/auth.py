@@ -18,23 +18,18 @@ router = APIRouter()
 @router.post("/google", response_model=Token)
 async def login_google(token_data: GoogleToken):
     try:
-        # If GOOGLE_CLIENT_ID is not set, we can't verify properly.
-        # For development without a real client ID, one might skip verification
-        # but that is insecure. We assume the user will provide it.
-        # If the user hasn't set it yet, this might fail or we should handle it.
-        # Ideally, we pass None as audience if we want to skip audience check (NOT RECOMMENDED)
-        # or we catch the error if the ID is empty.
-        
         client_id = settings.GOOGLE_CLIENT_ID
         if not client_id:
-             # Fallback for dev if needed, or raise error. 
-             # Let's assume it might be empty and just warn or fail.
-             pass
+            # Fail fast if Google OAuth is not properly configured.
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Google OAuth client ID is not configured on the server.",
+            )
 
         idinfo = id_token.verify_oauth2_token(
-            token_data.token, 
-            google_requests.Request(), 
-            client_id if client_id else None
+            token_data.token,
+            google_requests.Request(),
+            client_id,
         )
 
         email = idinfo['email']
