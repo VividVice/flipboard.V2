@@ -19,10 +19,12 @@ async def get_magazine_articles(
         raise HTTPException(status_code=404, detail="Magazine not found")
     
     # Check if user can view this magazine (assuming private for now, or public if we had a flag)
-    # For now, allow if it's the user's magazine
+    # For now, allow only if it's the user's magazine. Deny access for non-owners until public visibility is implemented.
     if magazine["user_id"] != current_user["id"]:
-         # TODO: Implement public magazines check
-         pass 
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this magazine",
+        )
 
     article_ids = magazine.get("article_ids", [])
     if not article_ids:
