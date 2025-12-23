@@ -97,6 +97,10 @@ async def add_article(
         raise HTTPException(status_code=404, detail="Magazine not found")
     if magazine["user_id"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="Not authorized to modify this magazine")
+
+    article = await crud_article.get_article_by_id(article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
     
     await crud_magazine.add_article_to_magazine(magazine_id, article_id)
     return {"message": "Article added to magazine"}
