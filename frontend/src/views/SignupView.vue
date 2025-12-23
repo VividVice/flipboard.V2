@@ -32,7 +32,7 @@ const handleSignup = async () => {
   }
 }
 
-const handleGoogleLogin = async (response: any) => {
+const handleGoogleLogin = async (response: CallbackTypes.CredentialResponse) => {
   try {
     loading.value = true
     if (response.credential) {
