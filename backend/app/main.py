@@ -1,6 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, topics, articles, comments, interactions, news, users, magazines
+
+from app.routes import (
+    articles,
+    auth,
+    comments,
+    interactions,
+    magazines,
+    news,
+    topics,
+    users,
+)
 
 app = FastAPI()
 
@@ -20,6 +30,7 @@ app.include_router(comments.router, tags=["comments"])
 app.include_router(interactions.router, tags=["interactions"])
 app.include_router(news.router, prefix="/news", tags=["news"])
 app.include_router(magazines.router, prefix="/magazines", tags=["magazines"])
+
 
 @app.get("/")
 def read_root():

@@ -1,43 +1,145 @@
 import asyncio
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 sys.path.append(str(Path(__file__).parent.parent))
 load_dotenv(Path(__file__).parent.parent / ".env")
 
+import random  # noqa: E402
+import uuid
+from datetime import datetime, timedelta
+
 from app.db.database import db
 from app.security.password import get_password_hash
-from datetime import datetime, timedelta
-import uuid
-import random
 
 TOPICS_FR = [
-    {"name": "Actualités", "description": "Les dernières nouvelles", "icon": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Technologie", "description": "Innovation et tech", "icon": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Science", "description": "Découvertes scientifiques", "icon": "https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Sport", "description": "Actualités sportives", "icon": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Culture", "description": "Arts et culture", "icon": "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Économie", "description": "Business et finance", "icon": "https://images.unsplash.com/photo-1591696205602-2f950c417cb9?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Santé", "description": "Santé et bien-être", "icon": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Environnement", "description": "Écologie et climat", "icon": "https://images.unsplash.com/photo-1500829243541-74b677fecc30?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Politique", "description": "Actualité politique", "icon": "https://images.unsplash.com/photo-1555848962-6e79363ec58f?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Gastronomie", "description": "Cuisine et restaurants", "icon": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Voyage", "description": "Tourisme et destinations", "icon": "https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Mode", "description": "Tendances et style", "icon": "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Automobile", "description": "Voitures et mobilité", "icon": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Immobilier", "description": "Marché immobilier", "icon": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Éducation", "description": "Enseignement et formation", "icon": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Musique", "description": "Actualité musicale", "icon": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Cinéma", "description": "Films et séries", "icon": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Jeux vidéo", "description": "Gaming et esports", "icon": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Livres", "description": "Littérature et lecture", "icon": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Photographie", "description": "Art photographique", "icon": "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Design", "description": "Design et créativité", "icon": "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Architecture", "description": "Architecture moderne", "icon": "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Intelligence Artificielle", "description": "IA et machine learning", "icon": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Cryptomonnaie", "description": "Bitcoin et blockchain", "icon": "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=800&q=80"},
-    {"name": "Startups", "description": "Entrepreneuriat", "icon": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80"},
+    {
+        "name": "Actualités",
+        "description": "Les dernières nouvelles",
+        "icon": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Technologie",
+        "description": "Innovation et tech",
+        "icon": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Science",
+        "description": "Découvertes scientifiques",
+        "icon": "https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Sport",
+        "description": "Actualités sportives",
+        "icon": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Culture",
+        "description": "Arts et culture",
+        "icon": "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Économie",
+        "description": "Business et finance",
+        "icon": "https://images.unsplash.com/photo-1591696205602-2f950c417cb9?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Santé",
+        "description": "Santé et bien-être",
+        "icon": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Environnement",
+        "description": "Écologie et climat",
+        "icon": "https://images.unsplash.com/photo-1500829243541-74b677fecc30?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Politique",
+        "description": "Actualité politique",
+        "icon": "https://images.unsplash.com/photo-1555848962-6e79363ec58f?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Gastronomie",
+        "description": "Cuisine et restaurants",
+        "icon": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Voyage",
+        "description": "Tourisme et destinations",
+        "icon": "https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Mode",
+        "description": "Tendances et style",
+        "icon": "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Automobile",
+        "description": "Voitures et mobilité",
+        "icon": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Immobilier",
+        "description": "Marché immobilier",
+        "icon": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Éducation",
+        "description": "Enseignement et formation",
+        "icon": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Musique",
+        "description": "Actualité musicale",
+        "icon": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Cinéma",
+        "description": "Films et séries",
+        "icon": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Jeux vidéo",
+        "description": "Gaming et esports",
+        "icon": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Livres",
+        "description": "Littérature et lecture",
+        "icon": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Photographie",
+        "description": "Art photographique",
+        "icon": "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Design",
+        "description": "Design et créativité",
+        "icon": "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Architecture",
+        "description": "Architecture moderne",
+        "icon": "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Intelligence Artificielle",
+        "description": "IA et machine learning",
+        "icon": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Cryptomonnaie",
+        "description": "Bitcoin et blockchain",
+        "icon": "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+        "name": "Startups",
+        "description": "Entrepreneuriat",
+        "icon": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
+    },
 ]
 
 ARTICLES_FR = [
@@ -48,7 +150,7 @@ ARTICLES_FR = [
         "author": "Marie Dubois",
         "publisher": "Le Monde",
         "topics": ["Intelligence Artificielle", "Technologie", "Économie"],
-        "image_url": "https://images.unsplash.com/photo-1677442136019-21780ecad995"
+        "image_url": "https://images.unsplash.com/photo-1677442136019-21780ecad995",
     },
     {
         "title": "Paris accueillera les Jeux Olympiques 2024",
@@ -57,7 +159,7 @@ ARTICLES_FR = [
         "author": "Jean Martin",
         "publisher": "L'Équipe",
         "topics": ["Sport", "Actualités"],
-        "image_url": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211"
+        "image_url": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211",
     },
     {
         "title": "Découverte majeure en physique quantique",
@@ -66,7 +168,7 @@ ARTICLES_FR = [
         "author": "Sophie Laurent",
         "publisher": "Sciences et Avenir",
         "topics": ["Science", "Technologie"],
-        "image_url": "https://images.unsplash.com/photo-1635070041078-e363dbe005cb"
+        "image_url": "https://images.unsplash.com/photo-1635070041078-e363dbe005cb",
     },
     {
         "title": "Le marché immobilier parisien en hausse",
@@ -75,7 +177,7 @@ ARTICLES_FR = [
         "author": "Pierre Renard",
         "publisher": "Les Échos",
         "topics": ["Immobilier", "Économie"],
-        "image_url": "https://images.unsplash.com/photo-1560518883-ce09059eeffa"
+        "image_url": "https://images.unsplash.com/photo-1560518883-ce09059eeffa",
     },
     {
         "title": "La cuisine végétale conquiert les restaurants français",
@@ -84,7 +186,7 @@ ARTICLES_FR = [
         "author": "Émilie Bernard",
         "publisher": "Le Figaro",
         "topics": ["Gastronomie", "Environnement"],
-        "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"
+        "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
     },
     {
         "title": "Tesla ouvre une nouvelle usine en France",
@@ -93,7 +195,7 @@ ARTICLES_FR = [
         "author": "Thomas Leroy",
         "publisher": "TechCrunch France",
         "topics": ["Automobile", "Technologie", "Économie"],
-        "image_url": "https://images.unsplash.com/photo-1560958089-b8a1929cea89"
+        "image_url": "https://images.unsplash.com/photo-1560958089-b8a1929cea89",
     },
     {
         "title": "Le changement climatique accélère en Europe",
@@ -102,7 +204,7 @@ ARTICLES_FR = [
         "author": "Claire Moreau",
         "publisher": "Libération",
         "topics": ["Environnement", "Science", "Actualités"],
-        "image_url": "https://images.unsplash.com/photo-1569163139394-de4798aa62b6"
+        "image_url": "https://images.unsplash.com/photo-1569163139394-de4798aa62b6",
     },
     {
         "title": "La France leader européen de la cybersécurité",
@@ -111,7 +213,7 @@ ARTICLES_FR = [
         "author": "Alexandre Petit",
         "publisher": "01net",
         "topics": ["Cybersécurité", "Technologie", "Économie"],
-        "image_url": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b"
+        "image_url": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b",
     },
     {
         "title": "Record historique pour le bitcoin",
@@ -120,7 +222,7 @@ ARTICLES_FR = [
         "author": "Julien Blanc",
         "publisher": "La Tribune",
         "topics": ["Cryptomonnaie", "Économie", "Technologie"],
-        "image_url": "https://images.unsplash.com/photo-1621761191319-c6fb62004040"
+        "image_url": "https://images.unsplash.com/photo-1621761191319-c6fb62004040",
     },
     {
         "title": "Le Louvre lance sa collection NFT",
@@ -129,7 +231,7 @@ ARTICLES_FR = [
         "author": "Isabelle Roux",
         "publisher": "Le Monde",
         "topics": ["Culture", "Technologie", "Art"],
-        "image_url": "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8"
+        "image_url": "https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8",
     },
     {
         "title": "La 5G couvre désormais 80% du territoire français",
@@ -138,7 +240,7 @@ ARTICLES_FR = [
         "author": "Marc Durand",
         "publisher": "Les Numériques",
         "topics": ["Technologie", "Réseaux sociaux"],
-        "image_url": "https://images.unsplash.com/photo-1528747045269-390fe33c19f2"
+        "image_url": "https://images.unsplash.com/photo-1528747045269-390fe33c19f2",
     },
     {
         "title": "Les startups françaises lèvent 14 milliards d'euros",
@@ -147,7 +249,7 @@ ARTICLES_FR = [
         "author": "Nathalie Girard",
         "publisher": "Maddyness",
         "topics": ["Startups", "Économie", "Technologie"],
-        "image_url": "https://images.unsplash.com/photo-1559136555-9303baea8ebd"
+        "image_url": "https://images.unsplash.com/photo-1559136555-9303baea8ebd",
     },
     {
         "title": "Découverte d'une exoplanète habitable",
@@ -156,7 +258,7 @@ ARTICLES_FR = [
         "author": "Vincent Lefevre",
         "publisher": "Sciences et Avenir",
         "topics": ["Espace", "Science"],
-        "image_url": "https://images.unsplash.com/photo-1614732414444-096e5f1122d5"
+        "image_url": "https://images.unsplash.com/photo-1614732414444-096e5f1122d5",
     },
     {
         "title": "Le streaming musical génère 15 milliards d'euros",
@@ -165,7 +267,7 @@ ARTICLES_FR = [
         "author": "Laura Martin",
         "publisher": "Rolling Stone France",
         "topics": ["Musique", "Technologie", "Économie"],
-        "image_url": "https://images.unsplash.com/photo-1511379938547-c1f69419868d"
+        "image_url": "https://images.unsplash.com/photo-1511379938547-c1f69419868d",
     },
     {
         "title": "Netflix annonce 50 nouveaux films français",
@@ -174,7 +276,7 @@ ARTICLES_FR = [
         "author": "Paul Rousseau",
         "publisher": "Première",
         "topics": ["Cinéma", "Culture", "Technologie"],
-        "image_url": "https://images.unsplash.com/photo-1574267432553-4b4628081c31"
+        "image_url": "https://images.unsplash.com/photo-1574267432553-4b4628081c31",
     },
 ]
 
@@ -184,35 +286,35 @@ SAMPLE_USERS = [
         "email": "marie@example.com",
         "password": "password123",
         "bio": "Passionnée de technologie et d'innovation",
-        "profile_pic": "https://i.pravatar.cc/150?img=1"
+        "profile_pic": "https://i.pravatar.cc/150?img=1",
     },
     {
         "username": "jean_lyon",
         "email": "jean@example.com",
         "password": "password123",
         "bio": "Amateur de sport et de culture",
-        "profile_pic": "https://i.pravatar.cc/150?img=2"
+        "profile_pic": "https://i.pravatar.cc/150?img=2",
     },
     {
         "username": "sophie_marseille",
         "email": "sophie@example.com",
         "password": "password123",
         "bio": "Journaliste freelance",
-        "profile_pic": "https://i.pravatar.cc/150?img=3"
+        "profile_pic": "https://i.pravatar.cc/150?img=3",
     },
     {
         "username": "pierre_toulouse",
         "email": "pierre@example.com",
         "password": "password123",
         "bio": "Développeur et entrepreneur",
-        "profile_pic": "https://i.pravatar.cc/150?img=4"
+        "profile_pic": "https://i.pravatar.cc/150?img=4",
     },
     {
         "username": "claire_nice",
         "email": "claire@example.com",
         "password": "password123",
         "bio": "Chef de projet digital",
-        "profile_pic": "https://i.pravatar.cc/150?img=5"
+        "profile_pic": "https://i.pravatar.cc/150?img=5",
     },
 ]
 
@@ -229,6 +331,7 @@ SAMPLE_COMMENTS = [
     "Article qui fait réfléchir.",
 ]
 
+
 async def clear_database():
     print("🗑️  Clearing existing data...")
     await db.topics.delete_many({})
@@ -237,6 +340,7 @@ async def clear_database():
     await db.comments.delete_many({})
     await db.user_interactions.delete_many({})
     print("✅ Database cleared")
+
 
 async def seed_topics():
     print("🌱 Seeding topics...")
@@ -248,13 +352,14 @@ async def seed_topics():
             "description": topic_data["description"],
             "icon": topic_data["icon"],
             "follower_count": random.randint(100, 10000),
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow(),
         }
         topics.append(topic)
 
     await db.topics.insert_many(topics)
     print(f"✅ Created {len(topics)} topics")
     return topics
+
 
 async def seed_users():
     print("🌱 Seeding users...")
@@ -268,7 +373,7 @@ async def seed_users():
             "bio": user_data["bio"],
             "profile_pic": user_data["profile_pic"],
             "followed_topics": [],
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow(),
         }
         users.append(user)
 
@@ -276,13 +381,18 @@ async def seed_users():
     print(f"✅ Created {len(users)} users")
     return users
 
+
 async def seed_articles(topics):
     print("🌱 Seeding articles...")
     topic_map = {topic["name"]: topic["id"] for topic in topics}
     articles = []
 
     for i, article_data in enumerate(ARTICLES_FR):
-        topic_ids = [topic_map[topic_name] for topic_name in article_data["topics"] if topic_name in topic_map]
+        topic_ids = [
+            topic_map[topic_name]
+            for topic_name in article_data["topics"]
+            if topic_name in topic_map
+        ]
 
         days_ago = i * 3
         published_at = datetime.utcnow() - timedelta(days=days_ago)
@@ -294,20 +404,21 @@ async def seed_articles(topics):
             "content": article_data["content"],
             "author": article_data["author"],
             "publisher": article_data["publisher"],
-            "source_url": f"https://example.com/article-{i+1}",
+            "source_url": f"https://example.com/article-{i + 1}",
             "image_url": article_data.get("image_url"),
             "published_at": published_at,
             "topics": topic_ids,
             "view_count": random.randint(100, 10000),
             "like_count": random.randint(10, 500),
             "comment_count": random.randint(0, 50),
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow(),
         }
         articles.append(article)
 
     await db.articles.insert_many(articles)
     print(f"✅ Created {len(articles)} articles")
     return articles
+
 
 async def seed_comments(users, articles):
     print("🌱 Seeding comments...")
@@ -324,13 +435,14 @@ async def seed_comments(users, articles):
             "user_id": user["id"],
             "content": comment_text,
             "created_at": datetime.utcnow() - timedelta(days=random.randint(0, 30)),
-            "updated_at": None
+            "updated_at": None,
         }
         comments.append(comment)
 
     await db.comments.insert_many(comments)
     print(f"✅ Created {len(comments)} comments")
     return comments
+
 
 async def seed_interactions(users, articles):
     print("🌱 Seeding user interactions...")
@@ -351,7 +463,9 @@ async def seed_interactions(users, articles):
                 "is_liked": True,
                 "is_saved": article in saved_articles,
                 "liked_at": datetime.utcnow() - timedelta(days=random.randint(0, 30)),
-                "saved_at": datetime.utcnow() - timedelta(days=random.randint(0, 30)) if article in saved_articles else None
+                "saved_at": datetime.utcnow() - timedelta(days=random.randint(0, 30))
+                if article in saved_articles
+                else None,
             }
             interactions.append(interaction)
 
@@ -364,12 +478,14 @@ async def seed_interactions(users, articles):
                     "is_liked": False,
                     "is_saved": True,
                     "liked_at": None,
-                    "saved_at": datetime.utcnow() - timedelta(days=random.randint(0, 30))
+                    "saved_at": datetime.utcnow()
+                    - timedelta(days=random.randint(0, 30)),
                 }
                 interactions.append(interaction)
 
     await db.user_interactions.insert_many(interactions)
     print(f"✅ Created {len(interactions)} user interactions")
+
 
 async def assign_topics_to_users(users, topics):
     print("🌱 Assigning topics to users...")
@@ -380,11 +496,11 @@ async def assign_topics_to_users(users, topics):
         topic_ids = [topic["id"] for topic in selected_topics]
 
         await db.users.update_one(
-            {"id": user["id"]},
-            {"$set": {"followed_topics": topic_ids}}
+            {"id": user["id"]}, {"$set": {"followed_topics": topic_ids}}
         )
 
     print(f"✅ Assigned topics to {len(users)} users")
+
 
 async def main():
     print("🚀 Starting database seeding...")
@@ -401,15 +517,16 @@ async def main():
 
     print("=" * 50)
     print("✅ Database seeding completed successfully!")
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"  - Topics: {len(topics)}")
     print(f"  - Users: {len(users)}")
     print(f"  - Articles: {len(articles)}")
-    print(f"  - Comments: 30")
+    print("  - Comments: 30")
     print(f"  - Interactions: ~{len(users) * 10}")
-    print(f"\n🔑 Test user credentials:")
-    print(f"  Email: marie@example.com")
-    print(f"  Password: password123")
+    print("\n🔑 Test user credentials:")
+    print("  Email: marie@example.com")
+    print("  Password: password123")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,10 +1,10 @@
+from typing import Any, List, Optional
+
 from pydantic import BaseModel, ConfigDict, field_validator
-from typing import Optional, List, Any
-from datetime import datetime
 
 
 class FacebookStats(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     likes: int = 0
     comments: int = 0
@@ -12,13 +12,13 @@ class FacebookStats(BaseModel):
 
 
 class VKStats(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     shares: int = 0
 
 
 class SocialStats(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     updated: Optional[str] = None
     facebook: Optional[FacebookStats] = None
@@ -26,7 +26,7 @@ class SocialStats(BaseModel):
 
 
 class Thread(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     uuid: str = ""
     url: str = ""
@@ -48,7 +48,7 @@ class Thread(BaseModel):
     domain_rank_updated: Optional[str] = None
     social: Optional[SocialStats] = None
 
-    @field_validator('site_categories', mode='before')
+    @field_validator("site_categories", mode="before")
     @classmethod
     def ensure_list(cls, v: Any) -> List[str]:
         if v is None:
@@ -57,14 +57,14 @@ class Thread(BaseModel):
 
 
 class Entity(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     name: str = ""
     sentiment: Optional[str] = None
 
 
 class Entities(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     persons: List[Entity] = []
     organizations: List[Entity] = []
@@ -72,7 +72,7 @@ class Entities(BaseModel):
 
 
 class NewsPost(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     thread: Optional[Thread] = None
     uuid: str = ""
@@ -98,7 +98,7 @@ class NewsPost(BaseModel):
     liked: bool = False
     saved: bool = False
 
-    @field_validator('categories', 'external_links', 'external_images', mode='before')
+    @field_validator("categories", "external_links", "external_images", mode="before")
     @classmethod
     def ensure_lists(cls, v: Any) -> List[Any]:
         if v is None:
@@ -107,7 +107,7 @@ class NewsPost(BaseModel):
 
 
 class NewsResponse(BaseModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     posts: List[NewsPost] = []
     totalResults: int = 0

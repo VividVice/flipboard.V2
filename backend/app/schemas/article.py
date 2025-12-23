@@ -1,6 +1,8 @@
-from pydantic import BaseModel, HttpUrl
-from typing import Optional, List
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel
+
 
 class ArticleBase(BaseModel):
     title: str
@@ -13,8 +15,10 @@ class ArticleBase(BaseModel):
     published_at: datetime
     topics: List[str] = []
 
+
 class ArticleCreate(ArticleBase):
     id: Optional[str] = None
+
 
 class ArticleUpdate(BaseModel):
     title: Optional[str] = None
@@ -27,6 +31,7 @@ class ArticleUpdate(BaseModel):
     published_at: Optional[datetime] = None
     topics: Optional[List[str]] = None
 
+
 class Article(ArticleBase):
     id: str
     view_count: int
@@ -38,6 +43,7 @@ class Article(ArticleBase):
 
     class Config:
         from_attributes = True
+
 
 class ArticleList(BaseModel):
     articles: List[Article]

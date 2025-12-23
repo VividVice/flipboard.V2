@@ -1,15 +1,20 @@
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel
+
 
 class CommentBase(BaseModel):
     content: str
 
+
 class CommentCreate(CommentBase):
     pass
 
+
 class CommentUpdate(BaseModel):
     content: str
+
 
 class Comment(CommentBase):
     id: str
@@ -21,6 +26,7 @@ class Comment(CommentBase):
 
     class Config:
         from_attributes = True
+
 
 class CommentWithUser(Comment):
     user: Dict[str, Any]

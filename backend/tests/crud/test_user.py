@@ -1,12 +1,15 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from app.crud import user as user_crud
 from app.schemas.user import UserCreate
 
 # Mark all tests in this file as anyio tests
 pytestmark = pytest.mark.anyio
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_get_user_by_email(mock_db):
     # GIVEN a user exists in the database
     user_data = {"email": "test@example.com", "username": "testuser"}
@@ -22,7 +25,8 @@ async def test_get_user_by_email(mock_db):
     assert user is not None
     assert user["email"] == "test@example.com"
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_get_user_by_email_not_found(mock_db):
     # GIVEN a user does not exist
     mock_db.users = MagicMock()
@@ -34,7 +38,8 @@ async def test_get_user_by_email_not_found(mock_db):
     # THEN None is returned
     assert user is None
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_get_user_by_username(mock_db):
     # GIVEN a user exists
     user_data = {"email": "test@example.com", "username": "testuser"}
@@ -49,7 +54,8 @@ async def test_get_user_by_username(mock_db):
     assert user is not None
     assert user["username"] == "testuser"
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_get_user_by_username_not_found(mock_db):
     # GIVEN a user does not exist
     mock_db.users = MagicMock()
@@ -61,17 +67,24 @@ async def test_get_user_by_username_not_found(mock_db):
     # THEN None is returned
     assert user is None
 
+
 @patch("app.crud.user.get_password_hash")
-@patch('app.crud.user.db')
+@patch("app.crud.user.db")
 async def test_create_user(mock_db, mock_get_password_hash):
     # GIVEN user data for a new user
     mock_db.users = MagicMock()
     mock_db.users.insert_one = AsyncMock()
     # The create_user function returns the created user, so we need to mock the find_one call too
-    created_user_doc = {"username": "newuser", "email": "new@example.com", "hashed_password": "hashedpassword"}
+    created_user_doc = {
+        "username": "newuser",
+        "email": "new@example.com",
+        "hashed_password": "hashedpassword",
+    }
     mock_db.users.find_one = AsyncMock(return_value=created_user_doc)
     mock_get_password_hash.return_value = "hashedpassword"
-    user_in = UserCreate(email="new@example.com", username="newuser", password="password")
+    user_in = UserCreate(
+        email="new@example.com", username="newuser", password="password"
+    )
 
     # WHEN create_user is called
     result_user = await user_crud.create_user(user_in)
@@ -88,7 +101,9 @@ async def test_create_user(mock_db, mock_get_password_hash):
 
 @patch("app.crud.user.verify_password")
 @patch("app.crud.user.get_user_by_username")
-async def test_authenticate_user_success(mock_get_user_by_username, mock_verify_password):
+async def test_authenticate_user_success(
+    mock_get_user_by_username, mock_verify_password
+):
     # GIVEN a correct username and password
     user_data = {"username": "testuser", "hashed_password": "hashedpassword"}
     mock_get_user_by_username.return_value = user_data
@@ -101,6 +116,7 @@ async def test_authenticate_user_success(mock_get_user_by_username, mock_verify_
     assert result is not None
     assert result["username"] == "testuser"
 
+
 @patch("app.crud.user.get_user_by_username")
 async def test_authenticate_user_not_found(mock_get_user_by_username):
     # GIVEN a user that does not exist
@@ -112,9 +128,12 @@ async def test_authenticate_user_not_found(mock_get_user_by_username):
     # THEN the result is False
     assert result is False
 
+
 @patch("app.crud.user.verify_password")
 @patch("app.crud.user.get_user_by_username")
-async def test_authenticate_user_wrong_password(mock_get_user_by_username, mock_verify_password):
+async def test_authenticate_user_wrong_password(
+    mock_get_user_by_username, mock_verify_password
+):
     # GIVEN an incorrect password
     user_data = {"username": "testuser", "hashed_password": "hashedpassword"}
     mock_get_user_by_username.return_value = user_data
@@ -126,18 +145,19 @@ async def test_authenticate_user_wrong_password(mock_get_user_by_username, mock_
     # THEN the result is False
     assert result is False
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_update_user_with_newsletter_false(mock_db):
     # GIVEN a user wants to unsubscribe from newsletter by setting it to False
     mock_db.users = MagicMock()
     mock_update_result = MagicMock()
     mock_update_result.modified_count = 1
     mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
-    
+
     # WHEN update_user is called with newsletter_subscribed=False
     user_update = {"newsletter_subscribed": False}
     result = await user_crud.update_user("user123", user_update)
-    
+
     # THEN the update should succeed and False should NOT be filtered out
     assert result is True
     mock_db.users.update_one.assert_awaited_once()
@@ -146,18 +166,19 @@ async def test_update_user_with_newsletter_false(mock_db):
     # Verify that False is included in the update (not filtered out)
     assert call_args[0][1] == {"$set": {"newsletter_subscribed": False}}
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_update_user_with_newsletter_true(mock_db):
     # GIVEN a user wants to subscribe to newsletter by setting it to True
     mock_db.users = MagicMock()
     mock_update_result = MagicMock()
     mock_update_result.modified_count = 1
     mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
-    
+
     # WHEN update_user is called with newsletter_subscribed=True
     user_update = {"newsletter_subscribed": True}
     result = await user_crud.update_user("user123", user_update)
-    
+
     # THEN the update should succeed
     assert result is True
     mock_db.users.update_one.assert_awaited_once()
@@ -165,18 +186,19 @@ async def test_update_user_with_newsletter_true(mock_db):
     assert call_args[0][0] == {"id": "user123"}
     assert call_args[0][1] == {"$set": {"newsletter_subscribed": True}}
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_update_user_filters_none_values(mock_db):
     # GIVEN a user update with explicit None values
     mock_db.users = MagicMock()
     mock_update_result = MagicMock()
     mock_update_result.modified_count = 1
     mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
-    
+
     # WHEN update_user is called with None values
     user_update = {"username": "newname", "bio": None}
     result = await user_crud.update_user("user123", user_update)
-    
+
     # THEN None values should be filtered out but other values remain
     assert result is True
     mock_db.users.update_one.assert_awaited_once()
@@ -184,22 +206,23 @@ async def test_update_user_filters_none_values(mock_db):
     # Only username should be in the update, bio should be filtered out
     assert call_args[0][1] == {"$set": {"username": "newname"}}
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_update_user_with_mixed_values(mock_db):
     # GIVEN a user update with mixed values including False, None, and regular values
     mock_db.users = MagicMock()
     mock_update_result = MagicMock()
     mock_update_result.modified_count = 1
     mock_db.users.update_one = AsyncMock(return_value=mock_update_result)
-    
+
     # WHEN update_user is called with mixed values
     user_update = {
         "username": "newname",
         "bio": None,  # Should be filtered out
-        "newsletter_subscribed": False  # Should NOT be filtered out
+        "newsletter_subscribed": False,  # Should NOT be filtered out
     }
     result = await user_crud.update_user("user123", user_update)
-    
+
     # THEN only non-None values should be updated (False is not None)
     assert result is True
     mock_db.users.update_one.assert_awaited_once()
@@ -210,15 +233,16 @@ async def test_update_user_with_mixed_values(mock_db):
     assert update_dict["newsletter_subscribed"] is False
     assert "bio" not in update_dict
 
-@patch('app.crud.user.db')
+
+@patch("app.crud.user.db")
 async def test_update_user_with_no_valid_data(mock_db):
     # GIVEN a user update with only None values
     mock_db.users = MagicMock()
-    
+
     # WHEN update_user is called with only None values
     user_update = {"bio": None, "username": None}
     result = await user_crud.update_user("user123", user_update)
-    
+
     # THEN no update should be performed and False should be returned
     assert result is False
     mock_db.users.update_one.assert_not_called()

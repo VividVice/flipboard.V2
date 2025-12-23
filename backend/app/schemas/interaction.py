@@ -1,10 +1,13 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
+
 
 class InteractionBase(BaseModel):
     is_liked: bool = False
     is_saved: bool = False
+
 
 class Interaction(InteractionBase):
     id: str
@@ -15,6 +18,7 @@ class Interaction(InteractionBase):
 
     class Config:
         from_attributes = True
+
 
 class InteractionStatus(BaseModel):
     article_id: str

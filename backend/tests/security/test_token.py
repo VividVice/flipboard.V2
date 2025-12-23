@@ -1,11 +1,14 @@
+import importlib
+from datetime import timedelta
+
 import pytest
 from jose import jwt
-from datetime import timedelta
-import importlib
+
+from app.core import config
 
 # To be tested
 from app.security import token as token_service
-from app.core import config
+
 
 @pytest.fixture(autouse=True)
 def reload_modules(monkeypatch):
@@ -19,7 +22,7 @@ def reload_modules(monkeypatch):
     # The following envs are not used in this test but are required by the Settings model
     monkeypatch.setenv("MONGODB_URL", "mongodb://test:test@localhost:27017")
     monkeypatch.setenv("MONGODB_DATABASE", "testdb")
-    
+
     importlib.reload(config)
     importlib.reload(token_service)
 
@@ -39,6 +42,6 @@ def test_create_access_token():
     decoded_token = jwt.decode(
         token, config.settings.SECRET_KEY, algorithms=[config.settings.ALGORITHM]
     )
-    
+
     assert decoded_token["sub"] == "testuser"
     assert "exp" in decoded_token

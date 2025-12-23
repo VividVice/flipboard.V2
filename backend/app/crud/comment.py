@@ -1,15 +1,22 @@
+import uuid
+from datetime import datetime
+
+from app.crud import user as user_crud
 from app.db.database import db
 from app.schemas.comment import CommentCreate, CommentUpdate
-from app.crud import user as user_crud
-from datetime import datetime
-import uuid
-from typing import List
+
 
 async def get_comment_by_id(comment_id: str):
     return await db.comments.find_one({"id": comment_id})
 
+
 async def get_comments_by_article(article_id: str, skip: int = 0, limit: int = 100):
-    cursor = db.comments.find({"article_id": article_id}).sort("created_at", -1).skip(skip).limit(limit)
+    cursor = (
+        db.comments.find({"article_id": article_id})
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    )
     comments = await cursor.to_list(length=limit)
 
     for comment in comments:
@@ -18,34 +25,41 @@ async def get_comments_by_article(article_id: str, skip: int = 0, limit: int = 1
             comment["user"] = {
                 "id": user.get("id"),
                 "username": user.get("username"),
-                "profile_pic": user.get("profile_pic")
+                "profile_pic": user.get("profile_pic"),
             }
         else:
             comment["user"] = {
                 "id": comment["user_id"],
                 "username": "Unknown User",
-                "profile_pic": None
+                "profile_pic": None,
             }
 
     return comments
 
+
 async def get_comments_count(article_id: str):
     return await db.comments.count_documents({"article_id": article_id})
 
+
 async def get_comments_by_user(user_id: str, skip: int = 0, limit: int = 100):
-    cursor = db.comments.find({"user_id": user_id}).sort("created_at", -1).skip(skip).limit(limit)
+    cursor = (
+        db.comments.find({"user_id": user_id})
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    )
     comments = await cursor.to_list(length=limit)
-    
+
     user = await user_crud.get_user_by_id(user_id)
-    user_info = {
-        "id": user.get("id"),
-        "username": user.get("username"),
-        "profile_pic": user.get("profile_pic")
-    } if user else {
-        "id": user_id,
-        "username": "Unknown User",
-        "profile_pic": None
-    }
+    user_info = (
+        {
+            "id": user.get("id"),
+            "username": user.get("username"),
+            "profile_pic": user.get("profile_pic"),
+        }
+        if user
+        else {"id": user_id, "username": "Unknown User", "profile_pic": None}
+    )
 
     for comment in comments:
         # Add article info
@@ -54,11 +68,12 @@ async def get_comments_by_user(user_id: str, skip: int = 0, limit: int = 100):
             comment["article_title"] = article.get("title")
         else:
             comment["article_title"] = "Deleted Article"
-        
+
         # Add user info
         comment["user"] = user_info
-            
+
     return comments
+
 
 async def create_comment(article_id: str, user_id: str, comment: CommentCreate):
     comment_doc = comment.dict()
@@ -76,26 +91,25 @@ async def create_comment(article_id: str, user_id: str, comment: CommentCreate):
         created_comment["user"] = {
             "id": user.get("id"),
             "username": user.get("username"),
-            "profile_pic": user.get("profile_pic")
+            "profile_pic": user.get("profile_pic"),
         }
     else:
         created_comment["user"] = {
             "id": user_id,
             "username": "Unknown User",
-            "profile_pic": None
+            "profile_pic": None,
         }
 
     return created_comment
+
 
 async def update_comment(comment_id: str, comment: CommentUpdate):
     update_data = comment.dict(exclude_unset=True)
     update_data["updated_at"] = datetime.utcnow()
 
-    await db.comments.update_one(
-        {"id": comment_id},
-        {"$set": update_data}
-    )
+    await db.comments.update_one({"id": comment_id}, {"$set": update_data})
     return await get_comment_by_id(comment_id)
+
 
 async def delete_comment(comment_id: str):
     result = await db.comments.delete_one({"id": comment_id})
