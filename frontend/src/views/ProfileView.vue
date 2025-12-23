@@ -145,7 +145,7 @@ const getMagazineCover = (articleIds: string[]) => {
       <div class="bg-gray-900 border border-gray-800 rounded-lg w-full max-w-md overflow-hidden shadow-2xl">
         <div class="p-6 border-b border-gray-800 flex justify-between items-center">
           <h2 class="text-xl font-display font-bold text-white uppercase tracking-tight">Edit Profile</h2>
-          <button @click="isEditModalOpen = false" aria-label="Close modal" class="text-gray-500 hover:text-white transition-colors">
+          <button @click="isEditModalOpen = false" class="text-gray-500 hover:text-white transition-colors" aria-label="Close modal">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -161,6 +161,8 @@ const getMagazineCover = (articleIds: string[]) => {
               class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors"
               placeholder="Your name"
               required
+              minlength="2"
+              maxlength="100"
             />
           </div>
           
