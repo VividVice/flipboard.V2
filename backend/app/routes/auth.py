@@ -32,7 +32,12 @@ async def login_google(token_data: GoogleToken):
             client_id,
         )
 
-        email = idinfo['email']
+        email = idinfo.get('email')
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email not provided in Google ID token",
+            )
         name = idinfo.get('name', '')
         picture = idinfo.get('picture', '')
 
