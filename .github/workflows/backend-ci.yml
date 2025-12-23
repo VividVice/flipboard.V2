@@ -42,4 +42,12 @@ jobs:
           ruff format --check .
 
       - name: Run Tests
+        env:
+          MONGODB_URL: "mongodb://localhost:27017"
+          MONGODB_DATABASE: "test_db"
+          SECRET_KEY: "test_secret_key_for_ci_pipeline"
+          ALGORITHM: "HS256"
+          ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+          WEBZ_IO_API_KEY: "mock_api_key"
+          GOOGLE_CLIENT_ID: "mock_google_client_id"
         run: pytest
