@@ -121,11 +121,11 @@ async def get_article_content(
 async def get_news(
     q: str = Query(
         "news",
-        description="Search query. Supports advanced filters like 'topic:' and 'sentiment:'",
+        description="Search query. Supports filters like 'topic:' and 'sentiment:'",
     ),
     ts: Optional[int] = Query(
         None,
-        description="Unix timestamp in milliseconds for historical data (up to 30 days)",
+        description="Unix timestamp in milliseconds for historical data (30 days)",
     ),
     size: int = Query(
         10, ge=1, le=10, description="Number of results to return (max 10)"
@@ -197,10 +197,9 @@ async def get_next_news_page(
     """
     Fetch the next page of news results
 
-    Use the 'next' field from a previous response (e.g., "/newsApiLite?token=...&from=10")
-    to paginate through results.
+    Use the 'next' field from a previous response to paginate through results.
 
-    Note: The webz.io API includes a maximum of 1,000 monthly calls, with up to 10 results per call.
+    Note: The webz.io API includes a maximum of 1,000 monthly calls.
     """
     response = await news_crud.fetch_news_paginated(next_url)
     return await enrich_news_response(response, current_user)

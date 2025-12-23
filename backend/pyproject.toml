@@ -24,6 +24,10 @@ ignore = []
 fixable = ["ALL"]
 unfixable = []
 
+[tool.ruff.lint.per-file-ignores]
+"scripts/seed_database.py" = ["E402", "E501"]
+"tests/**" = ["E501"]
+
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
 quote-style = "double"

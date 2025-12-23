@@ -12,7 +12,11 @@ async def scrape_article_content(url: str) -> str:
     Returns the HTML content of the article body or a simple text representation.
     """
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/91.0.4472.124 Safari/537.36"
+        )
     }
 
     try:
@@ -68,7 +72,10 @@ async def scrape_article_content(url: str) -> str:
                     best_parent = max(parents, key=parents.get)
                     return str(best_parent)
 
-            return "<p>Could not extract full content automatically. Please visit the source.</p>"
+            return (
+                "<p>Could not extract full content automatically. "
+                "Please visit the source.</p>"
+            )
 
     except Exception as e:
         logger.error(f"Error scraping {url}: {str(e)}", exc_info=True)

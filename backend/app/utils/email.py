@@ -30,9 +30,15 @@ async def send_newsletter_email(email: str, news_items: List[NewsPost]):
     message["To"] = email
 
     # Create HTML content
-    html_content = "<h1>Hello!</h1><p>Here are the most important news for your favorite topics:</p><ul>"
+    html_content = (
+        "<h1>Hello!</h1><p>Here are the most important news for your "
+        "favorite topics:</p><ul>"
+    )
     for item in news_items[:5]:
-        html_content += f"<li><strong><a href='{item.url}'>{item.title}</a></strong><br/>{item.text[:150]}...</li>"
+        html_content += (
+            f"<li><strong><a href='{item.url}'>{item.title}</a></strong>"
+            f"<br/>{item.text[:150]}...</li>"
+        )
     html_content += "</ul><p>Enjoy your reading!</p>"
 
     # Attach HTML part

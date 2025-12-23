@@ -19,7 +19,8 @@ async def trigger_newsletter(current_user: dict = Depends(get_current_user)):
 async def update_user_me(
     user_update: UserUpdate, current_user: dict = Depends(get_current_user)
 ):
-    # Convert to dict and ensure all objects (like HttpUrl) are converted to serializable types
+    # Convert to dict and ensure all objects (like HttpUrl) are
+    # converted to serializable types
     update_data = user_update.dict(exclude_unset=True)
 
     # Manually convert HttpUrl to string if present

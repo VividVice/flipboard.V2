@@ -146,7 +146,8 @@ async def fetch_news_feed(
     combined_query = " OR ".join(query_parts)
 
     print(
-        f"DEBUG: Generated news feed query ({len(combined_query)} chars): {combined_query}"
+        f"DEBUG: Generated news feed query ({len(combined_query)} chars): "
+        f"{combined_query}"
     )
 
     return await fetch_news(
