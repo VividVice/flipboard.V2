@@ -40,11 +40,50 @@ const handleTabChange = (tab: string) => {
   }
 }
 
+// Edit Profile Modal Logic
+const isEditModalOpen = ref(false)
+const editLoading = ref(false)
+const editForm = ref({
+  name: '',
+  bio: '',
+  avatarUrl: ''
+})
+
+const openEditModal = () => {
+  if (user.value) {
+    editForm.value = {
+      name: user.value.name,
+      bio: user.value.bio || 'Salut tout le monde.',
+      avatarUrl: user.value.avatarUrl
+    }
+    isEditModalOpen.value = true
+  }
+}
+
+const handleUpdateProfile = async () => {
+  editLoading.value = true
+  try {
+    await authStore.updateProfile({
+      name: editForm.value.name,
+      bio: editForm.value.bio,
+      avatarUrl: editForm.value.avatarUrl
+    })
+    // Only close modal on success
+    isEditModalOpen.value = false
+  } catch (error: any) {
+    // The auth store's updateProfile already shows error toasts for API failures
+    // Modal remains open on error so user can retry or correct their input
+    console.error('Profile update failed:', error)
+  } finally {
+    editLoading.value = false
+  }
+}
+
 const displayUser = computed(() => {
   return {
     name: user.value?.name || 'June Doe',
     username: `@${user.value?.name?.toLowerCase().replace(/\s+/g, '')}` || '@junedoe',
-    bio: 'Salut tout le monde.',
+    bio: user.value?.bio || 'Salut tout le monde.',
     followers: 1205,
     following: 45,
     avatarUrl: user.value?.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
@@ -91,10 +130,86 @@ const getMagazineCover = (articleIds: string[]) => {
         </div>
         
         <div class="mt-8">
-           <button class="bg-gray-800 border border-gray-700 text-white px-6 py-2 text-sm font-bold uppercase tracking-wider rounded hover:bg-gray-700 transition-colors">
+           <button 
+            @click="openEditModal"
+            class="bg-gray-800 border border-gray-700 text-white px-6 py-2 text-sm font-bold uppercase tracking-wider rounded hover:bg-gray-700 transition-colors"
+           >
              Edit Profile
            </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div v-if="isEditModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div class="bg-gray-900 border border-gray-800 rounded-lg w-full max-w-md overflow-hidden shadow-2xl">
+        <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+          <h2 class="text-xl font-display font-bold text-white uppercase tracking-tight">Edit Profile</h2>
+          <button @click="isEditModalOpen = false" class="text-gray-500 hover:text-white transition-colors" aria-label="Close modal">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <form @submit.prevent="handleUpdateProfile" class="p-6 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Display Name</label>
+            <input 
+              v-model="editForm.name" 
+              type="text" 
+              class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors"
+              placeholder="Your name"
+              required
+              minlength="2"
+              maxlength="100"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Bio</label>
+            <textarea 
+              v-model="editForm.bio" 
+              rows="3"
+              maxlength="300"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors resize-none"
+              placeholder="Tell us about yourself"
+            ></textarea>
+            <div class="mt-1 text-xs text-gray-500 text-right">
+              {{ (editForm.bio ? editForm.bio.length : 0) }} / 300
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Avatar URL</label>
+            <input 
+              v-model="editForm.avatarUrl" 
+              type="url" 
+              class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors"
+              placeholder="https://..."
+              pattern="https?://.+"
+              title="Please enter a valid URL starting with http:// or https://"
+            />
+          </div>
+          
+          <div class="pt-4 flex space-x-4">
+            <button 
+              type="button"
+              @click="isEditModalOpen = false"
+              class="flex-1 bg-transparent border border-gray-700 text-gray-400 px-6 py-3 text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              :disabled="editLoading"
+              class="flex-1 bg-flipboard-red border border-flipboard-red text-white px-6 py-3 text-xs font-bold uppercase tracking-widest rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              <span v-if="editLoading" class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+              {{ editLoading ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
     

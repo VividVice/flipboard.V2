@@ -17,7 +17,23 @@ async def update_user_me(
     user_update: UserUpdate,
     current_user: dict = Depends(get_current_user)
 ):
-    success = await user_crud.update_user(current_user["id"], user_update.dict(exclude_unset=True))
+    # Convert to dict and ensure all objects (like HttpUrl) are converted to serializable types
+    update_data = user_update.dict(exclude_unset=True)
+    
+    # Manually convert HttpUrl to string if present
+    if "profile_pic" in update_data and update_data["profile_pic"]:
+        update_data["profile_pic"] = str(update_data["profile_pic"])
+
+    # Ensure new username (if provided) is unique
+    if "username" in update_data:
+        existing_user = await user_crud.get_user_by_username(update_data["username"])
+        if existing_user and existing_user["id"] != current_user["id"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username is already taken",
+            )
+        
+    success = await user_crud.update_user(current_user["id"], update_data)
     if not success:
         # If nothing was modified, we can still return the current user
         pass

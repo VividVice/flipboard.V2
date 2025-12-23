@@ -8,7 +8,7 @@ from app.core.config import settings
 
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):

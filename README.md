@@ -1,122 +1,111 @@
-# Flipboard
+# Flipboard Clone
 
-A professional, high-fidelity web application that replicates the core experience of Flipboard. Built with **Vue 3** and **Tailwind CSS v4**, this project features a sophisticated dark theme, fluid animations, and a responsive magazine-style layout.
+A professional, high-fidelity web application that replicates the core experience of Flipboard. This is a full-stack project featuring a **Vue 3** frontend with **Tailwind CSS v4** and a robust **FastAPI** backend powered by **MongoDB**.
 
-![Flipboard](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=for-the-badge&logo=vue.js)
-![Flipboard](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript)
-![Flipboard](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=for-the-badge&logo=vue.js)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.x-009688?style=for-the-badge&logo=fastapi)
+![MongoDB](https://img.shields.io/badge/MongoDB-6.x-47A248?style=for-the-badge&logo=mongodb)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?style=for-the-badge&logo=tailwind-css)
 
 ## 🚀 Features
 
 ### 🎨 UI & UX Design
 - **Immersive Dark Theme:** A fully dark interface using deep grays and blacks with the signature Flipboard Red (`#E12828`) accent.
-- **Glassmorphism:** Sticky headers and filter bars use backdrop blur effects for a modern feel.
-- **Responsive Layout:** Mobile-first design with a custom hamburger menu on small screens and a full navigation bar on desktop.
-- **Page Transitions:** Smooth cross-fade animations when navigating between views.
-- **Skeleton Loading:** Shimmering placeholder cards provide visual feedback while data loads.
-- **Toast Notifications:** Global notification system for user interactions (Likes, Saves, Follows).
+- **Glassmorphism:** Sticky headers and filter bars use backdrop blur effects.
+- **Responsive Layout:** Mobile-first design with custom navigation for all screen sizes.
+- **Page Transitions:** Smooth cross-fade animations between views.
 
-### 📰 Content Discovery
-- **Magazine Grid:** A responsive, masonry-inspired grid layout. The first article in the feed is highlighted as a "Featured" story spanning multiple columns.
-- **Infinite Scroll:** Automatically loads more content as the user scrolls to the bottom of the feed.
-- **Smart Filtering:**
-    - **Category Chips:** Horizontal scrollable bar to filter the feed by topics (Technology, Design, Travel, etc.).
-    - **Real-time Search:** Search bar in the navigation filters articles instantly by title, description, or source.
-    - **Context-Aware Hero:** The large "Hero" section automatically hides when searching or filtering to focus on results.
-
-### 📖 Reading Experience
-- **Article Detail View:** Distraction-free reading mode with a large hero image, gradient overlays, and elegant typography.
-- **Typography:** Curated font stack matching the brand identity:
-    - **Oswald:** For bold headlines and logos.
-    - **Merriweather:** For serif body text (article content).
-    - **Inter:** For UI elements and navigation.
-- **Interaction Bar:** Fixed bottom bar for easy access to Like, Comment, and Save actions while reading.
+### 📰 Content & Discovery
+- **Magazine Grid:** Responsive masonry-inspired layout with featured "Hero" stories.
+- **Infinite Scroll:** Dynamic content loading as you scroll.
+- **Smart Filtering:** Category chips and real-time search for instant results.
+- **Rich Article View:** Distraction-free reading mode with large imagery and elegant typography (Oswald, Merriweather).
 
 ### 👤 User System & Personalization
-- **Mock Authentication:**
-    - Fully styled **Login** and **Sign Up** pages.
-    - Simulates user sessions (updates the NavBar with user avatar and profile link).
-- **Profile Management:**
-    - **Dashboard:** Displays user bio, follower counts, and activity.
-    - **Tabs:** Switch between Saved Stories, User Magazines, and Comments.
-- **Collections (Magazines):**
-    - **Save Modal:** Clicking "Save" opens a modal to choose a destination magazine.
-    - **Create Magazine:** Users can create new magazines directly from the modal.
-    - **Persistence:** Saved articles appear in the Profile's "Saved Stories" tab, and custom magazines appear in the "Magazines" tab.
-- **Topic Following:** Interactive grid of topics with "Follow" states.
+- **Authentication:** Secure Sign Up and Login system (JWT-based).
+- **Profile Management:** Personal dashboard with bio, follower counts, and activity.
+- **Collections (Magazines):** Create custom magazines and save articles to them.
+- **Social Interaction:** Like, comment, and follow topics in real-time.
 
 ## 🛠 Tech Stack
 
-- **Framework:** Vue.js 3 (Composition API, `<script setup>`)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS v4 (PostCSS) + `@tailwindcss/typography` plugin
-- **State Management:** Pinia (Stores for Auth, Articles, Topics, Magazines, Toasts)
-- **Routing:** Vue Router (with global scroll behavior management)
-- **Build Tool:** Vite
+### Frontend
+- **Framework:** Vue.js 3 (Composition API)
+- **Styling:** Tailwind CSS v4 + Typography plugin
+- **State:** Pinia (Auth, Articles, Topics, Magazines, Toasts)
+- **Build:** Vite & TypeScript
+
+### Backend
+- **Framework:** FastAPI (Python)
+- **Database:** MongoDB (using Motor for async operations)
+- **Auth:** JWT (JSON Web Tokens) with Passlib (bcrypt)
+- **Validation:** Pydantic
 
 ## 📂 Project Structure
 
 ```
-frontend/src/
-├── assets/          # Global CSS (Tailwind setup)
-├── components/      # Reusable UI components
-│   ├── ArticleCard.vue    # The main grid item
-│   ├── NavBar.vue         # Responsive navigation & search
-│   ├── SaveModal.vue      # "Add to Magazine" logic
-│   ├── SkeletonCard.vue   # Loading state placeholder
-│   └── ToastContainer.vue # Notification system
-├── data/            # Mock data (Articles, content)
-├── router/          # Route definitions & guards
-├── stores/          # Pinia stores (Business logic)
-│   ├── articles.ts  # Filter, search, infinite scroll logic
-│   ├── auth.ts      # User session management
-│   ├── magazines.ts # Collection management
-│   └── ...
-└── views/           # Page definitions
-    ├── HomeView.vue    # Main feed, hero, filters
-    ├── ArticleView.vue # Detail reading view
-    ├── ProfileView.vue # User dashboard
-    └── ...
+.
+├── backend/                # FastAPI Application
+│   ├── app/                # Main application logic (routes, models, crud)
+│   ├── tests/              # Pytest suite
+│   └── run_dev.sh          # Orchestrates Mongo (Docker) & Uvicorn
+├── frontend/               # Vue.js Application
+│   ├── src/                # Components, stores, views, assets
+│   └── public/             # Static assets
+├── GEMINI.md               # Detailed AI/Developer context
+└── Specification_Book.md   # Project requirements & documentation
 ```
 
 ## ⚡ Getting Started
 
 ### Prerequisites
-- **Node.js** (v20+ recommended)
-- **npm**
+- **Node.js** (v20+)
+- **Python** (3.10+)
+- **Docker** (for running MongoDB)
 
-### Installation
+### 1. Setup the Backend
 
-1.  **Clone the repository:**
+1.  Navigate to the backend directory:
     ```bash
-    git clone <repository-url>
-    cd flipboard.V2
+    cd backend
+    ```
+2.  Create and activate a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  Configure environment variables:
+    Create a `.env` file based on the instructions in `backend/README.md`.
+5.  Start the database and server:
+    ```bash
+    ./run_dev.sh
     ```
 
-2.  **Navigate to the frontend:**
+### 2. Setup the Frontend
+
+1.  Navigate to the frontend directory:
     ```bash
     cd frontend
     ```
-
-3.  **Install dependencies:**
+2.  Install dependencies:
     ```bash
     npm install
     ```
-
-4.  **Run the development server:**
+3.  Run the development server:
     ```bash
     npm run dev
     ```
 
-5.  Open `http://localhost:5173` in your browser.
+4.  Open `http://localhost:5173` in your browser.
 
 ## 📝 Usage Guide
 
-1.  **Explore:** Scroll the **Home** feed. Notice the skeleton loading on refresh and infinite scroll at the bottom.
-2.  **Filter:** Use the chips below the navbar (e.g., click "Technology") or type in the **Search** bar.
-3.  **Read:** Click any card to enter the **Article View**.
-4.  **Interact:**
-    - Click the **Heart** to like.
-    - Click the **Bookmark** to save. A modal will appear. Create a new magazine (e.g., "My Favorites") and save it there.
-5.  **Profile:** Go to the **Profile** page to see your saved articles and the magazine you just created.
-6.  **Login:** Log out and use the **Login/Sign Up** pages (any email/password works for the mock auth).
+1.  **Explore:** Scroll the **Home** feed to see the magazine layout and infinite scroll.
+2.  **Filter:** Use category chips or the search bar to find specific content.
+3.  **Read:** Click any article card for the immersive detail view.
+4.  **Interact:** Create an account to Like, Comment, and Save articles into custom Magazines.
+5.  **Profile:** Access your profile to manage your saved stories and custom collections.
