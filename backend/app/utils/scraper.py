@@ -28,16 +28,43 @@ async def scrape_article_content(url: str) -> str:
 
             # Remove unwanted elements
             unwanted_selectors = [
-                "script", "style", "nav", "header", "footer", "iframe", "noscript",
-                "aside", "form", ".social-share", ".related-posts",
-                ".newsletter-signup", ".ad-container", ".advertisement",
-                ".sidebar", ".comments-section", ".tags", ".categories",
-                ".author-bio", "#sidebar", "#comments", ".promo-box",
-                ".related-links", ".more-from", ".suggested-stories",
-                ".article-footer", ".article-sidebar", ".social-icons",
-                ".share-bar", ".topic-list", ".tags-list", ".article-sharing",
-                ".related-topics", ".topics-container", ".topics-header",
-                ".follow-button", ".see-all-topics"
+                "script",
+                "style",
+                "nav",
+                "header",
+                "footer",
+                "iframe",
+                "noscript",
+                "aside",
+                "form",
+                ".social-share",
+                ".related-posts",
+                ".newsletter-signup",
+                ".ad-container",
+                ".advertisement",
+                ".sidebar",
+                ".comments-section",
+                ".tags",
+                ".categories",
+                ".author-bio",
+                "#sidebar",
+                "#comments",
+                ".promo-box",
+                ".related-links",
+                ".more-from",
+                ".suggested-stories",
+                ".article-footer",
+                ".article-sidebar",
+                ".social-icons",
+                ".share-bar",
+                ".topic-list",
+                ".tags-list",
+                ".article-sharing",
+                ".related-topics",
+                ".topics-container",
+                ".topics-header",
+                ".follow-button",
+                ".see-all-topics",
             ]
             for selector in unwanted_selectors:
                 if selector.startswith("."):
@@ -54,7 +81,7 @@ async def scrape_article_content(url: str) -> str:
             image_junk = ["credit", "caption", "source", "image-label"]
             for tag in soup.find_all(
                 ["span", "div", "p", "figcaption"],
-                class_=lambda x: x and any(c in x.lower() for c in image_junk)
+                class_=lambda x: x and any(c in x.lower() for c in image_junk),
             ):
                 tag.decompose()
 
@@ -65,11 +92,22 @@ async def scrape_article_content(url: str) -> str:
 
                 # Check for social/topic junk patterns
                 junk_patterns = [
-                    "more from", "go deeper", "related stories", "read more",
-                    "suggested for you", "latest news", "sign up for our newsletter",
-                    "follow us on", "in:", "tags:", "see all topics",
-                    "facebook tweetemail", "link copied!", "follow",
-                    "share this", "republished from"
+                    "more from",
+                    "go deeper",
+                    "related stories",
+                    "read more",
+                    "suggested for you",
+                    "latest news",
+                    "sign up for our newsletter",
+                    "follow us on",
+                    "in:",
+                    "tags:",
+                    "see all topics",
+                    "facebook tweetemail",
+                    "link copied!",
+                    "follow",
+                    "share this",
+                    "republished from",
                 ]
 
                 if any(phrase in text_lower for phrase in junk_patterns):
@@ -78,9 +116,9 @@ async def scrape_article_content(url: str) -> str:
                         div.decompose()
                     # Specific check for social bars
                     elif (
-                        "facebook" in text_lower and
-                        "tweet" in text_lower and
-                        "email" in text_lower
+                        "facebook" in text_lower
+                        and "tweet" in text_lower
+                        and "email" in text_lower
                     ):
                         div.decompose()
 
