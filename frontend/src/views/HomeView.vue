@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import NewsCard from '../components/NewsCard.vue'
 import SkeletonCard from '../components/SkeletonCard.vue'
 import { useNewsStore } from '../stores/news'
 import { useArticleStore } from '../stores/articles'
 import { useTopicStore } from '../stores/topics'
 import { storeToRefs } from 'pinia'
+import type { NewsPost } from '../services/api'
 
 const newsStore = useNewsStore()
 const articleStore = useArticleStore()
 const topicStore = useTopicStore()
-const { posts, loading, totalResults, requestsLeft, hasMoreResults, isPersonalizedFeed, currentCountry } = storeToRefs(newsStore)
+const { posts, loading, totalResults, hasMoreResults, isPersonalizedFeed, currentCountry } = storeToRefs(newsStore)
 const { searchQuery } = storeToRefs(articleStore)
 const { followedTopics } = storeToRefs(topicStore)
 
@@ -68,6 +69,7 @@ watch(searchQuery, (newQuery) => {
 
 // Fetch news based on current filters
 const fetchNews = async () => {
+  layoutCache.clear() // Clear layout cache on new search
   if (searchQuery.value.trim()) {
     // Custom search query
     await newsStore.fetchNews({ q: searchQuery.value, size: 10 })
@@ -134,37 +136,43 @@ onUnmounted(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
 })
 
-// API usage warning color
-const apiUsageColor = computed(() => {
-  if (requestsLeft.value < 50) return 'text-red-400'
-  if (requestsLeft.value < 200) return 'text-yellow-400'
-  return 'text-green-400'
-})
 
 // Grid layout configuration
 type CardVariant = 'default' | 'featured' | 'horizontal' | 'compact'
+type CardConfig = { variant: CardVariant, class: string }
 
-const getCardConfig = (index: number): { variant: CardVariant, class: string } => {
+// Cache layout config to prevent shifts when appending
+const layoutCache = new Map<string, CardConfig>()
+
+const getCardConfig = (post: NewsPost, index: number): CardConfig => {
+  if (layoutCache.has(post.uuid)) {
+    return layoutCache.get(post.uuid)!
+  }
+
   const i = index % 10 // Repeat pattern every 10 items
-  
+  let config: CardConfig
+
   // 3-column grid pattern (lg)
   // Row 1-2: [Featured 2x2] [Default] / [Default]
   // Row 3:   [Horizontal 2x1] [Default]
   // Row 4:   [Default] [Horizontal 2x1]
   // Row 5:   [Default] [Default] [Default]
   
-  if (i === 0) return { variant: 'featured', class: 'lg:col-span-2 lg:row-span-2' }
-  if (i === 1) return { variant: 'default', class: 'lg:col-span-1 lg:row-span-1' }
-  if (i === 2) return { variant: 'default', class: 'lg:col-span-1 lg:row-span-1' }
+  if (i === 0) config = { variant: 'featured', class: 'lg:col-span-2 lg:row-span-2' }
+  else if (i === 1) config = { variant: 'default', class: 'lg:col-span-1 lg:row-span-1' }
+  else if (i === 2) config = { variant: 'default', class: 'lg:col-span-1 lg:row-span-1' }
   
-  if (i === 3) return { variant: 'horizontal', class: 'lg:col-span-2' }
-  if (i === 4) return { variant: 'compact', class: 'lg:col-span-1' }
+  else if (i === 3) config = { variant: 'horizontal', class: 'lg:col-span-2' }
+  else if (i === 4) config = { variant: 'compact', class: 'lg:col-span-1' }
   
-  if (i === 5) return { variant: 'default', class: 'lg:col-span-1' }
-  if (i === 6) return { variant: 'horizontal', class: 'lg:col-span-2' }
+  else if (i === 5) config = { variant: 'default', class: 'lg:col-span-1' }
+  else if (i === 6) config = { variant: 'horizontal', class: 'lg:col-span-2' }
 
   // Remaining 3 items (7, 8, 9) fill a row
-  return { variant: 'default', class: 'lg:col-span-1' }
+  else config = { variant: 'default', class: 'lg:col-span-1' }
+
+  layoutCache.set(post.uuid, config)
+  return config
 }
 </script>
 
@@ -269,7 +277,7 @@ const getCardConfig = (index: number): { variant: CardVariant, class: string } =
     </div>
 
     <!-- Results Info -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" v-if="!loading && totalResults > 0">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" v-if="totalResults > 0 && (!loading || posts.length > 0)">
       <p class="text-gray-400 text-sm">
         Found <span class="text-white font-bold">{{ totalResults.toLocaleString() }}</span> results
         <span v-if="hasMoreResults" class="text-gray-500"> (showing {{ posts.length }})</span>
@@ -289,8 +297,8 @@ const getCardConfig = (index: number): { variant: CardVariant, class: string } =
           v-for="(post, index) in posts"
           :key="post.uuid"
           :post="post"
-          :variant="getCardConfig(index).variant"
-          :class="getCardConfig(index).class"
+          :variant="getCardConfig(post, index).variant"
+          :class="getCardConfig(post, index).class"
         />
       </div>
 
