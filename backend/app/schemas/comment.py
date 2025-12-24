@@ -18,7 +18,8 @@ class CommentUpdate(BaseModel):
 
 class Comment(CommentBase):
     id: str
-    article_id: str
+    article_id: Optional[str] = None
+    magazine_id: Optional[str] = None
     user_id: str
     article_title: Optional[str] = None
     created_at: datetime
