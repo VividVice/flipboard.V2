@@ -129,6 +129,8 @@ const handleFollow = async () => {
     }
   } catch (error) {
     console.error('Follow action failed:', error)
+    const username = targetUser.value?.username ?? 'this user'
+    toast.show(`Failed to update follow status for ${username}. Please try again.`)
   }
 }
 
