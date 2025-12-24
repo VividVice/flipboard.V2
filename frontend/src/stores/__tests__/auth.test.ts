@@ -81,6 +81,9 @@ describe('Auth Store', () => {
         avatarUrl: 'https://example.com/pic.jpg',
         bio: undefined,
         newsletter_subscribed: false,
+        followers: [],
+        following: [],
+        followed_magazines: [],
       })
       expect(store.isAuthenticated).toBe(true)
     })
@@ -194,6 +197,9 @@ describe('Auth Store', () => {
         avatarUrl: expect.stringContaining('unsplash.com'),
         bio: undefined,
         newsletter_subscribed: false,
+        followers: [],
+        following: [],
+        followed_magazines: [],
       })
       expect(store.isAuthenticated).toBe(true)
     })
@@ -265,6 +271,10 @@ describe('Auth Store', () => {
         name: 'testuser',
         email: 'test@example.com',
         avatarUrl: 'https://example.com/pic.jpg',
+        newsletter_subscribed: false,
+        followers: [],
+        following: [],
+        followed_magazines: []
       }
       store.isAuthenticated = true
       localStorageMock.token = 'some-token'
@@ -286,6 +296,10 @@ describe('Auth Store', () => {
         name: 'testuser',
         email: 'test@example.com',
         avatarUrl: 'https://example.com/pic.jpg',
+        newsletter_subscribed: false,
+        followers: [],
+        following: [],
+        followed_magazines: []
       }
       store.isAuthenticated = true
 

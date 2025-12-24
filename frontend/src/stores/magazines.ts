@@ -4,6 +4,7 @@ import { apiServiceExtended, type Magazine } from '../services/api'
 export const useMagazineStore = defineStore('magazines', {
   state: () => ({
     magazines: [] as Magazine[],
+    followedMagazines: [] as Magazine[],
     loading: false,
     error: null as string | null
   }),
@@ -17,6 +18,14 @@ export const useMagazineStore = defineStore('magazines', {
         this.error = err.message || 'Failed to fetch magazines'
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchFollowedMagazines() {
+      try {
+        this.followedMagazines = await apiServiceExtended.getFollowedMagazines()
+      } catch (err: any) {
+        console.error('Failed to fetch followed magazines:', err)
       }
     },
 

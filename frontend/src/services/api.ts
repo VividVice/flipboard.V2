@@ -1,4 +1,5 @@
 import type { Comment } from '../data/articles'
+export type { Comment }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -33,6 +34,9 @@ export interface User {
   bio?: string
   profile_pic?: string
   followed_topics: string[]
+  followers: string[]
+  following: string[]
+  followed_magazines: string[]
   newsletter_subscribed: boolean
   created_at: string
 }
@@ -136,6 +140,18 @@ class ApiService {
 
   async getUserComments(): Promise<Comment[]> {
     const response = await fetch(`${API_BASE_URL}/users/me/comments`, {
+      headers: this.getHeaders(true),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user comments')
+    }
+
+    return response.json()
+  }
+
+  async getUserCommentsById(userId: string): Promise<Comment[]> {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/comments`, {
       headers: this.getHeaders(true),
     })
 
@@ -544,6 +560,56 @@ class ApiServiceExtended extends ApiService {
     if (!response.ok) throw new Error('Failed to trigger newsletter')
   }
 
+  // Public User Profiles
+  async getUserByUsername(username: string): Promise<User> {
+    const response = await fetch(`${API_BASE_URL}/users/${username}`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) {
+      if (response.status === 404) throw new Error('User not found')
+      throw new Error('Failed to fetch user profile')
+    }
+    return response.json()
+  }
+
+  async getUserById(userId: string): Promise<User> {
+    const response = await fetch(`${API_BASE_URL}/users/id/${userId}`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) {
+      if (response.status === 404) throw new Error('User not found')
+      throw new Error('Failed to fetch user profile')
+    }
+    return response.json()
+  }
+
+  async getUsersByIds(userIds: string[]): Promise<User[]> {
+    if (userIds.length === 0) return []
+    const response = await fetch(`${API_BASE_URL}/users/list`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(userIds),
+    })
+    if (!response.ok) throw new Error('Failed to fetch users list')
+    return response.json()
+  }
+
+  async followUser(userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to follow user')
+  }
+
+  async unfollowUser(userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/unfollow`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to unfollow user')
+  }
+
   // Magazines
   async getMagazines(): Promise<Magazine[]> {
     const response = await fetch(`${API_BASE_URL}/magazines/`, {
@@ -558,6 +624,14 @@ class ApiServiceExtended extends ApiService {
       headers: this.getHeaders(true),
     })
     if (!response.ok) throw new Error('Failed to fetch magazine')
+    return response.json()
+  }
+
+  async getMagazinesByUserId(userId: string): Promise<Magazine[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/user/${userId}`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to fetch user magazines')
     return response.json()
   }
 
@@ -595,12 +669,36 @@ class ApiServiceExtended extends ApiService {
     if (!response.ok) throw new Error('Failed to remove article from magazine')
   }
 
-  async getMagazineArticles(magazineId: string): Promise<Article[]> {
-    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/articles`, {
+  async getMagazineArticles(magazine_id: string): Promise<Article[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazine_id}/articles`, {
       headers: this.getHeaders(true),
     })
     if (!response.ok) throw new Error('Failed to fetch magazine articles')
     return response.json()
+  }
+
+  async getFollowedMagazines(): Promise<Magazine[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/followed/me`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to fetch followed magazines')
+    return response.json()
+  }
+
+  async followMagazine(magazineId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/follow`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to follow magazine')
+  }
+
+  async unfollowMagazine(magazineId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/unfollow`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to unfollow magazine')
   }
 }
 

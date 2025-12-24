@@ -108,7 +108,9 @@ const cancelDelete = () => {
         <!-- Meta Info (Name & Date) - Top for article view, Bottom for profile view -->
         <div v-if="!comment.articleTitle" class="flex items-center justify-between mb-1">
           <div class="flex items-center space-x-2">
-            <span class="text-sm font-bold text-gray-100">{{ comment.author.name }}</span>
+            <RouterLink :to="`/user/${comment.author.name}`" class="text-sm font-bold text-gray-100 hover:text-flipboard-red transition-colors">
+              {{ comment.author.name }}
+            </RouterLink>
             <span class="text-xs text-gray-500">{{ formattedDate }}</span>
             <span v-if="comment.updatedAt" class="text-xs text-gray-500 italic">(modifié)</span>
           </div>
@@ -171,7 +173,9 @@ const cancelDelete = () => {
         <!-- Profile view footer meta -->
         <div v-if="comment.articleTitle && !isEditing" class="mt-3 flex items-center justify-between border-t border-gray-800/50 pt-2">
           <div class="flex items-center space-x-2">
-            <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">{{ comment.author.name }}</span>
+            <RouterLink :to="`/user/${comment.author.name}`" class="text-[10px] font-black text-gray-500 hover:text-flipboard-red uppercase tracking-widest transition-colors">
+              {{ comment.author.name }}
+            </RouterLink>
             <span class="text-gray-700">•</span>
             <span class="text-[10px] text-gray-600 uppercase font-bold">{{ formattedDate }}</span>
           </div>
