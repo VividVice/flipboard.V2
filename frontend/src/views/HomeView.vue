@@ -297,8 +297,7 @@ const getCardConfig = (post: NewsPost, index: number): CardConfig => {
           v-for="(post, index) in posts"
           :key="post.uuid"
           :post="post"
-          :variant="getCardConfig(post, index).variant"
-          :class="getCardConfig(post, index).class"
+          v-bind="getCardConfig(post, index)"
         />
       </div>
 
