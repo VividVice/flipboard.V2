@@ -103,9 +103,9 @@ async def get_comments_by_user(user_id: str, skip: int = 0, limit: int = 100):
         elif comment.get("magazine_id"):
             magazine = await db.magazines.find_one({"id": comment["magazine_id"]})
             if magazine:
-                comment["article_title"] = f"Magazine: {magazine.get('name')}"
+                comment["magazine_title"] = magazine.get("name")
             else:
-                comment["article_title"] = "Deleted Magazine"
+                comment["magazine_title"] = "Deleted Magazine"
         else:
             # Fallback when neither article_id nor magazine_id is present
             comment["article_title"] = None
