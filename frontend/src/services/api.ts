@@ -152,7 +152,7 @@ class ApiService {
 
   async getUserCommentsById(userId: string): Promise<Comment[]> {
     const response = await fetch(`${API_BASE_URL}/users/${userId}/comments`, {
-      headers: this.getHeaders(true),
+      headers: this.getHeaders(),
     })
 
     if (!response.ok) {
@@ -679,7 +679,7 @@ class ApiServiceExtended extends ApiService {
 
   async getMagazineComments(magazineId: string): Promise<Comment[]> {
     const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/comments`, {
-      headers: this.getHeaders(true),
+      headers: this.getHeaders(),
     })
     if (!response.ok) throw new Error('Failed to fetch magazine comments')
     return response.json()

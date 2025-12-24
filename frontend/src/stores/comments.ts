@@ -92,13 +92,6 @@ export const useCommentsStore = defineStore('comments', {
       } catch (error) {
         this.error = 'Failed to load comments'
         console.error('Error fetching comments:', error)
-
-        // If using real API and it fails, fall back to mock mode
-        if (!this.useMockData) {
-          console.log('Falling back to mock data mode')
-          this.useMockData = true
-          this.commentsByArticle[articleId] = []
-        }
       } finally {
         this.loading = false
       }
