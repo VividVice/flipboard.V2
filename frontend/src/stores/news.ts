@@ -15,7 +15,8 @@ export const useNewsStore = defineStore('news', {
     currentTopic: null as string | null,
     currentSentiment: null as string | null,
     isPersonalizedFeed: false,
-    currentCountry: 'US' as string // Default to US
+    currentCountry: 'US' as string, // Default to US
+    seenUuids: new Set<string>(JSON.parse(localStorage.getItem('seen_news_uuids') || '[]'))
   }),
 
   getters: {
@@ -35,6 +36,22 @@ export const useNewsStore = defineStore('news', {
   },
 
   actions: {
+    persistSeenUuids() {
+      const uuidsArray = Array.from(this.seenUuids)
+      // Keep only last 1000 to prevent localStorage bloat
+      const limitedArray = uuidsArray.slice(-1000)
+      localStorage.setItem('seen_news_uuids', JSON.stringify(limitedArray))
+    },
+
+    markAsSeen(uuids: string[]) {
+      uuids.forEach(uuid => this.seenUuids.add(uuid))
+      this.persistSeenUuids()
+    },
+
+    filterFreshPosts(newPosts: NewsPost[]): NewsPost[] {
+      return newPosts.filter(post => !this.seenUuids.has(post.uuid))
+    },
+
     async fetchNews(params?: {
       q?: string
       ts?: number
@@ -46,13 +63,21 @@ export const useNewsStore = defineStore('news', {
       const toastStore = useToastStore()
 
       try {
-        const response: NewsResponse = await apiServiceExtended.getNews({
+        let response: NewsResponse = await apiServiceExtended.getNews({
           ...params,
           country: this.currentCountry
         })
 
-        // Reset posts when fetching new query
-        this.posts = response.posts
+        let freshPosts = this.filterFreshPosts(response.posts)
+        
+        // If everything was seen, try one more page automatically
+        if (freshPosts.length === 0 && response.next) {
+          const nextResponse = await apiServiceExtended.getNextNewsPage(response.next)
+          response = nextResponse
+          freshPosts = this.filterFreshPosts(response.posts)
+        }
+
+        this.posts = freshPosts
         this.totalResults = response.totalResults
         this.moreResultsAvailable = response.moreResultsAvailable
         this.nextUrl = response.next || null
@@ -62,7 +87,8 @@ export const useNewsStore = defineStore('news', {
         this.currentSentiment = null
         this.isPersonalizedFeed = false
 
-        // Warning if running low on API requests
+        this.markAsSeen(this.posts.map(p => p.uuid))
+
         if (response.requestsLeft < 100) {
           toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
         }
@@ -88,12 +114,20 @@ export const useNewsStore = defineStore('news', {
       const toastStore = useToastStore()
 
       try {
-        const response: NewsResponse = await apiServiceExtended.getNewsByTopic(topic, {
+        let response: NewsResponse = await apiServiceExtended.getNewsByTopic(topic, {
           ...params,
           country: this.currentCountry
         })
 
-        this.posts = response.posts
+        let freshPosts = this.filterFreshPosts(response.posts)
+
+        if (freshPosts.length === 0 && response.next) {
+          const nextResponse = await apiServiceExtended.getNextNewsPage(response.next)
+          response = nextResponse
+          freshPosts = this.filterFreshPosts(response.posts)
+        }
+
+        this.posts = freshPosts
         this.totalResults = response.totalResults
         this.moreResultsAvailable = response.moreResultsAvailable
         this.nextUrl = response.next || null
@@ -102,6 +136,8 @@ export const useNewsStore = defineStore('news', {
         this.currentSentiment = params?.sentiment || null
         this.currentQuery = `topic:"${topic}"${params?.sentiment ? ` sentiment:${params.sentiment}` : ''}`
         this.isPersonalizedFeed = false
+
+        this.markAsSeen(this.posts.map(p => p.uuid))
 
         if (response.requestsLeft < 100) {
           toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
@@ -124,12 +160,20 @@ export const useNewsStore = defineStore('news', {
       const toastStore = useToastStore()
 
       try {
-        const response: NewsResponse = await apiServiceExtended.getNewsFeed({
+        let response: NewsResponse = await apiServiceExtended.getNewsFeed({
           ...params,
           country: this.currentCountry
         })
 
-        this.posts = response.posts
+        let freshPosts = this.filterFreshPosts(response.posts)
+
+        if (freshPosts.length === 0 && response.next) {
+          const nextResponse = await apiServiceExtended.getNextNewsPage(response.next)
+          response = nextResponse
+          freshPosts = this.filterFreshPosts(response.posts)
+        }
+
+        this.posts = freshPosts
         this.totalResults = response.totalResults
         this.moreResultsAvailable = response.moreResultsAvailable
         this.nextUrl = response.next || null
@@ -138,6 +182,8 @@ export const useNewsStore = defineStore('news', {
         this.currentSentiment = null
         this.currentQuery = 'personalized-feed'
         this.isPersonalizedFeed = true
+
+        this.markAsSeen(this.posts.map(p => p.uuid))
 
         if (response.requestsLeft < 100) {
           toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
@@ -166,12 +212,21 @@ export const useNewsStore = defineStore('news', {
       try {
         const response: NewsResponse = await apiServiceExtended.getNextNewsPage(this.nextUrl)
 
-        // Append new posts to existing ones
-        this.posts = [...this.posts, ...response.posts]
+        // Filter out any already seen posts
+        const freshPosts = this.filterFreshPosts(response.posts)
+        
+        // Also ensure no duplicates with what's already in the current view
+        const uniqueFreshPosts = freshPosts.filter(
+          p => !this.posts.some(existing => existing.uuid === p.uuid)
+        )
+
+        this.posts = [...this.posts, ...uniqueFreshPosts]
         this.totalResults = response.totalResults
         this.moreResultsAvailable = response.moreResultsAvailable
         this.nextUrl = response.next || null
         this.requestsLeft = response.requestsLeft
+
+        this.markAsSeen(uniqueFreshPosts.map(p => p.uuid))
 
         if (response.requestsLeft < 100) {
           toastStore.show(`Warning: Only ${response.requestsLeft} API requests left this month`, 'info')
