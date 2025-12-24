@@ -22,7 +22,7 @@ console.log('🔧 Comments store initialized with USE_MOCK_DATA:', USE_MOCK_DATA
 const transformComment = (apiComment: any): Comment => {
   return {
     id: apiComment.id,
-    articleId: apiComment.article_id,
+    articleId: apiComment.article_id || apiComment.magazine_id,
     articleTitle: apiComment.article_title,
     author: {
       id: apiComment.user?.id || apiComment.user_id,
