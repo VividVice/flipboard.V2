@@ -4,13 +4,18 @@ import CommentItem from './CommentItem.vue'
 import { useCommentsStore } from '../stores/comments'
 
 interface Props {
-  articleId: string
+  articleId?: string
+  magazineId?: string
 }
 
 const props = defineProps<Props>()
 const commentsStore = useCommentsStore()
 
-const comments = computed(() => commentsStore.getCommentsByArticleId(props.articleId))
+const comments = computed(() => {
+  if (props.articleId) return commentsStore.getCommentsByArticleId(props.articleId)
+  if (props.magazineId) return commentsStore.getCommentsByMagazineId(props.magazineId)
+  return []
+})
 const loading = computed(() => commentsStore.loading)
 </script>
 
@@ -48,7 +53,8 @@ const loading = computed(() => commentsStore.loading)
         v-for="comment in comments"
         :key="comment.id"
         :comment="comment"
-        :article-id="articleId"
+        :article-id="articleId || ''"
+        :magazine-id="magazineId"
       />
     </div>
   </div>

@@ -11,3 +11,12 @@ class Comment(BaseModel):
     content: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+class MagazineComment(BaseModel):
+    id: str
+    magazine_id: str
+    user_id: str
+    content: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None

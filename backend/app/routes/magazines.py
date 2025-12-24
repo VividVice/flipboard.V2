@@ -1,12 +1,14 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.crud import article as crud_article
+from app.crud import comment as crud_comment
 from app.crud import magazine as crud_magazine
 from app.crud import user as crud_user
 from app.dependencies import get_current_user
 from app.schemas.article import Article
+from app.schemas.comment import CommentCreate, MagazineCommentWithUser
 from app.schemas.magazine import Magazine, MagazineCreate, MagazineUpdate
 from app.utils.article_enricher import enrich_articles
 
@@ -30,6 +32,41 @@ async def get_magazine_articles(
 
     articles = await crud_article.get_articles_by_ids(article_ids)
     return await enrich_articles(articles, current_user)
+
+
+@router.get("/{magazine_id}/comments", response_model=List[MagazineCommentWithUser])
+async def get_magazine_comments(
+    magazine_id: str, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=100)
+):
+    magazine = await crud_magazine.get_magazine_by_id(magazine_id)
+    if not magazine:
+        raise HTTPException(status_code=404, detail="Magazine not found")
+
+    comments = await crud_comment.get_comments_by_magazine(
+        magazine_id, skip=skip, limit=limit
+    )
+    return comments
+
+
+@router.post(
+    "/{magazine_id}/comments",
+    response_model=MagazineCommentWithUser,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_magazine_comment(
+    magazine_id: str,
+    comment_in: CommentCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    magazine = await crud_magazine.get_magazine_by_id(magazine_id)
+    if not magazine:
+        raise HTTPException(status_code=404, detail="Magazine not found")
+
+    comment = await crud_comment.create_magazine_comment(
+        magazine_id, current_user["id"], comment_in
+    )
+
+    return comment
 
 
 @router.post("/", response_model=Magazine)

@@ -4,7 +4,8 @@ import { useAuthStore } from '../stores/auth'
 import { useCommentsStore } from '../stores/comments'
 
 interface Props {
-  articleId: string
+  articleId?: string
+  magazineId?: string
 }
 
 const props = defineProps<Props>()
@@ -23,7 +24,11 @@ const submitComment = async () => {
 
   isSubmitting.value = true
   try {
-    await commentsStore.createComment(props.articleId, commentText.value.trim())
+    if (props.articleId) {
+      await commentsStore.createComment(props.articleId, commentText.value.trim())
+    } else if (props.magazineId) {
+      await commentsStore.createMagazineComment(props.magazineId, commentText.value.trim())
+    }
     commentText.value = ''
   } finally {
     isSubmitting.value = false

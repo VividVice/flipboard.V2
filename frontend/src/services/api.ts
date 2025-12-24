@@ -677,6 +677,24 @@ class ApiServiceExtended extends ApiService {
     return response.json()
   }
 
+  async getMagazineComments(magazineId: string): Promise<Comment[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/comments`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to fetch magazine comments')
+    return response.json()
+  }
+
+  async createMagazineComment(magazineId: string, data: CreateCommentDto): Promise<Comment> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/comments`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) throw new Error('Failed to create magazine comment')
+    return response.json()
+  }
+
   async getFollowedMagazines(): Promise<Magazine[]> {
     const response = await fetch(`${API_BASE_URL}/magazines/followed/me`, {
       headers: this.getHeaders(true),

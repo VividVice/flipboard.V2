@@ -7,7 +7,8 @@ import ConfirmModal from './ConfirmModal.vue'
 
 interface Props {
   comment: Comment
-  articleId: string
+  articleId?: string
+  magazineId?: string
 }
 
 const props = defineProps<Props>()
@@ -59,7 +60,15 @@ const saveEdit = async () => {
   }
   
   editError.value = ''
-  await commentsStore.updateComment(props.comment.id, props.articleId, trimmedContent)
+  
+  if (props.articleId) {
+    await commentsStore.updateComment(props.comment.id, props.articleId, trimmedContent)
+  } else if (props.magazineId) {
+    // For now, updateComment logic works globally if we just pass context
+    // But we need to update the correct array in store
+    await commentsStore.updateComment(props.comment.id, props.magazineId, trimmedContent, true)
+  }
+  
   isEditing.value = false
 }
 
@@ -69,7 +78,11 @@ const deleteComment = async () => {
 
 const confirmDelete = async () => {
   showDeleteConfirm.value = false
-  await commentsStore.deleteComment(props.comment.id, props.articleId)
+  if (props.articleId) {
+    await commentsStore.deleteComment(props.comment.id, props.articleId)
+  } else if (props.magazineId) {
+    await commentsStore.deleteComment(props.comment.id, props.magazineId, true)
+  }
 }
 
 const cancelDelete = () => {
