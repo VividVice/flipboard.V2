@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import type { Comment } from '../data/articles'
-import { apiService } from '../services/api'
+import { apiService, apiServiceExtended } from '../services/api'
 import { useToastStore } from './toast'
 import { useAuthStore } from './auth'
 
 interface CommentsState {
   commentsByArticle: Record<string, Comment[]>
+  commentsByMagazine: Record<string, Comment[]>
   userComments: Comment[]
   loading: boolean
   error: string | null
@@ -21,7 +22,7 @@ console.log('🔧 Comments store initialized with USE_MOCK_DATA:', USE_MOCK_DATA
 const transformComment = (apiComment: any): Comment => {
   return {
     id: apiComment.id,
-    articleId: apiComment.article_id,
+    articleId: apiComment.article_id || apiComment.magazine_id,
     articleTitle: apiComment.article_title,
     author: {
       id: apiComment.user?.id || apiComment.user_id,
@@ -37,6 +38,7 @@ const transformComment = (apiComment: any): Comment => {
 export const useCommentsStore = defineStore('comments', {
   state: (): CommentsState => ({
     commentsByArticle: {},
+    commentsByMagazine: {},
     userComments: [],
     loading: false,
     error: null,
@@ -50,9 +52,21 @@ export const useCommentsStore = defineStore('comments', {
       }
     },
 
+    getCommentsByMagazineId: (state) => {
+      return (magazineId: string): Comment[] => {
+        return state.commentsByMagazine[magazineId] || []
+      }
+    },
+
     getCommentsCount: (state) => {
       return (articleId: string): number => {
         return (state.commentsByArticle[articleId] || []).length
+      }
+    },
+
+    getMagazineCommentsCount: (state) => {
+      return (magazineId: string): number => {
+        return (state.commentsByMagazine[magazineId] || []).length
       }
     },
   },
@@ -78,13 +92,28 @@ export const useCommentsStore = defineStore('comments', {
       } catch (error) {
         this.error = 'Failed to load comments'
         console.error('Error fetching comments:', error)
+      } finally {
+        this.loading = false
+      }
+    },
 
-        // If using real API and it fails, fall back to mock mode
-        if (!this.useMockData) {
-          console.log('Falling back to mock data mode')
-          this.useMockData = true
-          this.commentsByArticle[articleId] = []
+    async fetchMagazineComments(magazineId: string) {
+      this.loading = true
+      this.error = null
+
+      try {
+        if (this.useMockData) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+          if (!this.commentsByMagazine[magazineId]) {
+            this.commentsByMagazine[magazineId] = []
+          }
+        } else {
+          const comments = await apiServiceExtended.getMagazineComments(magazineId)
+          this.commentsByMagazine[magazineId] = comments.map(transformComment)
         }
+      } catch (error) {
+        this.error = 'Failed to load magazine comments'
+        console.error('Error fetching magazine comments:', error)
       } finally {
         this.loading = false
       }
@@ -164,12 +193,43 @@ export const useCommentsStore = defineStore('comments', {
       }
     },
 
-    async updateComment(commentId: string, articleId: string, content: string) {
+    async createMagazineComment(magazineId: string, content: string) {
+      const authStore = useAuthStore()
+      const toast = useToastStore()
+
+      if (!authStore.user) {
+        toast.show('Please login to comment', 'error')
+        return
+      }
+
       this.loading = true
       this.error = null
 
       try {
-        const comments = this.commentsByArticle[articleId] || []
+        const apiComment = await apiServiceExtended.createMagazineComment(magazineId, { content })
+        const newComment = transformComment(apiComment)
+
+        if (!this.commentsByMagazine[magazineId]) {
+          this.commentsByMagazine[magazineId] = []
+        }
+
+        this.commentsByMagazine[magazineId].unshift(newComment)
+        toast.show('Comment added successfully')
+      } catch (error) {
+        this.error = 'Failed to create comment'
+        console.error('Error creating magazine comment:', error)
+        toast.show('Failed to add comment', 'error')
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async updateComment(commentId: string, contextId: string, content: string, isMagazine = false) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const comments = isMagazine ? (this.commentsByMagazine[contextId] || []) : (this.commentsByArticle[contextId] || [])
         const index = comments.findIndex((c) => c.id === commentId)
 
         if (this.useMockData) {
@@ -213,7 +273,7 @@ export const useCommentsStore = defineStore('comments', {
       }
     },
 
-    async deleteComment(commentId: string, articleId: string) {
+    async deleteComment(commentId: string, contextId: string, isMagazine = false) {
       this.loading = true
       this.error = null
 
@@ -225,8 +285,13 @@ export const useCommentsStore = defineStore('comments', {
           await apiService.deleteComment(commentId)
         }
 
-        const comments = this.commentsByArticle[articleId] || []
-        this.commentsByArticle[articleId] = comments.filter((c) => c.id !== commentId)
+        if (isMagazine) {
+          const comments = this.commentsByMagazine[contextId] || []
+          this.commentsByMagazine[contextId] = comments.filter((c) => c.id !== commentId)
+        } else {
+          const comments = this.commentsByArticle[contextId] || []
+          this.commentsByArticle[contextId] = comments.filter((c) => c.id !== commentId)
+        }
         
         // Also remove from userComments
         this.userComments = this.userComments.filter(c => c.id !== commentId)

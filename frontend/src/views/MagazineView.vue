@@ -4,6 +4,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { apiServiceExtended, type Magazine, type Article, type User } from '../services/api'
 import ArticleCard from '../components/ArticleCard.vue'
+import CommentSection from '../components/CommentSection.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -142,6 +143,11 @@ const goBack = () => {
         >
           Go to Home Feed
         </RouterLink>
+      </div>
+
+      <!-- Magazine Comments -->
+      <div class="mt-20">
+        <CommentSection :magazine-id="magazineId" />
       </div>
     </div>
   </div>

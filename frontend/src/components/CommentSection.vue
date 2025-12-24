@@ -5,7 +5,8 @@ import CommentList from './CommentList.vue'
 import { useCommentsStore } from '../stores/comments'
 
 interface Props {
-  articleId: string
+  articleId?: string
+  magazineId?: string
   showComments?: boolean
 }
 
@@ -13,10 +14,18 @@ const props = defineProps<Props>()
 const commentsStore = useCommentsStore()
 const isVisible = ref(props.showComments !== undefined ? props.showComments : true)
 
-const commentsCount = computed(() => commentsStore.getCommentsCount(props.articleId))
+const commentsCount = computed(() => {
+  if (props.articleId) return commentsStore.getCommentsCount(props.articleId)
+  if (props.magazineId) return commentsStore.getMagazineCommentsCount(props.magazineId)
+  return 0
+})
 
 onMounted(() => {
-  commentsStore.fetchComments(props.articleId)
+  if (props.articleId) {
+    commentsStore.fetchComments(props.articleId)
+  } else if (props.magazineId) {
+    commentsStore.fetchMagazineComments(props.magazineId)
+  }
 })
 
 const toggleSection = () => {
@@ -67,7 +76,6 @@ const toggleSection = () => {
         </button>
       </div>
 
-      <!-- Comment Form and List (Collapsible) -->
       <transition
         enter-active-class="transition-all duration-300 ease-out"
         leave-active-class="transition-all duration-200 ease-in"
@@ -77,8 +85,8 @@ const toggleSection = () => {
         leave-to-class="opacity-0 max-h-0"
       >
         <div v-show="isVisible" class="overflow-hidden">
-          <CommentForm :article-id="articleId" />
-          <CommentList :article-id="articleId" />
+          <CommentForm :article-id="articleId" :magazine-id="magazineId" />
+          <CommentList :article-id="articleId" :magazine-id="magazineId" />
         </div>
       </transition>
     </div>
