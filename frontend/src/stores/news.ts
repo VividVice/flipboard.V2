@@ -49,8 +49,8 @@ export const useNewsStore = defineStore('news', {
   actions: {
     persistSeenUuids() {
       const uuidsArray = Array.from(this.seenUuids)
-      // Keep only last 1000 to prevent localStorage bloat
-      const limitedArray = uuidsArray.slice(-1000)
+      // Keep only first 1000 to prevent localStorage bloat and maintain a stable set
+      const limitedArray = uuidsArray.slice(0, 1000)
       localStorage.setItem('seen_news_uuids', JSON.stringify(limitedArray))
     },
 
