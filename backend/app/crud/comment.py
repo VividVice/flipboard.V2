@@ -93,12 +93,19 @@ async def get_comments_by_user(user_id: str, skip: int = 0, limit: int = 100):
     )
 
     for comment in comments:
-        # Add article info
-        article = await db.articles.find_one({"id": comment["article_id"]})
-        if article:
-            comment["article_title"] = article.get("title")
-        else:
-            comment["article_title"] = "Deleted Article"
+        # Add context info (Article or Magazine)
+        if comment.get("article_id"):
+            article = await db.articles.find_one({"id": comment["article_id"]})
+            if article:
+                comment["article_title"] = article.get("title")
+            else:
+                comment["article_title"] = "Deleted Article"
+        elif comment.get("magazine_id"):
+            magazine = await db.magazines.find_one({"id": comment["magazine_id"]})
+            if magazine:
+                comment["article_title"] = f"Magazine: {magazine.get('name')}"
+            else:
+                comment["article_title"] = "Deleted Magazine"
 
         # Add user info
         comment["user"] = user_info
