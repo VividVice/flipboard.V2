@@ -236,10 +236,8 @@ export const useNewsStore = defineStore('news', {
         const freshPosts = this.filterFreshPosts(response.posts)
         
         // Also ensure no duplicates with what's already in the current view
-        const uniqueFreshPosts = freshPosts.filter(
-          p => !this.posts.some(existing => existing.uuid === p.uuid)
-        )
-
+        const existingUuids = new Set(this.posts.map(p => p.uuid))
+        const uniqueFreshPosts = freshPosts.filter(p => !existingUuids.has(p.uuid))
         this.posts = [...this.posts, ...uniqueFreshPosts]
         this.totalResults = response.totalResults
         this.moreResultsAvailable = response.moreResultsAvailable
