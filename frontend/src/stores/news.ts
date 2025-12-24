@@ -48,10 +48,19 @@ export const useNewsStore = defineStore('news', {
 
   actions: {
     persistSeenUuids() {
+      if (typeof localStorage === 'undefined') {
+        // In non-browser environments, skip persistence
+        return
+      }
       const uuidsArray = Array.from(this.seenUuids)
-      // Keep only first 1000 to prevent localStorage bloat and maintain a stable set
-      const limitedArray = uuidsArray.slice(0, 1000)
-      localStorage.setItem('seen_news_uuids', JSON.stringify(limitedArray))
+      // Keep only last 1000 to prevent localStorage bloat
+      const limitedArray = uuidsArray.slice(-1000)
+      try {
+        localStorage.setItem('seen_news_uuids', JSON.stringify(limitedArray))
+      } catch (error) {
+        // If localStorage is unavailable or quota is exceeded, skip persistence
+        console.warn('Failed to persist seen_news_uuids to localStorage', error)
+      }
     },
 
     markAsSeen(uuids: string[]) {
