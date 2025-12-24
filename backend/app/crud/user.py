@@ -67,6 +67,44 @@ async def remove_followed_topic(user_id: str, topic_id: str):
     return result.modified_count > 0
 
 
+async def follow_user(follower_id: str, followed_id: str):
+    # Add followed_id to follower's 'following' list
+    await db.users.update_one(
+        {"id": follower_id}, {"$addToSet": {"following": followed_id}}
+    )
+    # Add follower_id to followed's 'followers' list
+    await db.users.update_one(
+        {"id": followed_id}, {"$addToSet": {"followers": follower_id}}
+    )
+    return True
+
+
+async def unfollow_user(follower_id: str, followed_id: str):
+    # Remove followed_id from follower's 'following' list
+    await db.users.update_one(
+        {"id": follower_id}, {"$pull": {"following": followed_id}}
+    )
+    # Remove follower_id from followed's 'followers' list
+    await db.users.update_one(
+        {"id": followed_id}, {"$pull": {"followers": follower_id}}
+    )
+    return True
+
+
+async def follow_magazine(user_id: str, magazine_id: str):
+    result = await db.users.update_one(
+        {"id": user_id}, {"$addToSet": {"followed_magazines": magazine_id}}
+    )
+    return result.modified_count > 0
+
+
+async def unfollow_magazine(user_id: str, magazine_id: str):
+    result = await db.users.update_one(
+        {"id": user_id}, {"$pull": {"followed_magazines": magazine_id}}
+    )
+    return result.modified_count > 0
+
+
 async def update_user(user_id: str, user_update: dict):
     """
     Update user fields.
@@ -87,3 +125,8 @@ async def update_user(user_id: str, user_update: dict):
 
 async def get_user_by_id(user_id: str):
     return await db.users.find_one({"id": user_id})
+
+
+async def get_users_by_ids(user_ids: list):
+    cursor = db.users.find({"id": {"$in": user_ids}})
+    return await cursor.to_list(length=len(user_ids))

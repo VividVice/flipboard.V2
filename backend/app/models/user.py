@@ -13,5 +13,8 @@ class User(BaseModel):
     bio: Optional[str] = None
     profile_pic: Optional[HttpUrl] = None
     followed_topics: List[str] = []
+    followers: List[str] = []
+    following: List[str] = []
+    followed_magazines: List[str] = []
     newsletter_subscribed: bool = False
     created_at: datetime

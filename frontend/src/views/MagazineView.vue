@@ -1,17 +1,42 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import { apiServiceExtended, type Magazine, type Article } from '../services/api'
+import { useAuthStore } from '../stores/auth'
+import { apiServiceExtended, type Magazine, type Article, type User } from '../services/api'
 import ArticleCard from '../components/ArticleCard.vue'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const magazine = ref<Magazine | null>(null)
+const owner = ref<User | null>(null)
 const articles = ref<Article[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
 const magazineId = computed(() => route.params.id as string)
+
+const isOwner = computed(() => {
+  return magazine.value?.user_id === authStore.user?.id
+})
+
+const isFollowed = computed(() => {
+  return authStore.user?.followed_magazines.includes(magazineId.value)
+})
+
+const handleFollowToggle = async () => {
+  if (!magazine.value) return
+  
+  try {
+    if (isFollowed.value) {
+      await authStore.unfollowMagazine(magazineId.value)
+    } else {
+      await authStore.followMagazine(magazineId.value)
+    }
+  } catch (err) {
+    console.error('Failed to toggle magazine follow:', err)
+  }
+}
 
 onMounted(async () => {
   await fetchMagazineData()
@@ -21,17 +46,15 @@ const fetchMagazineData = async () => {
   loading.value = true
   error.value = null
   try {
-    // Fetch magazine details (we might want a getMagazineById method in store or api)
-    // Currently relying on a direct API call for now to keep it simple or we can add to store
-    // Let's assume we can get it via the list for now or fetch individual if we add that endpoint
-    // Actually we added getMagazine(id) in backend, let's add it to frontend API
-    
     // 1. Get Magazine Details
-    // We need to add getMagazineById to apiServiceExtended first or use the list if already loaded? 
-    // Best to fetch fresh.
-    // 1. Get Magazine Details via centralized API service
     magazine.value = await apiServiceExtended.getMagazineById(magazineId.value)
-    // 2. Get Articles
+    
+    // 2. Get Owner Details
+    if (magazine.value?.user_id) {
+      owner.value = await apiServiceExtended.getUserById(magazine.value.user_id)
+    }
+
+    // 3. Get Articles
     articles.value = await apiServiceExtended.getMagazineArticles(magazineId.value)
     
   } catch (err: any) {
@@ -70,11 +93,31 @@ const goBack = () => {
         </button>
         
         <h1 class="text-4xl md:text-6xl font-display font-bold text-white mb-4">{{ magazine.name }}</h1>
-        <p v-if="magazine.description" class="text-xl text-gray-400 font-serif max-w-3xl">{{ magazine.description }}</p>
-        <div class="mt-6 flex items-center text-gray-500 text-sm font-bold uppercase tracking-wider">
-          <span>{{ articles.length }} Stories</span>
-          <span class="mx-2">•</span>
-          <span>Updated {{ new Date(magazine.updated_at).toLocaleDateString() }}</span>
+        <p v-if="magazine.description" class="text-xl text-gray-400 font-serif max-w-3xl mb-6">{{ magazine.description }}</p>
+        
+        <div class="flex flex-wrap items-center gap-y-4">
+          <div v-if="owner" class="flex items-center mr-8">
+            <span class="text-gray-500 text-xs font-bold uppercase tracking-wider mr-2">Par</span>
+            <RouterLink :to="`/user/${owner.username}`" class="flex items-center group">
+              <img :src="owner.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'" class="h-6 w-6 rounded-full mr-2 border border-gray-700 group-hover:border-flipboard-red transition-colors" />
+              <span class="text-white text-sm font-bold hover:text-flipboard-red transition-colors">{{ owner.username }}</span>
+            </RouterLink>
+          </div>
+
+          <div class="flex items-center text-gray-500 text-sm font-bold uppercase tracking-wider mr-8">
+            <span>{{ articles.length }} Stories</span>
+            <span class="mx-2">•</span>
+            <span>Updated {{ new Date(magazine.updated_at).toLocaleDateString() }}</span>
+          </div>
+
+          <button 
+            v-if="!isOwner"
+            @click="handleFollowToggle"
+            :class="isFollowed ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-flipboard-red border-flipboard-red text-white'"
+            class="border px-6 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:opacity-90 transition-all"
+          >
+            {{ isFollowed ? 'Following Magazine' : 'Follow Magazine' }}
+          </button>
         </div>
       </div>
       

@@ -1,9 +1,10 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.crud import article as crud_article
 from app.crud import magazine as crud_magazine
+from app.crud import user as crud_user
 from app.dependencies import get_current_user
 from app.schemas.article import Article
 from app.schemas.magazine import Magazine, MagazineCreate, MagazineUpdate
@@ -20,14 +21,8 @@ async def get_magazine_articles(
     if not magazine:
         raise HTTPException(status_code=404, detail="Magazine not found")
 
-    # Check if user can view this magazine (assuming private for now)
-    # For now, allow only if it's the user's magazine.
-    # Deny access for non-owners until public visibility is implemented.
-    if magazine["user_id"] != current_user["id"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this magazine",
-        )
+    # For now, allow public viewing of all magazines to support Public Profiles.
+    # In the future, a 'is_public' flag could be added to the Magazine model.
 
     article_ids = magazine.get("article_ids", [])
     if not article_ids:
@@ -49,6 +44,50 @@ async def create_magazine(
 @router.get("/", response_model=List[Magazine])
 async def get_user_magazines(current_user: dict = Depends(get_current_user)):
     return await crud_magazine.get_user_magazines(user_id=current_user["id"])
+
+
+@router.get("/user/{user_id}", response_model=List[Magazine])
+async def get_magazines_by_user(user_id: str):
+    return await crud_magazine.get_user_magazines(user_id=user_id)
+
+
+@router.get("/followed/me", response_model=List[Magazine])
+async def get_followed_magazines(current_user: dict = Depends(get_current_user)):
+    magazine_ids = current_user.get("followed_magazines", [])
+    if not magazine_ids:
+        return []
+
+    magazines = []
+    for mag_id in magazine_ids:
+        mag = await crud_magazine.get_magazine_by_id(mag_id)
+        if mag:
+            magazines.append(mag)
+    return magazines
+
+
+@router.post("/{magazine_id}/follow")
+async def follow_magazine(
+    magazine_id: str, current_user: dict = Depends(get_current_user)
+):
+    mag = await crud_magazine.get_magazine_by_id(magazine_id)
+    if not mag:
+        raise HTTPException(status_code=404, detail="Magazine not found")
+
+    if mag["user_id"] == current_user["id"]:
+        raise HTTPException(
+            status_code=400, detail="You cannot follow your own magazine"
+        )
+
+    await crud_user.follow_magazine(current_user["id"], magazine_id)
+    return {"message": "Successfully followed magazine"}
+
+
+@router.post("/{magazine_id}/unfollow")
+async def unfollow_magazine(
+    magazine_id: str, current_user: dict = Depends(get_current_user)
+):
+    await crud_user.unfollow_magazine(current_user["id"], magazine_id)
+    return {"message": "Successfully unfollowed magazine"}
 
 
 @router.get("/{magazine_id}", response_model=Magazine)

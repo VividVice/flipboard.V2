@@ -18,6 +18,9 @@ export interface User {
   avatarUrl: string
   bio?: string
   newsletter_subscribed: boolean
+  followers: string[]
+  following: string[]
+  followed_magazines: string[]
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -46,7 +49,10 @@ export const useAuthStore = defineStore('auth', {
             email: userData.email,
             avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
             bio: userData.bio,
-            newsletter_subscribed: userData.newsletter_subscribed || false
+            newsletter_subscribed: userData.newsletter_subscribed || false,
+            followers: userData.followers || [],
+            following: userData.following || [],
+            followed_magazines: userData.followed_magazines || []
           }
           this.isAuthenticated = true
         } else {
@@ -77,7 +83,10 @@ export const useAuthStore = defineStore('auth', {
             email: userData.email,
             avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
             bio: userData.bio,
-            newsletter_subscribed: userData.newsletter_subscribed || false
+            newsletter_subscribed: userData.newsletter_subscribed || false,
+            followers: userData.followers || [],
+            following: userData.following || [],
+            followed_magazines: userData.followed_magazines || []
           }
           this.isAuthenticated = true
           toast.show(`Welcome back, ${this.user.name}!`)
@@ -109,7 +118,10 @@ export const useAuthStore = defineStore('auth', {
             email: userData.email,
             avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
             bio: userData.bio,
-            newsletter_subscribed: userData.newsletter_subscribed || false
+            newsletter_subscribed: userData.newsletter_subscribed || false,
+            followers: userData.followers || [],
+            following: userData.following || [],
+            followed_magazines: userData.followed_magazines || []
           }
           this.isAuthenticated = true
           toast.show(`Welcome back, ${this.user.name}!`)
@@ -135,7 +147,10 @@ export const useAuthStore = defineStore('auth', {
           email: userData.email,
           avatarUrl: userData.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
           bio: userData.bio,
-          newsletter_subscribed: userData.newsletter_subscribed || false
+          newsletter_subscribed: userData.newsletter_subscribed || false,
+          followers: userData.followers || [],
+          following: userData.following || [],
+          followed_magazines: userData.followed_magazines || []
         }
         this.isAuthenticated = true
         toast.show(`Welcome to Flipboard, ${username}!`)
@@ -192,6 +207,66 @@ export const useAuthStore = defineStore('auth', {
         toast.show('Newsletter processing triggered!', 'success')
       } catch (error: any) {
         toast.show('Failed to trigger newsletter', 'error')
+      }
+    },
+
+    async followUser(userId: string) {
+      const toast = useToastStore()
+      try {
+        await apiServiceExtended.followUser(userId)
+        if (this.user) {
+          if (!this.user.following.includes(userId)) {
+            this.user.following.push(userId)
+          }
+        }
+      } catch (error: any) {
+        toast.show('Failed to follow user', 'error')
+        throw error
+      }
+    },
+
+    async unfollowUser(userId: string) {
+      const toast = useToastStore()
+      try {
+        await apiServiceExtended.unfollowUser(userId)
+        if (this.user) {
+          this.user.following = this.user.following.filter(id => id !== userId)
+        }
+      } catch (error: any) {
+        toast.show('Failed to unfollow user', 'error')
+        throw error
+      }
+    },
+
+    async followMagazine(magazineId: string) {
+      const toast = useToastStore()
+      try {
+        await apiServiceExtended.followMagazine(magazineId)
+        if (this.user) {
+          if (!this.user.followed_magazines.includes(magazineId)) {
+            this.user.followed_magazines.push(magazineId)
+          }
+        }
+        const magazineStore = useMagazineStore()
+        await magazineStore.fetchFollowedMagazines()
+      } catch (error: any) {
+        toast.show('Failed to follow magazine', 'error')
+        throw error
+      }
+    },
+
+    async unfollowMagazine(magazineId: string) {
+      const toast = useToastStore()
+      try {
+        await apiServiceExtended.unfollowMagazine(magazineId)
+        if (this.user) {
+          this.user.followed_magazines = this.user.followed_magazines.filter(id => id !== magazineId)
+        }
+        const magazineStore = useMagazineStore()
+        await magazineStore.fetchFollowedMagazines()
+      } catch (error: any) {
+        toast.show('Failed to unfollow magazine', 'error')
+        throw error
       }
     },
 

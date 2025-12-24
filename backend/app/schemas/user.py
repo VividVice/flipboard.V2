@@ -11,6 +11,9 @@ class UserBase(BaseModel):
     bio: Optional[str] = None
     profile_pic: Optional[HttpUrl] = None
     followed_topics: List[str] = []
+    followers: List[str] = []
+    following: List[str] = []
+    followed_magazines: List[str] = []
     newsletter_subscribed: bool = False
 
 
@@ -44,6 +47,19 @@ class UserInDBBase(UserBase):
 
 class User(UserInDBBase):
     pass
+
+
+class UserPublic(BaseModel):
+    id: uuid.UUID
+    username: str
+    bio: Optional[str] = None
+    profile_pic: Optional[HttpUrl] = None
+    followers: List[str] = []
+    following: List[str] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class UserInDB(UserInDBBase):

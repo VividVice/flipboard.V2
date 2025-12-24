@@ -7,6 +7,7 @@ import { useAuthStore } from '../stores/auth'
 import { useCommentsStore } from '../stores/comments'
 import ArticleCard from '../components/ArticleCard.vue'
 import CommentItem from '../components/CommentItem.vue'
+import UserListModal from '../components/UserListModal.vue'
 import { storeToRefs } from 'pinia'
 
 const router = useRouter()
@@ -15,7 +16,7 @@ const magazineStore = useMagazineStore()
 const authStore = useAuthStore()
 const commentsStore = useCommentsStore()
 const { savedArticles } = storeToRefs(articleStore)
-const { magazines } = storeToRefs(magazineStore)
+const { magazines, followedMagazines } = storeToRefs(magazineStore)
 const { user } = storeToRefs(authStore)
 const { userComments, loading: commentsLoading } = storeToRefs(commentsStore)
 
@@ -32,6 +33,7 @@ const triggerNewsletter = async () => {
 onMounted(() => {
   articleStore.fetchSavedArticles()
   magazineStore.fetchUserMagazines()
+  magazineStore.fetchFollowedMagazines()
 })
 
 const activeTab = ref('saved') // 'saved', 'magazines', 'comments', 'settings'
@@ -41,6 +43,18 @@ const handleTabChange = (tab: string) => {
   if (tab === 'comments') {
     commentsStore.fetchUserComments()
   }
+}
+
+// User List Modal Logic
+const isUserListModalOpen = ref(false)
+const userListTitle = ref('')
+const userListIds = ref<string[]>([])
+
+const openUserList = (type: 'followers' | 'following') => {
+  if (!user.value) return
+  userListTitle.value = type === 'followers' ? 'Followers' : 'Following'
+  userListIds.value = type === 'followers' ? user.value.followers : user.value.following
+  isUserListModalOpen.value = true
 }
 
 // Create Magazine Logic
@@ -110,11 +124,11 @@ const handleUpdateProfile = async () => {
 
 const displayUser = computed(() => {
   return {
-    name: user.value?.name || 'June Doe',
-    username: `@${user.value?.name?.toLowerCase().replace(/\s+/g, '')}` || '@junedoe',
+    name: user.value?.name || 'User',
+    username: user.value?.name ? `@${user.value.name.toLowerCase().replace(/\s+/g, '')}` : '@user',
     bio: user.value?.bio || 'Salut tout le monde.',
-    followers: 1205,
-    following: 45,
+    followers: user.value?.followers?.length || 0,
+    following: user.value?.following?.length || 0,
     avatarUrl: user.value?.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   }
 })
@@ -148,14 +162,14 @@ const getMagazineCover = (articleIds: string[]) => {
         </p>
         
         <div class="mt-8 flex justify-center space-x-8 text-sm font-bold uppercase tracking-widest">
-           <div class="text-center">
-             <span class="block text-2xl text-white font-display">{{ displayUser.followers }}</span>
-             <span class="text-gray-500">Followers</span>
-           </div>
-           <div class="text-center">
-             <span class="block text-2xl text-white font-display">{{ displayUser.following }}</span>
-             <span class="text-gray-500">Following</span>
-           </div>
+           <button @click="openUserList('followers')" class="text-center group">
+             <span class="block text-2xl text-white font-display group-hover:text-flipboard-red transition-colors">{{ displayUser.followers }}</span>
+             <span class="text-gray-500 group-hover:text-gray-300 transition-colors">Followers</span>
+           </button>
+           <button @click="openUserList('following')" class="text-center group">
+             <span class="block text-2xl text-white font-display group-hover:text-flipboard-red transition-colors">{{ displayUser.following }}</span>
+             <span class="text-gray-500 group-hover:text-gray-300 transition-colors">Following</span>
+           </button>
         </div>
         
         <div class="mt-8">
@@ -345,7 +359,9 @@ const getMagazineCover = (articleIds: string[]) => {
 
        <!-- Magazines Grid -->
        <div v-if="activeTab === 'magazines'">
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <!-- My Magazines Section -->
+          <h2 class="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-6">My Magazines</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-16">
              <div 
                v-for="mag in magazines" 
                :key="mag.id" 
@@ -375,6 +391,26 @@ const getMagazineCover = (articleIds: string[]) => {
                 <span class="font-bold text-gray-400 group-hover:text-white uppercase tracking-wide text-sm">Create Magazine</span>
              </div>
           </div>
+
+          <!-- Followed Magazines Section -->
+          <template v-if="followedMagazines.length > 0">
+            <h2 class="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-6">Followed Magazines</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div 
+                v-for="mag in followedMagazines" 
+                :key="mag.id" 
+                @click="router.push({ name: 'magazine', params: { id: mag.id } })"
+                class="group relative aspect-[3/4] bg-gray-800 rounded-lg overflow-hidden cursor-pointer border border-gray-700 hover:border-gray-500 transition-colors"
+              >
+                  <img :src="getMagazineCover(mag.article_ids)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
+                  
+                  <div class="absolute inset-0 flex flex-col justify-end p-6">
+                    <h3 class="text-2xl font-display font-bold text-white leading-tight mb-1 shadow-black drop-shadow-lg">{{ mag.name }}</h3>
+                    <p class="text-sm text-gray-300 font-bold uppercase tracking-wider">{{ mag.article_ids.length }} Stories</p>
+                  </div>
+              </div>
+            </div>
+          </template>
        </div>
        
        <!-- Comments List -->
@@ -426,6 +462,15 @@ const getMagazineCover = (articleIds: string[]) => {
              </div>
           </div>
        </div>
-    </div>
+     </div>
+
+     <UserListModal
+       v-if="isUserListModalOpen"
+       :is-open="isUserListModalOpen"
+       :title="userListTitle"
+       :user-ids="userListIds"
+       @close="isUserListModalOpen = false"
+     />
+
   </div>
 </template>

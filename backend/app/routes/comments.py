@@ -38,6 +38,16 @@ async def get_my_comments(
     return comments
 
 
+@router.get("/users/{user_id}/comments", response_model=List[CommentWithUser])
+async def get_user_comments(
+    user_id: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+):
+    comments = await comment_crud.get_comments_by_user(user_id, skip=skip, limit=limit)
+    return comments
+
+
 @router.post(
     "/articles/{article_id}/comments",
     response_model=CommentWithUser,

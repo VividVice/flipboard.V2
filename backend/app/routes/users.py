@@ -1,11 +1,64 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.crud import user as user_crud
 from app.dependencies import get_current_user
-from app.schemas.user import User, UserUpdate
+from app.schemas.user import User, UserPublic, UserUpdate
 from app.utils.newsletter import process_weekly_newsletter
 
 router = APIRouter()
+
+
+@router.get("/{username}", response_model=UserPublic)
+async def get_user_by_username(username: str):
+    user = await user_crud.get_user_by_username(username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return user
+
+
+@router.get("/id/{user_id}", response_model=UserPublic)
+async def get_user_by_id(user_id: str):
+    user = await user_crud.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return user
+
+
+@router.post("/list", response_model=List[UserPublic])
+async def get_users_list(user_ids: List[str]):
+    users = await user_crud.get_users_by_ids(user_ids)
+    return users
+
+
+@router.post("/{user_id}/follow")
+async def follow_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="You cannot follow yourself")
+
+    target_user = await user_crud.get_user_by_id(user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await user_crud.follow_user(current_user["id"], user_id)
+    return {"message": "Successfully followed user"}
+
+
+@router.post("/{user_id}/unfollow")
+async def unfollow_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    target_user = await user_crud.get_user_by_id(user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await user_crud.unfollow_user(current_user["id"], user_id)
+    return {"message": "Successfully unfollowed user"}
 
 
 @router.post("/newsletter/trigger")
