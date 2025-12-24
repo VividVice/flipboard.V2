@@ -44,9 +44,7 @@ async def get_user_comments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
 ):
-    comments = await comment_crud.get_comments_by_user(
-        user_id, skip=skip, limit=limit
-    )
+    comments = await comment_crud.get_comments_by_user(user_id, skip=skip, limit=limit)
     return comments
 
 
