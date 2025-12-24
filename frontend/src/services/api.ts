@@ -669,8 +669,8 @@ class ApiServiceExtended extends ApiService {
     if (!response.ok) throw new Error('Failed to remove article from magazine')
   }
 
-  async getMagazineArticles(magazine_id: string): Promise<Article[]> {
-    const response = await fetch(`${API_BASE_URL}/magazines/${magazine_id}/articles`, {
+  async getMagazineArticles(magazineId: string): Promise<Article[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${magazineId}/articles`, {
       headers: this.getHeaders(true),
     })
     if (!response.ok) throw new Error('Failed to fetch magazine articles')
