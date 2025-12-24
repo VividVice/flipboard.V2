@@ -16,7 +16,18 @@ export const useNewsStore = defineStore('news', {
     currentSentiment: null as string | null,
     isPersonalizedFeed: false,
     currentCountry: 'US' as string, // Default to US
-    seenUuids: new Set<string>(JSON.parse(localStorage.getItem('seen_news_uuids') || '[]'))
+    seenUuids: new Set<string>((() => {
+      try {
+        const stored = localStorage.getItem('seen_news_uuids')
+        if (!stored) {
+          return []
+        }
+        const parsed = JSON.parse(stored)
+        return Array.isArray(parsed) ? parsed : []
+      } catch {
+        return []
+      }
+    })())
   }),
 
   getters: {
