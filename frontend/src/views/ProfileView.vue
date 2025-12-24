@@ -461,24 +461,16 @@ const getMagazineCover = (articleIds: string[]) => {
                 </button>
              </div>
           </div>
-             </div>
-           </div>
-       
-               <UserListModal 
-       
-                 v-if="isUserListModalOpen"
-       
-                 :is-open="isUserListModalOpen"
-       
-                 :title="userListTitle"
-       
-                 :user-ids="userListIds"
-       
-                 @close="isUserListModalOpen = false"
-       
-               />
-       
-           
-         </div>
-       </template>
-       
+       </div>
+     </div>
+
+     <UserListModal
+       v-if="isUserListModalOpen"
+       :is-open="isUserListModalOpen"
+       :title="userListTitle"
+       :user-ids="userListIds"
+       @close="isUserListModalOpen = false"
+     />
+
+  </div>
+</template>
