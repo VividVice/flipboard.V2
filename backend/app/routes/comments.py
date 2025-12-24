@@ -113,6 +113,7 @@ async def delete_comment(
 
     await comment_crud.delete_comment(comment_id)
 
-    await article_crud.increment_comment_count(comment["article_id"], -1)
+    if comment.get("article_id"):
+        await article_crud.increment_comment_count(comment["article_id"], -1)
 
     return None
