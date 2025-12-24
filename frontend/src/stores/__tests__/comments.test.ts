@@ -151,7 +151,7 @@ describe('Comments Store', () => {
         expect(store.commentsByArticle['article-1']).toEqual([mockComment])
       })
 
-      it('should fall back to mock mode on API error', async () => {
+      it('should handle API error without falling back to mock mode', async () => {
         const store = useCommentsStore()
         store.useMockData = false
 
@@ -159,8 +159,9 @@ describe('Comments Store', () => {
 
         await store.fetchComments('article-1')
 
-        expect(store.useMockData).toBe(true)
-        expect(store.commentsByArticle['article-1']).toEqual([])
+        expect(store.useMockData).toBe(false)
+        expect(store.error).toBe('Failed to load comments')
+        expect(store.commentsByArticle['article-1']).toBeUndefined()
       })
     })
 
