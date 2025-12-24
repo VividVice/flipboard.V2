@@ -88,6 +88,16 @@ async def import_article(
     # Check if exists by URL
     existing = await article_crud.get_article_by_url(article_in.source_url)
     if existing:
+        # Check if new content is significantly longer (indicating full content update)
+        existing_content_len = len(existing.get("content", "") or "")
+        new_content_len = len(article_in.content or "")
+
+        # If new content is longer by at least 100 chars, update it
+        if new_content_len > existing_content_len + 100:
+            update_data = ArticleUpdate(content=article_in.content)
+            updated = await article_crud.update_article(existing["id"], update_data)
+            return await enrich_article(updated, current_user)
+
         return await enrich_article(existing, current_user)
 
     # Create new
