@@ -150,6 +150,12 @@ onMounted(async () => {
             ...rest,
             isExternal: false
           }
+          
+          // If local content is longer/better than what we just imported (e.g. fetchFullContent finished first),
+          // push the full content to the backend.
+          if (article.value.content && article.value.content.length > (importedArticle.content?.length || 0) + 100) {
+              apiServiceExtended.importArticle(article.value).catch(console.error)
+          }
         }
       })
       .catch(e => console.error('Import failed', e))
@@ -173,6 +179,11 @@ const fetchFullContent = async (url: string) => {
       const fullContent = await apiServiceExtended.getArticleContent(url)
       if (article.value && fullContent.content && fullContent.content.length > (article.value.content?.length || 0)) {
         article.value.content = fullContent.content
+        
+        // If the article is already imported (not external), update the backend with the full content
+        if (!article.value.isExternal && article.value.id) {
+             apiServiceExtended.importArticle(article.value).catch(console.error)
+        }
       }
     } catch (e) {
       console.error('Failed to fetch full content', e)
