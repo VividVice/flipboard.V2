@@ -31,6 +31,7 @@ const fetchUsers = async () => {
     users.value = await apiServiceExtended.getUsersByIds(props.userIds)
   } catch (error) {
     console.error('Failed to fetch users:', error)
+    window.alert('Failed to load users. Please try again.')
   } finally {
     loading.value = false
   }
