@@ -149,7 +149,7 @@ async def test_toggle_save_new_interaction(mock_db):
     mock_db.user_interactions.insert_one = AsyncMock()
 
     # WHEN toggle_save is called
-    result = await interaction_crud.toggle_save("test-user-id", "test-article-id")
+    await interaction_crud.toggle_save("test-user-id", "test-article-id")
 
     # THEN a new interaction is created with is_saved=True
     mock_db.user_interactions.insert_one.assert_awaited_once()
@@ -176,7 +176,7 @@ async def test_toggle_save_already_saved(mock_db):
     mock_db.user_interactions.update_one = AsyncMock()
 
     # WHEN toggle_save is called
-    result = await interaction_crud.toggle_save("test-user-id", "test-article-id")
+    await interaction_crud.toggle_save("test-user-id", "test-article-id")
 
     # THEN save is toggled off
     mock_db.user_interactions.update_one.assert_awaited_once()
@@ -202,7 +202,7 @@ async def test_toggle_save_not_saved(mock_db):
     mock_db.user_interactions.update_one = AsyncMock()
 
     # WHEN toggle_save is called
-    result = await interaction_crud.toggle_save("test-user-id", "test-article-id")
+    await interaction_crud.toggle_save("test-user-id", "test-article-id")
 
     # THEN save is toggled on
     call_args = mock_db.user_interactions.update_one.call_args
