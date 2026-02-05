@@ -45,5 +45,9 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: {
+      VITE_GOOGLE_CLIENT_ID: 'mock-google-client-id',
+      VITE_API_URL: 'http://localhost:8000',
+    },
   },
 })
