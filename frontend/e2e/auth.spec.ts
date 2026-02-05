@@ -67,7 +67,7 @@ test.describe('Authentication', () => {
       await page.getByRole('button', { name: /log in/i }).click()
 
       // Wait for error message (network error or invalid credentials)
-      await expect(page.locator('.bg-red-500\\/10, [class*="error"]').first()).toBeVisible({ timeout: 10000 })
+      await expect(page.getByText(/login failed|invalid|error|incorrect/i).first()).toBeVisible({ timeout: 10000 })
     })
 
     test('should navigate to signup from login', async ({ page }) => {
