@@ -10,6 +10,7 @@ pytestmark = pytest.mark.anyio
 @pytest.fixture
 def app():
     from app.main import app
+
     return app
 
 
@@ -21,21 +22,22 @@ def app():
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_create_magazine(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_create_magazine(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN authenticated user
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.create_magazine = AsyncMock(return_value=test_magazine)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN create magazine is called
         response = await client.post(
             "/magazines/",
             json={"name": "Test Magazine", "description": "Test description"},
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN magazine is created
@@ -46,14 +48,10 @@ async def test_create_magazine(mock_verify, mock_get_user, mock_magazine_crud, a
 async def test_create_magazine_unauthorized(app):
     # GIVEN no auth token
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN create magazine is called
-        response = await client.post(
-            "/magazines/",
-            json={"name": "Test Magazine"}
-        )
+        response = await client.post("/magazines/", json={"name": "Test Magazine"})
 
     # THEN unauthorized is returned
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -67,20 +65,20 @@ async def test_create_magazine_unauthorized(app):
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_get_user_magazines(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_get_user_magazines(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN authenticated user with magazines
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_user_magazines = AsyncMock(return_value=[test_magazine])
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN get magazines is called
         response = await client.get(
-            "/magazines/",
-            headers={"Authorization": "Bearer valid-token"}
+            "/magazines/", headers={"Authorization": "Bearer valid-token"}
         )
 
     # THEN user's magazines are returned
@@ -96,20 +94,21 @@ async def test_get_user_magazines(mock_verify, mock_get_user, mock_magazine_crud
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_get_magazine(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_get_magazine(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN authenticated user and magazine exists
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN get magazine is called
         response = await client.get(
             f"/magazines/{test_magazine['id']}",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN magazine is returned
@@ -120,20 +119,20 @@ async def test_get_magazine(mock_verify, mock_get_user, mock_magazine_crud, app,
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_get_magazine_not_found(mock_verify, mock_get_user, mock_magazine_crud, app, test_user):
+async def test_get_magazine_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
     # GIVEN magazine doesn't exist
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN get magazine is called
         response = await client.get(
-            "/magazines/nonexistent-id",
-            headers={"Authorization": "Bearer valid-token"}
+            "/magazines/nonexistent-id", headers={"Authorization": "Bearer valid-token"}
         )
 
     # THEN 404 is returned
@@ -148,24 +147,27 @@ async def test_get_magazine_not_found(mock_verify, mock_get_user, mock_magazine_
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_update_magazine(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_update_magazine(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN authenticated user owns the magazine
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
     mock_magazine_crud.update_magazine = AsyncMock(return_value=True)
     updated_magazine = {**test_magazine, "name": "Updated Name"}
-    mock_magazine_crud.get_magazine_by_id = AsyncMock(side_effect=[test_magazine, updated_magazine])
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(
+        side_effect=[test_magazine, updated_magazine]
+    )
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN update magazine is called
         response = await client.put(
             f"/magazines/{test_magazine['id']}",
             json={"name": "Updated Name"},
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN magazine is updated
@@ -175,7 +177,9 @@ async def test_update_magazine(mock_verify, mock_get_user, mock_magazine_crud, a
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_update_magazine_not_owner(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_update_magazine_not_owner(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN user doesn't own the magazine
     different_user = {**test_user, "id": "different-user-id"}
     mock_verify.return_value = {"sub": different_user["id"]}
@@ -183,14 +187,13 @@ async def test_update_magazine_not_owner(mock_verify, mock_get_user, mock_magazi
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN update magazine is called
         response = await client.put(
             f"/magazines/{test_magazine['id']}",
             json={"name": "Updated Name"},
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN 403 is returned
@@ -205,7 +208,9 @@ async def test_update_magazine_not_owner(mock_verify, mock_get_user, mock_magazi
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_delete_magazine(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_delete_magazine(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN authenticated user owns the magazine
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
@@ -213,13 +218,12 @@ async def test_delete_magazine(mock_verify, mock_get_user, mock_magazine_crud, a
     mock_magazine_crud.delete_magazine = AsyncMock()
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN delete magazine is called
         response = await client.delete(
             f"/magazines/{test_magazine['id']}",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN magazine is deleted
@@ -230,7 +234,9 @@ async def test_delete_magazine(mock_verify, mock_get_user, mock_magazine_crud, a
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_delete_magazine_not_owner(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_delete_magazine_not_owner(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN user doesn't own the magazine
     different_user = {**test_user, "id": "different-user-id"}
     mock_verify.return_value = {"sub": different_user["id"]}
@@ -238,13 +244,12 @@ async def test_delete_magazine_not_owner(mock_verify, mock_get_user, mock_magazi
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN delete magazine is called
         response = await client.delete(
             f"/magazines/{test_magazine['id']}",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN 403 is returned
@@ -260,7 +265,16 @@ async def test_delete_magazine_not_owner(mock_verify, mock_get_user, mock_magazi
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_add_article_to_magazine(mock_verify, mock_get_user, mock_magazine_crud, mock_article_crud, app, test_user, test_magazine, test_article):
+async def test_add_article_to_magazine(
+    mock_verify,
+    mock_get_user,
+    mock_magazine_crud,
+    mock_article_crud,
+    app,
+    test_user,
+    test_magazine,
+    test_article,
+):
     # GIVEN user owns magazine and article exists
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
@@ -269,13 +283,12 @@ async def test_add_article_to_magazine(mock_verify, mock_get_user, mock_magazine
     mock_magazine_crud.add_article_to_magazine = AsyncMock()
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN add article is called
         response = await client.post(
             f"/magazines/{test_magazine['id']}/articles/{test_article['id']}",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN article is added
@@ -287,20 +300,21 @@ async def test_add_article_to_magazine(mock_verify, mock_get_user, mock_magazine
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_add_article_magazine_not_found(mock_verify, mock_get_user, mock_magazine_crud, mock_article_crud, app, test_user):
+async def test_add_article_magazine_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, mock_article_crud, app, test_user
+):
     # GIVEN magazine doesn't exist
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN add article is called
         response = await client.post(
             "/magazines/nonexistent/articles/article-id",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN 404 is returned
@@ -311,7 +325,15 @@ async def test_add_article_magazine_not_found(mock_verify, mock_get_user, mock_m
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_add_article_article_not_found(mock_verify, mock_get_user, mock_magazine_crud, mock_article_crud, app, test_user, test_magazine):
+async def test_add_article_article_not_found(
+    mock_verify,
+    mock_get_user,
+    mock_magazine_crud,
+    mock_article_crud,
+    app,
+    test_user,
+    test_magazine,
+):
     # GIVEN article doesn't exist
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
@@ -319,13 +341,12 @@ async def test_add_article_article_not_found(mock_verify, mock_get_user, mock_ma
     mock_article_crud.get_article_by_id = AsyncMock(return_value=None)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN add article is called
         response = await client.post(
             f"/magazines/{test_magazine['id']}/articles/nonexistent",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN 404 is returned
@@ -340,7 +361,15 @@ async def test_add_article_article_not_found(mock_verify, mock_get_user, mock_ma
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_remove_article_from_magazine(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine, test_article):
+async def test_remove_article_from_magazine(
+    mock_verify,
+    mock_get_user,
+    mock_magazine_crud,
+    app,
+    test_user,
+    test_magazine,
+    test_article,
+):
     # GIVEN user owns magazine
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
@@ -348,13 +377,12 @@ async def test_remove_article_from_magazine(mock_verify, mock_get_user, mock_mag
     mock_magazine_crud.remove_article_from_magazine = AsyncMock()
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN remove article is called
         response = await client.delete(
             f"/magazines/{test_magazine['id']}/articles/{test_article['id']}",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN article is removed
@@ -372,22 +400,33 @@ async def test_remove_article_from_magazine(mock_verify, mock_get_user, mock_mag
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_get_magazine_articles(mock_verify, mock_get_user, mock_magazine_crud, mock_article_crud, mock_enrich, app, test_user, test_magazine_with_articles, test_article):
+async def test_get_magazine_articles(
+    mock_verify,
+    mock_get_user,
+    mock_magazine_crud,
+    mock_article_crud,
+    mock_enrich,
+    app,
+    test_user,
+    test_magazine_with_articles,
+    test_article,
+):
     # GIVEN magazine has articles
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
-    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine_with_articles)
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(
+        return_value=test_magazine_with_articles
+    )
     mock_article_crud.get_articles_by_ids = AsyncMock(return_value=[test_article])
     mock_enrich.return_value = [test_article]
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN get articles is called
         response = await client.get(
             f"/magazines/{test_magazine_with_articles['id']}/articles",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN articles are returned
@@ -404,7 +443,16 @@ async def test_get_magazine_articles(mock_verify, mock_get_user, mock_magazine_c
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_follow_magazine(mock_verify, mock_get_user, mock_magazine_crud, mock_user_crud, app, test_user, test_user_2, test_magazine):
+async def test_follow_magazine(
+    mock_verify,
+    mock_get_user,
+    mock_magazine_crud,
+    mock_user_crud,
+    app,
+    test_user,
+    test_user_2,
+    test_magazine,
+):
     # GIVEN user wants to follow someone else's magazine
     other_user_magazine = {**test_magazine, "user_id": test_user_2["id"]}
     mock_verify.return_value = {"sub": test_user["id"]}
@@ -413,13 +461,12 @@ async def test_follow_magazine(mock_verify, mock_get_user, mock_magazine_crud, m
     mock_user_crud.follow_magazine = AsyncMock()
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN follow magazine is called
         response = await client.post(
             f"/magazines/{other_user_magazine['id']}/follow",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN magazine is followed
@@ -430,20 +477,21 @@ async def test_follow_magazine(mock_verify, mock_get_user, mock_magazine_crud, m
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
-async def test_follow_own_magazine(mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine):
+async def test_follow_own_magazine(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
     # GIVEN user tries to follow their own magazine
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN follow magazine is called
         response = await client.post(
             f"/magazines/{test_magazine['id']}/follow",
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
     # THEN error is returned
@@ -461,8 +509,7 @@ async def test_get_magazines_by_user(mock_magazine_crud, app, test_user, test_ma
     mock_magazine_crud.get_user_magazines = AsyncMock(return_value=[test_magazine])
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # WHEN get magazines by user is called
         response = await client.get(f"/magazines/user/{test_user['id']}")

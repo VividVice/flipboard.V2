@@ -20,7 +20,9 @@ async def test_get_interaction_found(mock_db, test_interaction):
     mock_db.user_interactions.find_one = AsyncMock(return_value=test_interaction)
 
     # WHEN get_interaction is called
-    result = await interaction_crud.get_interaction("test-user-id-123", "test-article-id-123")
+    result = await interaction_crud.get_interaction(
+        "test-user-id-123", "test-article-id-123"
+    )
 
     # THEN the interaction is returned
     mock_db.user_interactions.find_one.assert_awaited_with(
@@ -64,7 +66,9 @@ async def test_toggle_like_new_interaction(mock_db):
     mock_db.user_interactions.insert_one = AsyncMock()
 
     # WHEN toggle_like is called
-    result, increment = await interaction_crud.toggle_like("test-user-id", "test-article-id")
+    result, increment = await interaction_crud.toggle_like(
+        "test-user-id", "test-article-id"
+    )
 
     # THEN a new interaction is created with is_liked=True
     mock_db.user_interactions.insert_one.assert_awaited_once()
@@ -92,7 +96,9 @@ async def test_toggle_like_already_liked(mock_db):
     mock_db.user_interactions.update_one = AsyncMock()
 
     # WHEN toggle_like is called
-    result, increment = await interaction_crud.toggle_like("test-user-id", "test-article-id")
+    result, increment = await interaction_crud.toggle_like(
+        "test-user-id", "test-article-id"
+    )
 
     # THEN like is toggled off
     mock_db.user_interactions.update_one.assert_awaited_once()
@@ -119,7 +125,9 @@ async def test_toggle_like_not_liked(mock_db):
     mock_db.user_interactions.update_one = AsyncMock()
 
     # WHEN toggle_like is called
-    result, increment = await interaction_crud.toggle_like("test-user-id", "test-article-id")
+    result, increment = await interaction_crud.toggle_like(
+        "test-user-id", "test-article-id"
+    )
 
     # THEN like is toggled on
     call_args = mock_db.user_interactions.update_one.call_args

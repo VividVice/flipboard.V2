@@ -48,7 +48,9 @@ async def test_get_comment_by_id_not_found(mock_db):
 
 @patch("app.crud.comment.user_crud")
 @patch("app.crud.comment.db")
-async def test_get_comments_by_article(mock_db, mock_user_crud, test_comment, test_user):
+async def test_get_comments_by_article(
+    mock_db, mock_user_crud, test_comment, test_user
+):
     # GIVEN comments exist for an article
     mock_cursor = MagicMock()
     mock_cursor.sort = MagicMock(return_value=mock_cursor)
@@ -71,7 +73,9 @@ async def test_get_comments_by_article(mock_db, mock_user_crud, test_comment, te
 
 @patch("app.crud.comment.user_crud")
 @patch("app.crud.comment.db")
-async def test_get_comments_by_article_user_not_found(mock_db, mock_user_crud, test_comment):
+async def test_get_comments_by_article_user_not_found(
+    mock_db, mock_user_crud, test_comment
+):
     # GIVEN comments exist but user doesn't
     mock_cursor = MagicMock()
     mock_cursor.sort = MagicMock(return_value=mock_cursor)
