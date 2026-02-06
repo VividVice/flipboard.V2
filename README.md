@@ -71,6 +71,7 @@ A professional, high-fidelity web application that replicates the core experienc
 │   │   ├── models/         # Pydantic Models
 │   │   ├── routes/         # API Endpoints
 │   │   └── schemas/        # Request/Response Schemas
+│   ├── scripts/            # Utility Scripts (Seeding, etc.)
 │   ├── tests/              # Pytest Suite
 │   ├── requirements.txt    # Python Dependencies
 │   └── run_dev.sh          # Dev Startup Script
@@ -83,6 +84,8 @@ A professional, high-fidelity web application that replicates the core experienc
 │   │   └── services/       # API Integration
 │   ├── package.json        # NPM Dependencies
 │   └── vite.config.ts      # Vite Configuration
+├── .github/workflows/      # CI/CD Pipelines
+├── docker-compose.yml      # Docker Composition
 ├── Specification_Book.md   # Detailed Specs
 └── README.md               # Project Documentation
 ```
@@ -92,17 +95,36 @@ A professional, high-fidelity web application that replicates the core experienc
 ### Prerequisites
 - **Node.js** (v20+)
 - **Python** (3.10+)
-- **Docker** (for running MongoDB)
+- **Docker** (Recommended for Database & Full Stack)
 - **Google Cloud Console Project** (for OAuth)
 
-### 1. Google OAuth Setup
+### 🐳 Running with Docker (Recommended)
+
+The easiest way to run the entire application (Frontend + Backend + Database) is using Docker Compose.
+
+1.  **Configure Environment:**
+    Ensure you have your Google Client ID ready (optional for local dev if not using Auth features).
+    
+2.  **Start Services:**
+    ```bash
+    docker-compose up --build
+    ```
+
+3.  **Access:**
+    - Frontend: `http://localhost:80`
+    - Backend API: `http://localhost:8000`
+    - API Docs: `http://localhost:8000/docs`
+
+### 🛠 Manual Local Setup
+
+#### 1. Google OAuth Setup
 To enable "Sign in with Google", you need a Client ID:
 1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
 2.  Create a new project and set up **OAuth 2.0 Credentials**.
-3.  Add `http://localhost:5173` to **Authorized JavaScript origins** and **Authorized redirect URIs**.
+3.  Add `http://localhost:5173` (Local) and `http://localhost` (Docker) to **Authorized JavaScript origins**.
 4.  Copy your **Client ID**.
 
-### 2. Backend Setup
+#### 2. Backend Setup
 
 1.  Navigate to the backend directory:
     ```bash
@@ -127,13 +149,15 @@ To enable "Sign in with Google", you need a Client ID:
     ACCESS_TOKEN_EXPIRE_MINUTES=30
     GOOGLE_CLIENT_ID=your-google-client-id-here
     ```
-5.  Start the database and server:
+5.  Start the database (if not using Docker for everything):
+    *Ensure you have a MongoDB instance running locally or via Docker (`docker run -p 27017:27017 mongo`).*
+    
+6.  Start the server:
     ```bash
     ./run_dev.sh
     ```
-    *This script checks for a Docker container named `mongo` and starts it if needed, then launches the Uvicorn server.*
 
-### 3. Frontend Setup
+#### 3. Frontend Setup
 
 1.  Navigate to the frontend directory:
     ```bash
@@ -156,19 +180,38 @@ To enable "Sign in with Google", you need a Client ID:
 
 5.  Open `http://localhost:5173` in your browser.
 
-## 🧪 Quality Assurance
+## 🌱 Database Seeding
 
-### Frontend Checks
-Run these commands in the `frontend/` directory:
+To populate the database with initial topics, users, and articles (French content by default), use the included seeding script.
+
+1.  Ensure your Backend is set up and MongoDB is running.
+2.  From the `backend/` directory (with venv activated):
+    ```bash
+    python scripts/seed_database.py
+    ```
+3.  **Test User:**
+    - Email: `marie@example.com`
+    - Password: `password123`
+
+## 🧪 Quality Assurance & CI/CD
+
+This project uses **GitHub Actions** for continuous integration.
+- **Backend Pipeline:** Runs on every push to `main` and PRs. Checks code quality (Ruff) and runs tests (Pytest).
+- **Frontend Pipeline:** Runs on every push to `main` and PRs. Checks types (TypeScript), lints code (ESLint), and runs unit tests (Vitest).
+
+### Manual Checks
+
+**Frontend:**
 ```bash
+cd frontend
 npm run lint         # Check for code quality issues
 npm run type-check   # Validate TypeScript types
 npm run test         # Run unit tests with Vitest
 ```
 
-### Backend Checks
-Run these commands in the `backend/` directory (ensure venv is active):
+**Backend:**
 ```bash
+cd backend
 ruff check .         # Check for linting errors
 ruff format --check . # Verify code formatting
 pytest               # Run the test suite
@@ -177,7 +220,7 @@ pytest               # Run the test suite
 ## 📝 Usage Guide
 
 1.  **Onboarding:**
-    *   Sign up via Email or Google.
+    *   Sign up via Email or Google (or use the seeded test user).
     *   Select at least 3 topics of interest to personalize your feed.
 2.  **Home Feed:**
     *   Browse the "For You" feed, curating articles from your followed topics.
