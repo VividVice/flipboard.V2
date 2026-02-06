@@ -133,7 +133,7 @@ async def test_get_all_magazines_basic(mock_db, test_magazine):
     magazine_2["id"] = "test-magazine-id-456"
     magazine_2["user_id"] = "another-user-id"
     magazine_2["updated_at"] = datetime(2024, 1, 11, 0, 0, 0)
-    
+
     mock_cursor = MagicMock()
     mock_cursor.sort = MagicMock(return_value=mock_cursor)
     mock_cursor.skip = MagicMock(return_value=mock_cursor)
@@ -159,7 +159,7 @@ async def test_get_all_magazines_with_exclude_user(mock_db, test_magazine):
     magazine_2 = test_magazine.copy()
     magazine_2["id"] = "test-magazine-id-456"
     magazine_2["user_id"] = "another-user-id"
-    
+
     mock_cursor = MagicMock()
     mock_cursor.sort = MagicMock(return_value=mock_cursor)
     mock_cursor.skip = MagicMock(return_value=mock_cursor)
@@ -183,7 +183,7 @@ async def test_get_all_magazines_pagination(mock_db, test_magazine):
     # GIVEN pagination parameters
     skip_value = 10
     limit_value = 5
-    
+
     mock_cursor = MagicMock()
     mock_cursor.sort = MagicMock(return_value=mock_cursor)
     mock_cursor.skip = MagicMock(return_value=mock_cursor)
@@ -227,15 +227,15 @@ async def test_get_all_magazines_sorting(mock_db, test_magazine):
     magazine_1 = test_magazine.copy()
     magazine_1["id"] = "magazine-1"
     magazine_1["updated_at"] = datetime(2024, 1, 10, 0, 0, 0)
-    
+
     magazine_2 = test_magazine.copy()
     magazine_2["id"] = "magazine-2"
     magazine_2["updated_at"] = datetime(2024, 1, 12, 0, 0, 0)
-    
+
     magazine_3 = test_magazine.copy()
     magazine_3["id"] = "magazine-3"
     magazine_3["updated_at"] = datetime(2024, 1, 11, 0, 0, 0)
-    
+
     # Sorted by updated_at descending
     mock_cursor = MagicMock()
     mock_cursor.sort = MagicMock(return_value=mock_cursor)
