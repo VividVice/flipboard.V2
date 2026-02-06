@@ -16,7 +16,7 @@ const magazineStore = useMagazineStore()
 const authStore = useAuthStore()
 const commentsStore = useCommentsStore()
 const { savedArticles } = storeToRefs(articleStore)
-const { magazines, followedMagazines } = storeToRefs(magazineStore)
+const { magazines, followedMagazines, exploreMagazines, loading: magazinesLoading } = storeToRefs(magazineStore)
 const { user } = storeToRefs(authStore)
 const { userComments, loading: commentsLoading } = storeToRefs(commentsStore)
 
@@ -36,12 +36,14 @@ onMounted(() => {
   magazineStore.fetchFollowedMagazines()
 })
 
-const activeTab = ref('saved') // 'saved', 'magazines', 'comments', 'settings'
+const activeTab = ref('saved') // 'saved', 'magazines', 'community', 'comments', 'settings'
 
 const handleTabChange = (tab: string) => {
   activeTab.value = tab
   if (tab === 'comments') {
     commentsStore.fetchUserComments()
+  } else if (tab === 'community') {
+    magazineStore.fetchExploreMagazines()
   }
 }
 
@@ -332,6 +334,13 @@ const getMagazineCover = (articleIds: string[]) => {
             Magazines
           </button>
           <button 
+            @click="handleTabChange('community')"
+            class="pb-4 border-b-2 font-bold uppercase tracking-wide text-sm transition-colors"
+            :class="activeTab === 'community' ? 'border-flipboard-red text-white' : 'border-transparent text-gray-500 hover:text-gray-300'"
+          >
+            Community
+          </button>
+          <button 
             @click="handleTabChange('comments')"
             class="pb-4 border-b-2 font-bold uppercase tracking-wide text-sm transition-colors"
             :class="activeTab === 'comments' ? 'border-flipboard-red text-white' : 'border-transparent text-gray-500 hover:text-gray-300'"
@@ -411,6 +420,32 @@ const getMagazineCover = (articleIds: string[]) => {
               </div>
             </div>
           </template>
+       </div>
+
+       <!-- Community Grid -->
+       <div v-if="activeTab === 'community'">
+          <div v-if="magazinesLoading" class="text-center py-20 text-gray-500">
+             <p>Loading community magazines...</p>
+          </div>
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+             <div 
+               v-for="mag in exploreMagazines" 
+               :key="mag.id" 
+               @click="router.push({ name: 'magazine', params: { id: mag.id } })"
+               class="group relative aspect-[3/4] bg-gray-800 rounded-lg overflow-hidden cursor-pointer border border-gray-700 hover:border-gray-500 transition-colors"
+             >
+                <img :src="getMagazineCover(mag.article_ids)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
+                
+                <div class="absolute inset-0 flex flex-col justify-end p-6">
+                   <h3 class="text-2xl font-display font-bold text-white leading-tight mb-1 shadow-black drop-shadow-lg">{{ mag.name }}</h3>
+                   <p class="text-sm text-gray-300 font-bold uppercase tracking-wider">{{ mag.article_ids.length }} Stories</p>
+                </div>
+             </div>
+             
+             <div v-if="exploreMagazines.length === 0" class="col-span-full text-center py-20 text-gray-500 border-2 border-dashed border-gray-800 rounded-lg">
+                <p>No community magazines found yet.</p>
+             </div>
+          </div>
        </div>
        
        <!-- Comments List -->

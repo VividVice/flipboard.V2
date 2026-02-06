@@ -635,6 +635,14 @@ class ApiServiceExtended extends ApiService {
     return response.json()
   }
 
+  async getExploreMagazines(): Promise<Magazine[]> {
+    const response = await fetch(`${API_BASE_URL}/magazines/explore`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to fetch explore magazines')
+    return response.json()
+  }
+
   async createMagazine(name: string, description?: string): Promise<Magazine> {
     const response = await fetch(`${API_BASE_URL}/magazines/`, {
       method: 'POST',

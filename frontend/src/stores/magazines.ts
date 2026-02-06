@@ -5,6 +5,7 @@ export const useMagazineStore = defineStore('magazines', {
   state: () => ({
     magazines: [] as Magazine[],
     followedMagazines: [] as Magazine[],
+    exploreMagazines: [] as Magazine[],
     loading: false,
     error: null as string | null
   }),
@@ -16,6 +17,17 @@ export const useMagazineStore = defineStore('magazines', {
         this.magazines = await apiServiceExtended.getMagazines()
       } catch (err: any) {
         this.error = err.message || 'Failed to fetch magazines'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchExploreMagazines() {
+      this.loading = true
+      try {
+        this.exploreMagazines = await apiServiceExtended.getExploreMagazines()
+      } catch (err: any) {
+        this.error = err.message || 'Failed to fetch explore magazines'
       } finally {
         this.loading = false
       }

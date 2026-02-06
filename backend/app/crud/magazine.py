@@ -26,6 +26,15 @@ async def get_user_magazines(user_id: str):
     return await cursor.to_list(length=100)
 
 
+async def get_all_magazines(skip: int = 0, limit: int = 100, exclude_user_id: str = None):
+    query = {}
+    if exclude_user_id:
+        query["user_id"] = {"$ne": exclude_user_id}
+    
+    cursor = db.magazines.find(query).sort("updated_at", -1).skip(skip).limit(limit)
+    return await cursor.to_list(length=limit)
+
+
 async def update_magazine(magazine_id: str, magazine_update: MagazineUpdate):
     update_data = {k: v for k, v in magazine_update.dict().items() if v is not None}
     if not update_data:
