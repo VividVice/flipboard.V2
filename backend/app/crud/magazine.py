@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import List
 
 from app.db.database import db
 from app.schemas.magazine import MagazineCreate, MagazineUpdate
@@ -73,3 +74,28 @@ async def remove_article_from_magazine(magazine_id: str, article_id: str):
 async def delete_magazine(magazine_id: str):
     result = await db.magazines.delete_one({"id": magazine_id})
     return result.deleted_count > 0
+
+
+async def enrich_magazines_with_covers(magazines: List[dict]) -> List[dict]:
+    from app.crud.article import get_articles_by_ids
+
+    first_article_ids = []
+    for mag in magazines:
+        article_ids = mag.get("article_ids", [])
+        if article_ids:
+            first_article_ids.append(article_ids[0])
+
+    if not first_article_ids:
+        return magazines
+
+    articles = await get_articles_by_ids(first_article_ids)
+    article_map = {a["id"]: a for a in articles}
+
+    for mag in magazines:
+        article_ids = mag.get("article_ids", [])
+        if article_ids:
+            first_article = article_map.get(article_ids[0])
+            if first_article:
+                mag["cover_image_url"] = first_article.get("image_url")
+
+    return magazines

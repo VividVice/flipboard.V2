@@ -244,6 +244,7 @@ export interface Magazine {
   name: string
   description?: string
   article_ids: string[]
+  cover_image_url?: string
   created_at: string
   updated_at: string
 }
@@ -505,11 +506,13 @@ class ApiServiceExtended extends ApiService {
   }
 
   async getNewsFeed(params?: {
+    sentiment?: string
     ts?: number
     size?: number
     country?: string
   }): Promise<NewsResponse> {
     const queryParams = new URLSearchParams()
+    if (params?.sentiment) queryParams.append('sentiment', params.sentiment)
     if (params?.ts) queryParams.append('ts', params.ts.toString())
     if (params?.size) queryParams.append('size', params.size.toString())
     if (params?.country) queryParams.append('country', params.country)

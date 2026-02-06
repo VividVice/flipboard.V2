@@ -81,7 +81,10 @@ const fetchNews = async () => {
     })
   } else {
     // Fetch personalized feed
-    await newsStore.fetchNewsFeed({ size: 10 })
+    await newsStore.fetchNewsFeed({
+      sentiment: selectedSentiment.value || undefined,
+      size: 10
+    })
   }
 }
 

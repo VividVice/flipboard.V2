@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useArticleStore } from '../stores/articles'
 import { useToastStore } from '../stores/toast'
 import { apiServiceExtended, type User, type Magazine, type Comment } from '../services/api'
 import CommentItem from '../components/CommentItem.vue'
@@ -11,7 +10,6 @@ import UserListModal from '../components/UserListModal.vue'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const articleStore = useArticleStore()
 const toast = useToastStore()
 
 const username = computed(() => route.params.username as string)
@@ -135,14 +133,8 @@ const handleFollow = async () => {
 }
 
 // Helper to get cover image for a magazine (first article image)
-const getMagazineCover = (articleIds: string[]) => {
-  const firstId = articleIds[0]
-  if (!firstId) return 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80'
-  
-  // Try to find the article in the articleStore if it happens to be there
-  const firstArticle = articleStore.getArticleById(firstId)
-  if (firstArticle?.image_url) return firstArticle.image_url
-
+const getMagazineCover = (mag: Magazine) => {
+  if (mag.cover_image_url) return mag.cover_image_url
   return 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80'
 }
 </script>
@@ -227,7 +219,7 @@ const getMagazineCover = (articleIds: string[]) => {
                  @click="router.push({ name: 'magazine', params: { id: mag.id } })"
                  class="group relative aspect-[3/4] bg-gray-800 rounded-lg overflow-hidden cursor-pointer border border-gray-700 hover:border-gray-500 transition-colors"
                >
-                  <img :src="getMagazineCover(mag.article_ids)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
+                  <img :src="getMagazineCover(mag)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
                   
                   <div class="absolute inset-0 flex flex-col justify-end p-6">
                      <h3 class="text-2xl font-display font-bold text-white leading-tight mb-1 shadow-black drop-shadow-lg">{{ mag.name }}</h3>

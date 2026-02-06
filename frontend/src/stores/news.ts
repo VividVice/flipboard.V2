@@ -115,6 +115,7 @@ export const useNewsStore = defineStore('news', {
     },
 
     async fetchNewsFeed(params?: {
+      sentiment?: string
       ts?: number
       size?: number
     }) {
@@ -135,8 +136,8 @@ export const useNewsStore = defineStore('news', {
         this.nextUrl = response.next || null
         this.requestsLeft = response.requestsLeft
         this.currentTopic = null
-        this.currentSentiment = null
-        this.currentQuery = 'personalized-feed'
+        this.currentSentiment = params?.sentiment || null
+        this.currentQuery = `personalized-feed${params?.sentiment ? ` sentiment:${params.sentiment}` : ''}`
         this.isPersonalizedFeed = true
 
         if (response.requestsLeft < 100) {

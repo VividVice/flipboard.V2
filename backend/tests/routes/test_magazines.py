@@ -73,6 +73,7 @@ async def test_get_user_magazines(
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_user_magazines = AsyncMock(return_value=[test_magazine])
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(return_value=[test_magazine])
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -102,6 +103,7 @@ async def test_get_magazine(
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(return_value=[test_magazine])
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -523,6 +525,9 @@ async def test_get_explore_magazines(
         "updated_at": "2024-01-01T00:00:00",
     }
     mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[other_user_magazine])
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(
+        return_value=[other_user_magazine]
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -560,6 +565,9 @@ async def test_get_explore_magazines_excludes_current_user(
         "updated_at": datetime(2024, 1, 5, 0, 0, 0),
     }
     mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[other_user_magazine])
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(
+        return_value=[other_user_magazine]
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -591,6 +599,7 @@ async def test_get_explore_magazines_with_pagination(
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[])
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(return_value=[])
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -618,6 +627,7 @@ async def test_get_explore_magazines_empty_results(
     mock_verify.return_value = {"sub": test_user["id"]}
     mock_get_user.return_value = test_user
     mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[])
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(return_value=[])
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -653,6 +663,7 @@ async def test_get_explore_magazines_unauthorized(app):
 async def test_get_magazines_by_user(mock_magazine_crud, app, test_user, test_magazine):
     # GIVEN user has magazines
     mock_magazine_crud.get_user_magazines = AsyncMock(return_value=[test_magazine])
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(return_value=[test_magazine])
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
