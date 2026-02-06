@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -496,6 +497,151 @@ async def test_follow_own_magazine(
 
     # THEN error is returned
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# ============================================================================
+# GET /magazines/explore Tests
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_explore_magazines(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_user_2
+):
+    # GIVEN authenticated user and magazines from other users exist
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    other_user_magazine = {
+        "id": "other-magazine-id",
+        "name": "Other User Magazine",
+        "description": "A magazine from another user",
+        "user_id": test_user_2["id"],
+        "article_ids": [],
+        "created_at": "2024-01-01T00:00:00",
+        "updated_at": "2024-01-01T00:00:00",
+    }
+    mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[other_user_magazine])
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # WHEN get explore magazines is called
+        response = await client.get(
+            "/magazines/explore", headers={"Authorization": "Bearer valid-token"}
+        )
+
+    # THEN magazines are returned
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.json()) == 1
+    # THEN get_all_magazines was called with correct exclude_user_id
+    mock_magazine_crud.get_all_magazines.assert_awaited_once_with(
+        skip=0, limit=100, exclude_user_id=test_user["id"]
+    )
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_explore_magazines_excludes_current_user(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_user_2
+):
+    # GIVEN authenticated user with magazines
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    # GIVEN other user's magazines are returned (user's own excluded)
+    other_user_magazine = {
+        "id": "other-magazine-id",
+        "name": "Other User Magazine",
+        "user_id": test_user_2["id"],
+        "article_ids": [],
+        "created_at": datetime(2024, 1, 5, 0, 0, 0),
+        "updated_at": datetime(2024, 1, 5, 0, 0, 0),
+    }
+    mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[other_user_magazine])
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # WHEN get explore magazines is called
+        response = await client.get(
+            "/magazines/explore", headers={"Authorization": "Bearer valid-token"}
+        )
+
+    # THEN only other users' magazines are returned
+    assert response.status_code == status.HTTP_200_OK
+    magazines = response.json()
+    # Verify no magazine belongs to current user
+    for magazine in magazines:
+        assert magazine["user_id"] != test_user["id"]
+    # THEN get_all_magazines was called with exclude_user_id
+    mock_magazine_crud.get_all_magazines.assert_awaited_once_with(
+        skip=0, limit=100, exclude_user_id=test_user["id"]
+    )
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_explore_magazines_with_pagination(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    # GIVEN authenticated user
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[])
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # WHEN get explore magazines is called with pagination params
+        response = await client.get(
+            "/magazines/explore?skip=10&limit=20",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    # THEN pagination params are passed to crud function
+    assert response.status_code == status.HTTP_200_OK
+    mock_magazine_crud.get_all_magazines.assert_awaited_once_with(
+        skip=10, limit=20, exclude_user_id=test_user["id"]
+    )
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_explore_magazines_empty_results(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    # GIVEN no magazines available to explore
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_all_magazines = AsyncMock(return_value=[])
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # WHEN get explore magazines is called
+        response = await client.get(
+            "/magazines/explore", headers={"Authorization": "Bearer valid-token"}
+        )
+
+    # THEN empty list is returned
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == []
+
+
+async def test_get_explore_magazines_unauthorized(app):
+    # GIVEN no auth token
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        # WHEN get explore magazines is called
+        response = await client.get("/magazines/explore")
+
+    # THEN unauthorized is returned
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 # ============================================================================
