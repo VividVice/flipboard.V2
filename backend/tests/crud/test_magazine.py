@@ -169,10 +169,14 @@ async def test_get_all_magazines_with_exclude_user(mock_db, test_magazine):
     mock_db.magazines.find = MagicMock(return_value=mock_cursor)
 
     # WHEN get_all_magazines is called with exclude_user_id
-    result = await magazine_crud.get_all_magazines(exclude_user_id=test_magazine["user_id"])
+    result = await magazine_crud.get_all_magazines(
+        exclude_user_id=test_magazine["user_id"]
+    )
 
     # THEN only magazines not belonging to excluded user are returned
-    mock_db.magazines.find.assert_called_with({"user_id": {"$ne": test_magazine["user_id"]}})
+    mock_db.magazines.find.assert_called_with(
+        {"user_id": {"$ne": test_magazine["user_id"]}}
+    )
     mock_cursor.sort.assert_called_with("updated_at", -1)
     assert len(result) == 1
     assert result[0]["user_id"] == "another-user-id"
