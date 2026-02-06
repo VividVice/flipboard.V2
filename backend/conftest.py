@@ -20,6 +20,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest")
 os.environ.setdefault("ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 os.environ.setdefault("GOOGLE_CLIENT_ID", "test-google-client-id")
+os.environ.setdefault("WEBZ_IO_API_KEY", "test-webz-io-api-key")
 
 
 # Mark all tests as anyio tests by default
