@@ -16,7 +16,7 @@ const magazineStore = useMagazineStore()
 const authStore = useAuthStore()
 const commentsStore = useCommentsStore()
 const { savedArticles } = storeToRefs(articleStore)
-const { magazines, followedMagazines, exploreMagazines, loading: magazinesLoading } = storeToRefs(magazineStore)
+const { magazines, followedMagazines, exploreMagazines, exploreMagazinesLoading } = storeToRefs(magazineStore)
 const { user } = storeToRefs(authStore)
 const { userComments, loading: commentsLoading } = storeToRefs(commentsStore)
 
@@ -424,7 +424,7 @@ const getMagazineCover = (articleIds: string[]) => {
 
        <!-- Community Grid -->
        <div v-if="activeTab === 'community'">
-          <div v-if="magazinesLoading" class="text-center py-20 text-gray-500">
+          <div v-if="exploreMagazinesLoading" class="text-center py-20 text-gray-500">
              <p>Loading community magazines...</p>
           </div>
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

@@ -6,38 +6,43 @@ export const useMagazineStore = defineStore('magazines', {
     magazines: [] as Magazine[],
     followedMagazines: [] as Magazine[],
     exploreMagazines: [] as Magazine[],
-    loading: false,
+    userMagazinesLoading: false,
+    exploreMagazinesLoading: false,
+    followedMagazinesLoading: false,
     error: null as string | null
   }),
   
   actions: {
     async fetchUserMagazines() {
-      this.loading = true
+      this.userMagazinesLoading = true
       try {
         this.magazines = await apiServiceExtended.getMagazines()
       } catch (err: any) {
         this.error = err.message || 'Failed to fetch magazines'
       } finally {
-        this.loading = false
+        this.userMagazinesLoading = false
       }
     },
 
     async fetchExploreMagazines() {
-      this.loading = true
+      this.exploreMagazinesLoading = true
       try {
         this.exploreMagazines = await apiServiceExtended.getExploreMagazines()
       } catch (err: any) {
         this.error = err.message || 'Failed to fetch explore magazines'
       } finally {
-        this.loading = false
+        this.exploreMagazinesLoading = false
       }
     },
 
     async fetchFollowedMagazines() {
+      this.followedMagazinesLoading = true
       try {
         this.followedMagazines = await apiServiceExtended.getFollowedMagazines()
       } catch (err: any) {
         console.error('Failed to fetch followed magazines:', err)
+      } finally {
+        this.followedMagazinesLoading = false
       }
     },
 
