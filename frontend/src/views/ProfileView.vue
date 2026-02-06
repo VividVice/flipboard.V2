@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useArticleStore } from '../stores/articles'
 import { useMagazineStore } from '../stores/magazines'
+import type { Magazine } from '../services/api'
 import { useAuthStore } from '../stores/auth'
 import { useCommentsStore } from '../stores/comments'
 import ArticleCard from '../components/ArticleCard.vue'
@@ -137,12 +138,9 @@ const displayUser = computed(() => {
 
 
 // Helper to get cover image for a magazine (first article image)
-const getMagazineCover = (articleIds: string[]) => {
-  const firstId = articleIds[0]
-  if (!firstId) return 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80' // Default gradient
-  
-  const firstArticle = articleStore.getArticleById(firstId)
-  return firstArticle?.image_url || 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80'
+const getMagazineCover = (mag: Magazine) => {
+  if (mag.cover_image_url) return mag.cover_image_url
+  return 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=800&q=80'
 }
 </script>
 
@@ -378,7 +376,7 @@ const getMagazineCover = (articleIds: string[]) => {
                class="group relative aspect-[3/4] bg-gray-800 rounded-lg overflow-hidden cursor-pointer border border-gray-700 hover:border-gray-500 transition-colors"
              >
                 <!-- Cover Image (First article or default) -->
-                <img :src="getMagazineCover(mag.article_ids)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
+                <img :src="getMagazineCover(mag)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
                 
                 <!-- Content -->
                 <div class="absolute inset-0 flex flex-col justify-end p-6">
@@ -411,7 +409,7 @@ const getMagazineCover = (articleIds: string[]) => {
                 @click="router.push({ name: 'magazine', params: { id: mag.id } })"
                 class="group relative aspect-[3/4] bg-gray-800 rounded-lg overflow-hidden cursor-pointer border border-gray-700 hover:border-gray-500 transition-colors"
               >
-                  <img :src="getMagazineCover(mag.article_ids)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
+                  <img :src="getMagazineCover(mag)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
                   
                   <div class="absolute inset-0 flex flex-col justify-end p-6">
                     <h3 class="text-2xl font-display font-bold text-white leading-tight mb-1 shadow-black drop-shadow-lg">{{ mag.name }}</h3>
@@ -434,7 +432,7 @@ const getMagazineCover = (articleIds: string[]) => {
                @click="router.push({ name: 'magazine', params: { id: mag.id } })"
                class="group relative aspect-[3/4] bg-gray-800 rounded-lg overflow-hidden cursor-pointer border border-gray-700 hover:border-gray-500 transition-colors"
              >
-                <img :src="getMagazineCover(mag.article_ids)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
+                <img :src="getMagazineCover(mag)" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500" />
                 
                 <div class="absolute inset-0 flex flex-col justify-end p-6">
                    <h3 class="text-2xl font-display font-bold text-white leading-tight mb-1 shadow-black drop-shadow-lg">{{ mag.name }}</h3>

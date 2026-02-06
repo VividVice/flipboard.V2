@@ -22,6 +22,7 @@ class Magazine(MagazineBase):
     id: str
     user_id: str
     article_ids: List[str] = []
+    cover_image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

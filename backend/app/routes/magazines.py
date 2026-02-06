@@ -80,12 +80,14 @@ async def create_magazine(
 
 @router.get("/", response_model=List[Magazine])
 async def get_user_magazines(current_user: dict = Depends(get_current_user)):
-    return await crud_magazine.get_user_magazines(user_id=current_user["id"])
+    magazines = await crud_magazine.get_user_magazines(user_id=current_user["id"])
+    return await crud_magazine.enrich_magazines_with_covers(magazines)
 
 
 @router.get("/user/{user_id}", response_model=List[Magazine])
 async def get_magazines_by_user(user_id: str):
-    return await crud_magazine.get_user_magazines(user_id=user_id)
+    magazines = await crud_magazine.get_user_magazines(user_id=user_id)
+    return await crud_magazine.enrich_magazines_with_covers(magazines)
 
 
 @router.get("/followed/me", response_model=List[Magazine])
@@ -99,7 +101,7 @@ async def get_followed_magazines(current_user: dict = Depends(get_current_user))
         mag = await crud_magazine.get_magazine_by_id(mag_id)
         if mag:
             magazines.append(mag)
-    return magazines
+    return await crud_magazine.enrich_magazines_with_covers(magazines)
 
 
 @router.get("/explore", response_model=List[Magazine])
@@ -108,9 +110,10 @@ async def get_explore_magazines(
     limit: int = Query(100, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
 ):
-    return await crud_magazine.get_all_magazines(
+    magazines = await crud_magazine.get_all_magazines(
         skip=skip, limit=limit, exclude_user_id=current_user["id"]
     )
+    return await crud_magazine.enrich_magazines_with_covers(magazines)
 
 
 @router.post("/{magazine_id}/follow")
@@ -145,8 +148,8 @@ async def get_magazine(
     magazine = await crud_magazine.get_magazine_by_id(magazine_id)
     if not magazine:
         raise HTTPException(status_code=404, detail="Magazine not found")
-    # Optional: Check ownership or visibility
-    return magazine
+    enriched = await crud_magazine.enrich_magazines_with_covers([magazine])
+    return enriched[0]
 
 
 @router.put("/{magazine_id}", response_model=Magazine)

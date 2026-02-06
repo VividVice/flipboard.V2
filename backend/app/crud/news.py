@@ -96,12 +96,14 @@ async def fetch_news(
 
 async def fetch_news_feed(
     topics: list[str],
+    sentiment: Optional[str] = None,
     timestamp: Optional[int] = None,
     size: int = 10,
     country: Optional[str] = None,
 ) -> NewsResponse:
     """
     Fetch news for a list of topics combined with OR logic.
+    Optionally filter by sentiment.
     Lite API has a 100 character limit.
     """
     if not topics:
@@ -109,11 +111,15 @@ async def fetch_news_feed(
             query="news", timestamp=timestamp, size=size, country=country
         )
 
+    sentiment_suffix = f" sentiment:{sentiment}" if sentiment else ""
+
     query_parts = []
     current_length = 0
     # Add country filter length if applicable
     if country:
         current_length += len(f" thread.country:{country}")
+    # Reserve space for sentiment suffix
+    current_length += len(sentiment_suffix)
 
     for topic in topics[:5]:  # Try up to 5 topics
         if not topic or not isinstance(topic, str):
@@ -144,6 +150,12 @@ async def fetch_news_feed(
         )
 
     combined_query = " OR ".join(query_parts)
+
+    # Wrap topics in parentheses if sentiment is applied and multiple topics
+    if sentiment_suffix and len(query_parts) > 1:
+        combined_query = f"({combined_query}){sentiment_suffix}"
+    elif sentiment_suffix:
+        combined_query = f"{combined_query}{sentiment_suffix}"
 
     print(
         f"DEBUG: Generated news feed query ({len(combined_query)} chars): "

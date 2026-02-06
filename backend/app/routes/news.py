@@ -46,13 +46,23 @@ async def enrich_news_response(response: NewsResponse, user: Optional[dict]):
 @router.get("/feed", response_model=NewsResponse)
 async def get_news_feed(
     ts: Optional[int] = Query(None, description="Unix timestamp in milliseconds"),
+    sentiment: Optional[str] = Query(
+        None, description="Filter by sentiment: positive, negative, or neutral"
+    ),
     size: int = Query(10, ge=1, le=10),
     country: Optional[str] = Query(None, description="Country code (e.g. US, FR, GB)"),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Fetch news based on the topics followed by the current user.
+    Optionally filter by sentiment.
     """
+    if sentiment and sentiment not in ["positive", "negative", "neutral"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sentiment must be one of: positive, negative, neutral",
+        )
+
     print(f"DEBUG: Entering get_news_feed for user: {current_user.get('username')}")
     try:
         followed_topic_ids = current_user.get("followed_topics", [])
@@ -79,9 +89,16 @@ async def get_news_feed(
             )
             return await enrich_news_response(response, current_user)
 
-        print(f"DEBUG: Calling fetch_news_feed with topics: {topic_names}")
+        print(
+            f"DEBUG: Calling fetch_news_feed with topics: {topic_names}, "
+            f"sentiment: {sentiment}"
+        )
         response = await news_crud.fetch_news_feed(
-            topics=topic_names, timestamp=ts, size=size, country=country
+            topics=topic_names,
+            sentiment=sentiment,
+            timestamp=ts,
+            size=size,
+            country=country,
         )
         print(f"DEBUG: Received response with {len(response.posts)} posts")
 
