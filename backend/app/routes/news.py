@@ -89,9 +89,16 @@ async def get_news_feed(
             )
             return await enrich_news_response(response, current_user)
 
-        print(f"DEBUG: Calling fetch_news_feed with topics: {topic_names}, sentiment: {sentiment}")
+        print(
+            f"DEBUG: Calling fetch_news_feed with topics: {topic_names}, "
+            f"sentiment: {sentiment}"
+        )
         response = await news_crud.fetch_news_feed(
-            topics=topic_names, sentiment=sentiment, timestamp=ts, size=size, country=country
+            topics=topic_names,
+            sentiment=sentiment,
+            timestamp=ts,
+            size=size,
+            country=country,
         )
         print(f"DEBUG: Received response with {len(response.posts)} posts")
 
