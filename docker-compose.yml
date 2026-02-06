@@ -29,18 +29,14 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - MONGODB_URL=mongodb://mongodb:27017
       - MONGODB_DATABASE=flipboard
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - SMTP_HOST=${SMTP_HOST:-}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER:-}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - WEBZ_IO_API_KEY=${WEBZ_IO_API_KEY:-}
     depends_on:
       mongodb:
         condition: service_healthy
