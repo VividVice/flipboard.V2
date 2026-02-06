@@ -10,7 +10,10 @@ pydantic-settings
 python-multipart
 bcrypt==3.2.0
 pytest
+pytest-asyncio
+pytest-cov
 httpx
+anyio
 beautifulsoup4
 lxml
 google-auth

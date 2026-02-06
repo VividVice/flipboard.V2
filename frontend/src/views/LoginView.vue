@@ -58,7 +58,7 @@ const handleGoogleLogin: CallbackTypes.CredentialCallback = async (response) => 
 
       <div class="space-y-6">
         <form class="space-y-4" @submit.prevent="handleLogin">
-          <div v-if="error" class="bg-red-500/10 border border-red-500/50 text-red-500 p-3 text-sm rounded-sm text-center">
+          <div v-if="error" data-testid="login-error" class="bg-red-500/10 border border-red-500/50 text-red-500 p-3 text-sm rounded-sm text-center">
             {{ error }}
           </div>
 

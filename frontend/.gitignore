@@ -14,6 +14,11 @@ dist-ssr
 coverage
 *.local
 
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -34,3 +39,8 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# Playwright
+/playwright-report/
+/playwright/.cache/
+/test-results/
