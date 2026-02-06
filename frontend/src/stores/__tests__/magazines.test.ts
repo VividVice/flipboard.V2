@@ -7,6 +7,7 @@ vi.mock('../../services/api', () => ({
   apiServiceExtended: {
     getMagazines: vi.fn(),
     getFollowedMagazines: vi.fn(),
+    getExploreMagazines: vi.fn(),
     createMagazine: vi.fn(),
     addArticleToMagazine: vi.fn(),
     removeArticleFromMagazine: vi.fn(),
@@ -30,9 +31,11 @@ describe('Magazine Store', () => {
       expect(store.followedMagazines).toEqual([])
     })
 
-    it('should have loading set to false', () => {
+    it('should have loading states set to false', () => {
       const store = useMagazineStore()
-      expect(store.loading).toBe(false)
+      expect(store.userMagazinesLoading).toBe(false)
+      expect(store.exploreMagazinesLoading).toBe(false)
+      expect(store.followedMagazinesLoading).toBe(false)
     })
 
     it('should have error set to null', () => {
@@ -54,11 +57,11 @@ describe('Magazine Store', () => {
         await store.fetchUserMagazines()
 
         expect(store.magazines).toEqual(mockMagazines)
-        expect(store.loading).toBe(false)
+        expect(store.userMagazinesLoading).toBe(false)
         expect(store.error).toBeNull()
       })
 
-      it('should set loading to true while fetching', async () => {
+      it('should set userMagazinesLoading to true while fetching', async () => {
         vi.mocked(apiServiceExtended.getMagazines).mockImplementation(
           () => new Promise((resolve) => setTimeout(() => resolve([]), 100))
         )
@@ -66,9 +69,9 @@ describe('Magazine Store', () => {
         const store = useMagazineStore()
         const promise = store.fetchUserMagazines()
 
-        expect(store.loading).toBe(true)
+        expect(store.userMagazinesLoading).toBe(true)
         await promise
-        expect(store.loading).toBe(false)
+        expect(store.userMagazinesLoading).toBe(false)
       })
 
       it('should handle errors', async () => {
@@ -78,7 +81,7 @@ describe('Magazine Store', () => {
         await store.fetchUserMagazines()
 
         expect(store.error).toBe('Network error')
-        expect(store.loading).toBe(false)
+        expect(store.userMagazinesLoading).toBe(false)
       })
 
       it('should use default error message when error has no message', async () => {

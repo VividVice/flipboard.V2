@@ -122,6 +122,145 @@ async def test_get_user_magazines_empty(mock_db):
 
 
 # ============================================================================
+# get_all_magazines Tests
+# ============================================================================
+
+
+@patch("app.crud.magazine.db")
+async def test_get_all_magazines_basic(mock_db, test_magazine):
+    # GIVEN multiple magazines exist
+    magazine_2 = test_magazine.copy()
+    magazine_2["id"] = "test-magazine-id-456"
+    magazine_2["user_id"] = "another-user-id"
+    magazine_2["updated_at"] = datetime(2024, 1, 11, 0, 0, 0)
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[magazine_2, test_magazine])
+    mock_db.magazines = MagicMock()
+    mock_db.magazines.find = MagicMock(return_value=mock_cursor)
+
+    # WHEN get_all_magazines is called without exclude_user_id
+    result = await magazine_crud.get_all_magazines()
+
+    # THEN all magazines are returned
+    mock_db.magazines.find.assert_called_with({})
+    mock_cursor.sort.assert_called_with("updated_at", -1)
+    mock_cursor.skip.assert_called_with(0)
+    mock_cursor.limit.assert_called_with(100)
+    assert len(result) == 2
+
+
+@patch("app.crud.magazine.db")
+async def test_get_all_magazines_with_exclude_user(mock_db, test_magazine):
+    # GIVEN multiple magazines exist
+    magazine_2 = test_magazine.copy()
+    magazine_2["id"] = "test-magazine-id-456"
+    magazine_2["user_id"] = "another-user-id"
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[magazine_2])
+    mock_db.magazines = MagicMock()
+    mock_db.magazines.find = MagicMock(return_value=mock_cursor)
+
+    # WHEN get_all_magazines is called with exclude_user_id
+    result = await magazine_crud.get_all_magazines(
+        exclude_user_id=test_magazine["user_id"]
+    )
+
+    # THEN only magazines not belonging to excluded user are returned
+    mock_db.magazines.find.assert_called_with(
+        {"user_id": {"$ne": test_magazine["user_id"]}}
+    )
+    mock_cursor.sort.assert_called_with("updated_at", -1)
+    assert len(result) == 1
+    assert result[0]["user_id"] == "another-user-id"
+
+
+@patch("app.crud.magazine.db")
+async def test_get_all_magazines_pagination(mock_db, test_magazine):
+    # GIVEN pagination parameters
+    skip_value = 10
+    limit_value = 5
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[test_magazine])
+    mock_db.magazines = MagicMock()
+    mock_db.magazines.find = MagicMock(return_value=mock_cursor)
+
+    # WHEN get_all_magazines is called with skip and limit
+    result = await magazine_crud.get_all_magazines(skip=skip_value, limit=limit_value)
+
+    # THEN pagination parameters are applied correctly
+    mock_cursor.skip.assert_called_with(skip_value)
+    mock_cursor.limit.assert_called_with(limit_value)
+    mock_cursor.to_list.assert_awaited_with(length=limit_value)
+    assert len(result) == 1
+
+
+@patch("app.crud.magazine.db")
+async def test_get_all_magazines_empty(mock_db):
+    # GIVEN no magazines exist
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[])
+    mock_db.magazines = MagicMock()
+    mock_db.magazines.find = MagicMock(return_value=mock_cursor)
+
+    # WHEN get_all_magazines is called
+    result = await magazine_crud.get_all_magazines()
+
+    # THEN empty list is returned
+    assert result == []
+    mock_db.magazines.find.assert_called_with({})
+
+
+@patch("app.crud.magazine.db")
+async def test_get_all_magazines_sorting(mock_db, test_magazine):
+    # GIVEN multiple magazines with different updated_at timestamps
+    magazine_1 = test_magazine.copy()
+    magazine_1["id"] = "magazine-1"
+    magazine_1["updated_at"] = datetime(2024, 1, 10, 0, 0, 0)
+
+    magazine_2 = test_magazine.copy()
+    magazine_2["id"] = "magazine-2"
+    magazine_2["updated_at"] = datetime(2024, 1, 12, 0, 0, 0)
+
+    magazine_3 = test_magazine.copy()
+    magazine_3["id"] = "magazine-3"
+    magazine_3["updated_at"] = datetime(2024, 1, 11, 0, 0, 0)
+
+    # Sorted by updated_at descending
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[magazine_2, magazine_3, magazine_1])
+    mock_db.magazines = MagicMock()
+    mock_db.magazines.find = MagicMock(return_value=mock_cursor)
+
+    # WHEN get_all_magazines is called
+    result = await magazine_crud.get_all_magazines()
+
+    # THEN results are sorted by updated_at in descending order
+    mock_cursor.sort.assert_called_with("updated_at", -1)
+    assert len(result) == 3
+    # Verify order: most recently updated first
+    assert result[0]["updated_at"] > result[1]["updated_at"]
+    assert result[1]["updated_at"] > result[2]["updated_at"]
+
+
+# ============================================================================
 # update_magazine Tests
 # ============================================================================
 

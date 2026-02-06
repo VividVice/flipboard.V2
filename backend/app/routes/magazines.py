@@ -102,6 +102,17 @@ async def get_followed_magazines(current_user: dict = Depends(get_current_user))
     return magazines
 
 
+@router.get("/explore", response_model=List[Magazine])
+async def get_explore_magazines(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
+):
+    return await crud_magazine.get_all_magazines(
+        skip=skip, limit=limit, exclude_user_id=current_user["id"]
+    )
+
+
 @router.post("/{magazine_id}/follow")
 async def follow_magazine(
     magazine_id: str, current_user: dict = Depends(get_current_user)
