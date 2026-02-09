@@ -352,3 +352,95 @@ async def test_google_login_not_configured(mock_settings, app):
 
     # THEN error is returned
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+# ============================================================================
+# POST /auth/google Edge Cases
+# ============================================================================
+
+
+@patch("app.routes.auth.id_token")
+@patch("app.routes.auth.settings")
+async def test_google_login_no_email(mock_settings, mock_id_token, app):
+    # GIVEN Google token with no email
+    mock_settings.GOOGLE_CLIENT_ID = "test-client-id"
+    mock_id_token.verify_oauth2_token = MagicMock(
+        return_value={"name": "Test User", "picture": "pic.jpg"}
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/auth/google", json={"token": "valid-google-token"}
+        )
+
+    # THEN 400 is returned
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "Email not provided" in response.json()["detail"]
+
+
+@patch("app.routes.auth.security_token")
+@patch("app.routes.auth.user_crud")
+@patch("app.routes.auth.id_token")
+@patch("app.routes.auth.settings")
+async def test_google_login_username_collision(
+    mock_settings, mock_id_token, mock_user_crud, mock_security, app
+):
+    # GIVEN valid Google token, user doesn't exist, but username taken
+    mock_settings.GOOGLE_CLIENT_ID = "test-client-id"
+    mock_id_token.verify_oauth2_token = MagicMock(
+        return_value={"email": "john@example.com", "picture": None}
+    )
+    mock_user_crud.get_user_by_email = AsyncMock(return_value=None)
+    # First call: "john" is taken, second call: "john1" is free
+    mock_user_crud.get_user_by_username = AsyncMock(
+        side_effect=[{"username": "john"}, None]
+    )
+    mock_user_crud.create_social_user = AsyncMock(
+        return_value={"id": "new-id", "email": "john@example.com"}
+    )
+    mock_security.create_access_token = MagicMock(return_value="token")
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/auth/google", json={"token": "valid-google-token"}
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    # Verify the username was incremented
+    create_call = mock_user_crud.create_social_user.call_args[0][0]
+    assert create_call["username"] == "john1"
+
+
+@patch("app.routes.auth.security_token")
+@patch("app.routes.auth.user_crud")
+@patch("app.routes.auth.id_token")
+@patch("app.routes.auth.settings")
+async def test_google_login_no_picture(
+    mock_settings, mock_id_token, mock_user_crud, mock_security, app
+):
+    # GIVEN Google token with empty picture
+    mock_settings.GOOGLE_CLIENT_ID = "test-client-id"
+    mock_id_token.verify_oauth2_token = MagicMock(
+        return_value={"email": "user@example.com", "picture": ""}
+    )
+    mock_user_crud.get_user_by_email = AsyncMock(return_value=None)
+    mock_user_crud.get_user_by_username = AsyncMock(return_value=None)
+    mock_user_crud.create_social_user = AsyncMock(
+        return_value={"id": "new-id", "email": "user@example.com"}
+    )
+    mock_security.create_access_token = MagicMock(return_value="token")
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/auth/google", json={"token": "valid-google-token"}
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    create_call = mock_user_crud.create_social_user.call_args[0][0]
+    assert create_call["profile_pic"] is None

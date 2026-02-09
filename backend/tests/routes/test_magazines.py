@@ -184,6 +184,29 @@ async def test_update_magazine(
 @patch("app.routes.magazines.crud_magazine")
 @patch("app.dependencies.get_user_by_id")
 @patch("app.dependencies.verify_token")
+async def test_update_magazine_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    # GIVEN magazine doesn't exist
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.put(
+            "/magazines/nonexistent",
+            json={"name": "Updated"},
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
 async def test_update_magazine_not_owner(
     mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
 ):
@@ -236,6 +259,28 @@ async def test_delete_magazine(
     # THEN magazine is deleted
     assert response.status_code == status.HTTP_200_OK
     assert "deleted" in response.json()["message"].lower()
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_delete_magazine_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    # GIVEN magazine doesn't exist
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.delete(
+            "/magazines/nonexistent",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @patch("app.routes.magazines.crud_magazine")
@@ -680,3 +725,341 @@ async def test_get_magazines_by_user(mock_magazine_crud, app, test_user, test_ma
     # THEN magazines are returned
     assert response.status_code == status.HTTP_200_OK
     assert len(response.json()) == 1
+
+
+# ============================================================================
+# GET /magazines/{magazine_id}/comments Tests
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_comment")
+@patch("app.routes.magazines.crud_magazine")
+async def test_get_magazine_comments(
+    mock_magazine_crud, mock_comment_crud, app, test_user, test_magazine
+):
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
+    comment = {
+        "id": "c1",
+        "magazine_id": test_magazine["id"],
+        "user_id": test_user["id"],
+        "content": "Great magazine",
+        "created_at": "2024-01-01T00:00:00",
+        "updated_at": None,
+        "user": {
+            "id": test_user["id"],
+            "username": test_user["username"],
+            "profile_pic": test_user["profile_pic"],
+        },
+    }
+    mock_comment_crud.get_comments_by_magazine = AsyncMock(return_value=[comment])
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get(f"/magazines/{test_magazine['id']}/comments")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.json()) == 1
+
+
+@patch("app.routes.magazines.crud_magazine")
+async def test_get_magazine_comments_not_found(mock_magazine_crud, app):
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/magazines/nonexistent/comments")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# ============================================================================
+# POST /magazines/{magazine_id}/comments Tests
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_comment")
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_create_magazine_comment(
+    mock_verify,
+    mock_get_user,
+    mock_magazine_crud,
+    mock_comment_crud,
+    app,
+    test_user,
+    test_magazine,
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
+    comment_result = {
+        "id": "new-comment",
+        "magazine_id": test_magazine["id"],
+        "user_id": test_user["id"],
+        "content": "Nice magazine",
+        "created_at": "2024-01-01T00:00:00",
+        "updated_at": None,
+        "user": {
+            "id": test_user["id"],
+            "username": test_user["username"],
+            "profile_pic": test_user["profile_pic"],
+        },
+    }
+    mock_comment_crud.create_magazine_comment = AsyncMock(return_value=comment_result)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            f"/magazines/{test_magazine['id']}/comments",
+            json={"content": "Nice magazine"},
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_create_magazine_comment_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/magazines/nonexistent/comments",
+            json={"content": "Comment"},
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# ============================================================================
+# POST /magazines/{magazine_id}/unfollow Tests
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_user")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_unfollow_magazine(
+    mock_verify, mock_get_user, mock_user_crud, app, test_user, test_magazine
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_user_crud.unfollow_magazine = AsyncMock()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            f"/magazines/{test_magazine['id']}/unfollow",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    mock_user_crud.unfollow_magazine.assert_awaited_once()
+
+
+# ============================================================================
+# Follow magazine not found Tests
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_follow_magazine_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/magazines/nonexistent/follow",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# ============================================================================
+# GET /magazines/{magazine_id}/articles - empty Tests
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_magazine_articles_empty(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get(
+            f"/magazines/{test_magazine['id']}/articles",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == []
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_magazine_articles_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get(
+            "/magazines/nonexistent/articles",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# ============================================================================
+# GET /magazines/followed/me Tests
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_followed_magazines(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
+    user = {**test_user, "followed_magazines": [test_magazine["id"]]}
+    mock_verify.return_value = {"sub": user["id"]}
+    mock_get_user.return_value = user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
+    mock_magazine_crud.enrich_magazines_with_covers = AsyncMock(
+        return_value=[test_magazine]
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get(
+            "/magazines/followed/me",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.json()) == 1
+
+
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_get_followed_magazines_empty(mock_verify, mock_get_user, app, test_user):
+    user = {**test_user, "followed_magazines": []}
+    mock_verify.return_value = {"sub": user["id"]}
+    mock_get_user.return_value = user
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get(
+            "/magazines/followed/me",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == []
+
+
+# ============================================================================
+# Auth checks for article operations
+# ============================================================================
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_remove_article_not_owner(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
+    different_user = {**test_user, "id": "different-id"}
+    mock_verify.return_value = {"sub": different_user["id"]}
+    mock_get_user.return_value = different_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.delete(
+            f"/magazines/{test_magazine['id']}/articles/some-article",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_add_article_not_owner(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user, test_magazine
+):
+    different_user = {**test_user, "id": "different-id"}
+    mock_verify.return_value = {"sub": different_user["id"]}
+    mock_get_user.return_value = different_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=test_magazine)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            f"/magazines/{test_magazine['id']}/articles/some-article",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@patch("app.routes.magazines.crud_magazine")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_remove_article_magazine_not_found(
+    mock_verify, mock_get_user, mock_magazine_crud, app, test_user
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_magazine_crud.get_magazine_by_id = AsyncMock(return_value=None)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.delete(
+            "/magazines/nonexistent/articles/some-article",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
