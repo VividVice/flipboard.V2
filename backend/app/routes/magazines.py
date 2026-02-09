@@ -10,7 +10,9 @@ from app.dependencies import get_current_user
 from app.schemas.article import Article
 from app.schemas.comment import CommentCreate, MagazineCommentWithUser
 from app.schemas.magazine import Magazine, MagazineCreate, MagazineUpdate
+from app.schemas.notification import NotificationCreate
 from app.utils.article_enricher import enrich_articles
+from app.crud import notification as crud_notification
 
 router = APIRouter()
 
@@ -203,6 +205,24 @@ async def add_article(
         raise HTTPException(status_code=404, detail="Article not found")
 
     await crud_magazine.add_article_to_magazine(magazine_id, article_id)
+
+    # Notify followers of the magazine
+    if magazine and article:
+        followers = await crud_user.get_users_following_magazine(magazine_id)
+        notification_message = (
+            f"New article '{article['title']}' added to '{magazine['name']}' magazine."
+        )
+        for user_data in followers:
+            # Ensure the magazine owner does not get a notification for their own action
+            if user_data["id"] != current_user["id"]:
+                notification_in = NotificationCreate(
+                    user_id=user_data["id"],
+                    magazine_id=magazine_id,
+                    article_id=article_id,
+                    message=notification_message,
+                )
+                await crud_notification.create_notification(notification_in)
+
     return {"message": "Article added to magazine"}
 
 
