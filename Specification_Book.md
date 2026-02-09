@@ -110,6 +110,27 @@ A web application that allows users to browse, curate, and share news, articles,
 
 ---
 
+## Testing
+
+The project is tested at multiple levels to ensure quality and stability.
+
+### Backend (Python/FastAPI)
+- **Framework:** `Pytest`
+- **Strategy:**
+  - **Unit Tests:** For individual functions and classes (e.g., CRUD operations, utility functions).
+  - **Integration Tests:** For API endpoints, ensuring they behave as expected and interact correctly with the database.
+- **Continuous Integration:** GitHub Actions runs the test suite on every push and pull request.
+
+### Frontend (Vue/TypeScript)
+- **Framework:** `Vitest`
+- **Strategy:**
+  - **Unit Tests:** For individual components and functions (e.g., Pinia stores, utility functions).
+  - **Component Tests:** To ensure components render and behave correctly in isolation.
+- **End-to-End (E2E) Tests:** `Playwright` is used to simulate user journeys and test critical flows (e.g., authentication, article viewing).
+- **Continuous Integration:** GitHub Actions runs linting, type-checking, and tests on every push and pull request.
+
+---
+
 ## Database Schema
 
 ### Users
@@ -205,7 +226,18 @@ A web application that allows users to browse, curate, and share news, articles,
 2. **Reverse Proxy:** Nginx for routing and SSL termination.
 3. **Database:** Managed PostgreSQL or MongoDB instance.
 4. **CDN:** Serve images and static assets via a CDN.
-5. **Admin Page:** Using Budibase.
+
+---
+
+## Future Enhancements
+
+* **Social Logins:** Integration with other OAuth providers like Facebook, Twitter, or GitHub.
+* **Real-time Notifications:** Use WebSockets for instant notifications on likes, comments, and new articles.
+* **Content Submission:** Allow users to submit their own articles or links.
+* **Advanced Search:** Integrate a dedicated search engine like Elasticsearch for faster, more powerful searches.
+* **Mobile Applications:** Develop native or cross-platform mobile apps for iOS and Android.
+* **Personalized Newsletters:** Implement a system to send customized email newsletters based on user's followed topics.
+
 
 ---
 
