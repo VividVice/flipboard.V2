@@ -3,12 +3,15 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useArticleStore } from '../stores/articles'
+import { useNotificationStore } from '../stores/notifications'
 import { storeToRefs } from 'pinia'
 
 const authStore = useAuthStore()
 const articleStore = useArticleStore()
+const notificationStore = useNotificationStore()
 const { isAuthenticated, user } = storeToRefs(authStore)
 const { searchQuery } = storeToRefs(articleStore)
+const { unreadCount } = storeToRefs(notificationStore)
 
 const isMenuOpen = ref(false)
 
@@ -70,12 +73,18 @@ const scrollToTop = () => {
             <RouterLink to="/" @click="scrollToTop" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Home
             </RouterLink>
-            <RouterLink to="/topics" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
+            <RouterLink to="/topics" @click="scrollToTop" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Topics
             </RouterLink>
 
-            <RouterLink v-if="isAuthenticated" to="/profile" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
+            <RouterLink v-if="isAuthenticated" to="/profile" @click="scrollToTop" active-class="text-flipboard-red" class="text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
               Profile
+            </RouterLink>
+            <RouterLink v-if="isAuthenticated" to="/notifications" @click="scrollToTop" active-class="text-flipboard-red" class="relative text-gray-400 hover:text-flipboard-red text-sm font-bold uppercase tracking-wide transition-colors duration-200">
+              Notifications
+              <span v-if="unreadCount > 0" class="absolute -top-2 -right-3 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                {{ unreadCount }}
+              </span>
             </RouterLink>
           </div>
           <div class="hidden sm:flex flex-shrink-0 border-l border-gray-800 pl-6">
@@ -121,6 +130,12 @@ const scrollToTop = () => {
            <RouterLink to="/topics" @click="closeMenu" active-class="bg-gray-800 text-white" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800">Topics</RouterLink>
 
            <RouterLink v-if="isAuthenticated" to="/profile" @click="closeMenu" active-class="bg-gray-800 text-white" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800">Profile</RouterLink>
+           <RouterLink v-if="isAuthenticated" to="/notifications" @click="closeMenu" active-class="bg-gray-800 text-white" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800">
+             Notifications
+             <span v-if="unreadCount > 0" class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+               {{ unreadCount }}
+             </span>
+           </RouterLink>
            
            <div class="border-t border-gray-800 mt-2 pt-2">
               <template v-if="!isAuthenticated">
