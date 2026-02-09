@@ -46,6 +46,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('../views/NotificationsView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/welcome/topics',
       name: 'topic-selection',
       component: () => import('../views/TopicSelectionView.vue'),

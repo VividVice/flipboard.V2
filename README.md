@@ -25,15 +25,21 @@ A professional, high-fidelity web application that replicates the core experienc
 
 ### 📰 Content & Discovery
 - **Smart Feed:** Personalized content stream based on followed topics.
+- **Content Aggregation:** Pulls articles from various sources, including external news APIs, to provide a diverse content stream.
 - **Topic Selection:** Interactive onboarding flow to select initial interests.
 - **Infinite Scroll:** Seamless content loading for uninterrupted reading.
 - **Rich Article View:** Distraction-free reading mode with large imagery and elegant typography (Oswald for headers, Merriweather for body).
 - **Search & Filtering:** Real-time search and category chips to quickly find specific content.
 
 ### 🤝 Social & Interaction
-- **Engagement:** Like, comment, and save articles to your personal collection.
+- **Engagement:** Like, comment, and save articles to personal "Magazines".
+- **Magazines:** Create and curate personal collections of articles.
 - **Topic Following:** Follow/unfollow topics to customize your feed.
 - **Community:** View comments from other users on articles.
+
+### ✨ Advanced Features
+- **Content Recommendation:** Intelligent suggestions for articles based on user activity and interests.
+- **Offline Mode:** Read saved articles without an internet connection.
 
 ## 🛠 Tech Stack
 
@@ -52,13 +58,15 @@ A professional, high-fidelity web application that replicates the core experienc
 - **Framework:** FastAPI (Python 3.10+)
 - **Database:** MongoDB (Containerized)
 - **ODM:** Motor (Async MongoDB driver)
-- **Authentication:** 
+- **Authentication:**
   - `python-jose` (JWT)
   - `passlib` (Bcrypt hashing)
   - `google-auth` (OAuth token verification)
 - **Validation:** Pydantic models
 - **Testing:** Pytest
 - **Linting & Formatting:** Ruff
+- **API Documentation:** Interactive docs available at `/docs` (via FastAPI)
+
 
 ## 📂 Project Structure
 
@@ -232,3 +240,12 @@ pytest               # Run the test suite
 4.  **Profile:**
     *   View your saved articles and followed topics.
     *   Manage your bio and subscription settings.
+
+## 🚀 Future Enhancements
+
+- **Social Logins:** Integration with other OAuth providers like Facebook, Twitter, or GitHub.
+- **Real-time Notifications:** Use WebSockets for instant notifications on likes, comments, and new articles.
+- **Content Submission:** Allow users to submit their own articles or links.
+- **Advanced Search:** Integrate a dedicated search engine like Elasticsearch for faster, more powerful searches.
+- **Mobile Applications:** Develop native or cross-platform mobile apps for iOS and Android.
+- **Personalized Newsletters:** Implement a system to send customized email newsletters based on user's followed topics.
