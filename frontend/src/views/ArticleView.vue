@@ -17,7 +17,25 @@ const magazineStore = useMagazineStore()
 const toastStore = useToastStore()
 const articleId = route.params.id as string
 
-const article = ref<Record<string, unknown> | null>(null)
+interface ViewArticle {
+  id: string
+  title: string
+  content: string
+  image_url?: string
+  author?: string
+  publisher?: string
+  published_at?: string
+  source_url?: string
+  excerpt?: string
+  topics?: string[]
+  isExternal?: boolean
+  liked?: boolean
+  saved?: boolean
+  isContentLoading?: boolean
+  [key: string]: unknown
+}
+
+const article = ref<ViewArticle | null>(null)
 const loading = ref(true)
 const showComments = ref(true)
 const scrollProgress = ref(0)
