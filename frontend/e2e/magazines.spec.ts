@@ -69,6 +69,7 @@ const setAuthToken = async (page: Page, token: string) => {
 }
 
 test.describe.serial('Authenticated Magazine Tests', () => {
+  test.skip(!!process.env.CI, 'Requires a running backend server')
   let owner: TestUser
   let follower: TestUser
   let ownerToken: string
