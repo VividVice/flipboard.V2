@@ -2,14 +2,14 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, HttpUrl
+from pydantic import BaseModel, EmailStr
 
 
 class UserBase(BaseModel):
     email: EmailStr
     username: str
     bio: Optional[str] = None
-    profile_pic: Optional[HttpUrl] = None
+    profile_pic: Optional[str] = None
     followed_topics: List[str] = []
     followers: List[str] = []
     following: List[str] = []
@@ -32,7 +32,7 @@ class UserUpdate(BaseModel):
 
     username: Optional[str] = None
     bio: Optional[str] = None
-    profile_pic: Optional[HttpUrl] = None
+    profile_pic: Optional[str] = None
     followed_topics: Optional[List[str]] = None
     newsletter_subscribed: Optional[bool] = None
 
@@ -53,7 +53,7 @@ class UserPublic(BaseModel):
     id: uuid.UUID
     username: str
     bio: Optional[str] = None
-    profile_pic: Optional[HttpUrl] = None
+    profile_pic: Optional[str] = None
     followers: List[str] = []
     following: List[str] = []
     created_at: datetime

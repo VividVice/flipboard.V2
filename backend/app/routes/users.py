@@ -72,13 +72,7 @@ async def trigger_newsletter(current_user: dict = Depends(get_current_user)):
 async def update_user_me(
     user_update: UserUpdate, current_user: dict = Depends(get_current_user)
 ):
-    # Convert to dict and ensure all objects (like HttpUrl) are
-    # converted to serializable types
     update_data = user_update.dict(exclude_unset=True)
-
-    # Manually convert HttpUrl to string if present
-    if "profile_pic" in update_data and update_data["profile_pic"]:
-        update_data["profile_pic"] = str(update_data["profile_pic"])
 
     # Ensure new username (if provided) is unique
     if "username" in update_data:

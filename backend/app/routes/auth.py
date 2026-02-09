@@ -42,7 +42,7 @@ async def login_google(token_data: GoogleToken):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email not provided in Google ID token",
             )
-        picture = idinfo.get("picture", "")
+        picture = idinfo.get("picture") or None
 
     except ValueError as e:
         raise HTTPException(
