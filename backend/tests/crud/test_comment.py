@@ -429,3 +429,173 @@ async def test_delete_comment_not_found(mock_db):
 
     # THEN False is returned
     assert result is False
+
+
+# ============================================================================
+# Edge Cases: get_comments_by_article with no user
+# ============================================================================
+
+
+@patch("app.crud.comment.user_crud")
+@patch("app.crud.comment.db")
+async def test_get_comments_by_magazine_user_not_found(
+    mock_db, mock_user_crud, test_user
+):
+    # GIVEN magazine comments exist but user doesn't
+    magazine_comment = {
+        "id": "magazine-comment-id",
+        "content": "Magazine comment",
+        "magazine_id": "test-magazine-id",
+        "user_id": "unknown-user-id",
+        "created_at": datetime.utcnow(),
+    }
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[magazine_comment])
+    mock_db.comments = MagicMock()
+    mock_db.comments.find = MagicMock(return_value=mock_cursor)
+
+    mock_user_crud.get_user_by_id = AsyncMock(return_value=None)
+
+    # WHEN get_comments_by_magazine is called
+    result = await comment_crud.get_comments_by_magazine("test-magazine-id")
+
+    # THEN comments have fallback user info
+    assert len(result) == 1
+    assert result[0]["user"]["username"] == "Unknown User"
+
+
+# ============================================================================
+# Edge Cases: get_comments_by_user with deleted magazine
+# ============================================================================
+
+
+@patch("app.crud.comment.user_crud")
+@patch("app.crud.comment.db")
+async def test_get_comments_by_user_deleted_magazine(
+    mock_db, mock_user_crud, test_user
+):
+    # GIVEN user has comments but magazine was deleted
+    user_comment = {
+        "id": "user-comment-id",
+        "content": "User comment",
+        "magazine_id": "deleted-magazine-id",
+        "user_id": test_user["id"],
+        "created_at": datetime.utcnow(),
+    }
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[user_comment])
+    mock_db.comments = MagicMock()
+    mock_db.comments.find = MagicMock(return_value=mock_cursor)
+    mock_db.magazines = MagicMock()
+    mock_db.magazines.find_one = AsyncMock(return_value=None)
+
+    mock_user_crud.get_user_by_id = AsyncMock(return_value=test_user)
+
+    # WHEN get_comments_by_user is called
+    result = await comment_crud.get_comments_by_user(test_user["id"])
+
+    # THEN comments show deleted magazine
+    assert len(result) == 1
+    assert result[0]["magazine_title"] == "Deleted Magazine"
+
+
+@patch("app.crud.comment.user_crud")
+@patch("app.crud.comment.db")
+async def test_get_comments_by_user_no_article_or_magazine(
+    mock_db, mock_user_crud, test_user
+):
+    # GIVEN user has comments with neither article_id nor magazine_id
+    user_comment = {
+        "id": "user-comment-id",
+        "content": "Orphan comment",
+        "user_id": test_user["id"],
+        "created_at": datetime.utcnow(),
+    }
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[user_comment])
+    mock_db.comments = MagicMock()
+    mock_db.comments.find = MagicMock(return_value=mock_cursor)
+
+    mock_user_crud.get_user_by_id = AsyncMock(return_value=test_user)
+
+    # WHEN get_comments_by_user is called
+    result = await comment_crud.get_comments_by_user(test_user["id"])
+
+    # THEN comments have article_title set to None
+    assert len(result) == 1
+    assert result[0]["article_title"] is None
+
+
+@patch("app.crud.comment.user_crud")
+@patch("app.crud.comment.db")
+async def test_get_comments_by_user_unknown_user(mock_db, mock_user_crud):
+    # GIVEN user not found
+    user_comment = {
+        "id": "user-comment-id",
+        "content": "Comment",
+        "article_id": "a1",
+        "user_id": "unknown-user-id",
+        "created_at": datetime.utcnow(),
+    }
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort = MagicMock(return_value=mock_cursor)
+    mock_cursor.skip = MagicMock(return_value=mock_cursor)
+    mock_cursor.limit = MagicMock(return_value=mock_cursor)
+    mock_cursor.to_list = AsyncMock(return_value=[user_comment])
+    mock_db.comments = MagicMock()
+    mock_db.comments.find = MagicMock(return_value=mock_cursor)
+    mock_db.articles = MagicMock()
+    mock_db.articles.find_one = AsyncMock(return_value={"id": "a1", "title": "Art"})
+
+    mock_user_crud.get_user_by_id = AsyncMock(return_value=None)
+
+    # WHEN get_comments_by_user is called
+    result = await comment_crud.get_comments_by_user("unknown-user-id")
+
+    # THEN fallback user info is used
+    assert result[0]["user"]["username"] == "Unknown User"
+
+
+# ============================================================================
+# Edge Cases: create_magazine_comment user not found
+# ============================================================================
+
+
+@patch("app.crud.comment.user_crud")
+@patch("app.crud.comment.db")
+async def test_create_magazine_comment_user_not_found(mock_db, mock_user_crud):
+    # GIVEN magazine comment data but user doesn't exist
+    comment_in = CommentCreate(content="Magazine comment")
+    created_comment = {
+        "id": "new-magazine-comment-id",
+        "content": "Magazine comment",
+        "magazine_id": "test-magazine-id",
+        "user_id": "unknown-user-id",
+        "created_at": datetime.utcnow(),
+        "updated_at": None,
+    }
+    mock_db.comments = MagicMock()
+    mock_db.comments.insert_one = AsyncMock()
+    mock_db.comments.find_one = AsyncMock(return_value=created_comment)
+
+    mock_user_crud.get_user_by_id = AsyncMock(return_value=None)
+
+    # WHEN create_magazine_comment is called
+    result = await comment_crud.create_magazine_comment(
+        "test-magazine-id", "unknown-user-id", comment_in
+    )
+
+    # THEN comment has fallback user info
+    assert result["user"]["username"] == "Unknown User"

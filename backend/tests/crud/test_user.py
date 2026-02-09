@@ -246,3 +246,225 @@ async def test_update_user_with_no_valid_data(mock_db):
     # THEN no update should be performed and False should be returned
     assert result is False
     mock_db.users.update_one.assert_not_called()
+
+
+# ============================================================================
+# create_social_user Tests
+# ============================================================================
+
+
+@patch("app.crud.user.get_password_hash")
+@patch("app.crud.user.db")
+async def test_create_social_user(mock_db, mock_hash):
+    # GIVEN social user data
+    mock_db.users = MagicMock()
+    mock_db.users.insert_one = AsyncMock()
+    created_user = {
+        "username": "googleuser",
+        "email": "google@example.com",
+        "hashed_password": "hashed_random",
+    }
+    mock_db.users.find_one = AsyncMock(return_value=created_user)
+    mock_hash.return_value = "hashed_random"
+
+    user_data = {
+        "email": "google@example.com",
+        "username": "googleuser",
+        "profile_pic": "https://example.com/pic.jpg",
+    }
+
+    # WHEN create_social_user is called
+    result = await user_crud.create_social_user(user_data)
+
+    # THEN user is inserted and returned
+    mock_db.users.insert_one.assert_awaited_once()
+    inserted = mock_db.users.insert_one.call_args[0][0]
+    assert inserted["email"] == "google@example.com"
+    assert "id" in inserted
+    assert "created_at" in inserted
+    assert "hashed_password" in inserted
+    assert result == created_user
+
+
+# ============================================================================
+# follow_user / unfollow_user Tests
+# ============================================================================
+
+
+@patch("app.crud.user.db")
+async def test_follow_user(mock_db):
+    mock_db.users = MagicMock()
+    mock_db.users.update_one = AsyncMock()
+
+    result = await user_crud.follow_user("follower-id", "followed-id")
+
+    assert result is True
+    assert mock_db.users.update_one.await_count == 2
+    # First call: add to follower's following
+    first_call = mock_db.users.update_one.call_args_list[0]
+    assert first_call[0][0] == {"id": "follower-id"}
+    assert "$addToSet" in first_call[0][1]
+    # Second call: add to followed's followers
+    second_call = mock_db.users.update_one.call_args_list[1]
+    assert second_call[0][0] == {"id": "followed-id"}
+    assert "$addToSet" in second_call[0][1]
+
+
+@patch("app.crud.user.db")
+async def test_unfollow_user(mock_db):
+    mock_db.users = MagicMock()
+    mock_db.users.update_one = AsyncMock()
+
+    result = await user_crud.unfollow_user("follower-id", "followed-id")
+
+    assert result is True
+    assert mock_db.users.update_one.await_count == 2
+    first_call = mock_db.users.update_one.call_args_list[0]
+    assert first_call[0][0] == {"id": "follower-id"}
+    assert "$pull" in first_call[0][1]
+    second_call = mock_db.users.update_one.call_args_list[1]
+    assert second_call[0][0] == {"id": "followed-id"}
+    assert "$pull" in second_call[0][1]
+
+
+# ============================================================================
+# follow_magazine / unfollow_magazine Tests
+# ============================================================================
+
+
+@patch("app.crud.user.db")
+async def test_follow_magazine(mock_db):
+    mock_db.users = MagicMock()
+    mock_result = MagicMock()
+    mock_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_result)
+
+    result = await user_crud.follow_magazine("user-id", "magazine-id")
+
+    assert result is True
+    call_args = mock_db.users.update_one.call_args
+    assert call_args[0][0] == {"id": "user-id"}
+    assert call_args[0][1] == {"$addToSet": {"followed_magazines": "magazine-id"}}
+
+
+@patch("app.crud.user.db")
+async def test_unfollow_magazine(mock_db):
+    mock_db.users = MagicMock()
+    mock_result = MagicMock()
+    mock_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_result)
+
+    result = await user_crud.unfollow_magazine("user-id", "magazine-id")
+
+    assert result is True
+    call_args = mock_db.users.update_one.call_args
+    assert call_args[0][0] == {"id": "user-id"}
+    assert call_args[0][1] == {"$pull": {"followed_magazines": "magazine-id"}}
+
+
+# ============================================================================
+# get_user_by_id Tests
+# ============================================================================
+
+
+@patch("app.crud.user.db")
+async def test_get_user_by_id_found(mock_db):
+    user_data = {"id": "user-123", "username": "testuser"}
+    mock_db.users = MagicMock()
+    mock_db.users.find_one = AsyncMock(return_value=user_data)
+
+    result = await user_crud.get_user_by_id("user-123")
+
+    mock_db.users.find_one.assert_awaited_with({"id": "user-123"})
+    assert result == user_data
+
+
+@patch("app.crud.user.db")
+async def test_get_user_by_id_not_found(mock_db):
+    mock_db.users = MagicMock()
+    mock_db.users.find_one = AsyncMock(return_value=None)
+
+    result = await user_crud.get_user_by_id("nonexistent")
+
+    assert result is None
+
+
+# ============================================================================
+# get_users_by_ids Tests
+# ============================================================================
+
+
+@patch("app.crud.user.db")
+async def test_get_users_by_ids(mock_db):
+    users = [
+        {"id": "u1", "username": "user1"},
+        {"id": "u2", "username": "user2"},
+    ]
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = AsyncMock(return_value=users)
+    mock_db.users = MagicMock()
+    mock_db.users.find = MagicMock(return_value=mock_cursor)
+
+    result = await user_crud.get_users_by_ids(["u1", "u2"])
+
+    mock_db.users.find.assert_called_with({"id": {"$in": ["u1", "u2"]}})
+    assert len(result) == 2
+
+
+@patch("app.crud.user.db")
+async def test_get_users_by_ids_empty(mock_db):
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = AsyncMock(return_value=[])
+    mock_db.users = MagicMock()
+    mock_db.users.find = MagicMock(return_value=mock_cursor)
+
+    result = await user_crud.get_users_by_ids([])
+
+    assert result == []
+
+
+# ============================================================================
+# update_followed_topics / add / remove Tests
+# ============================================================================
+
+
+@patch("app.crud.user.db")
+async def test_update_followed_topics(mock_db):
+    mock_db.users = MagicMock()
+    mock_result = MagicMock()
+    mock_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_result)
+
+    result = await user_crud.update_followed_topics("user-id", ["t1", "t2"])
+
+    assert result is True
+    call_args = mock_db.users.update_one.call_args
+    assert call_args[0][1] == {"$set": {"followed_topics": ["t1", "t2"]}}
+
+
+@patch("app.crud.user.db")
+async def test_add_followed_topic(mock_db):
+    mock_db.users = MagicMock()
+    mock_result = MagicMock()
+    mock_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_result)
+
+    result = await user_crud.add_followed_topic("user-id", "topic-1")
+
+    assert result is True
+    call_args = mock_db.users.update_one.call_args
+    assert call_args[0][1] == {"$addToSet": {"followed_topics": "topic-1"}}
+
+
+@patch("app.crud.user.db")
+async def test_remove_followed_topic(mock_db):
+    mock_db.users = MagicMock()
+    mock_result = MagicMock()
+    mock_result.modified_count = 1
+    mock_db.users.update_one = AsyncMock(return_value=mock_result)
+
+    result = await user_crud.remove_followed_topic("user-id", "topic-1")
+
+    assert result is True
+    call_args = mock_db.users.update_one.call_args
+    assert call_args[0][1] == {"$pull": {"followed_topics": "topic-1"}}

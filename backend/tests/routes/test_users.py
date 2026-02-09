@@ -335,3 +335,69 @@ async def test_unfollow_user_not_found(
 
     # THEN 404 is returned
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# ============================================================================
+# POST /users/newsletter/trigger Tests
+# ============================================================================
+
+
+@patch("app.routes.users.process_weekly_newsletter")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_trigger_newsletter(
+    mock_verify, mock_get_user, mock_newsletter, app, test_user
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_newsletter.return_value = None
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/users/newsletter/trigger",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert "triggered" in response.json()["message"].lower()
+    mock_newsletter.assert_awaited_once()
+
+
+async def test_trigger_newsletter_unauthorized(app):
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post("/users/newsletter/trigger")
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# ============================================================================
+# PUT /users/me - no changes Tests
+# ============================================================================
+
+
+@patch("app.routes.users.user_crud")
+@patch("app.dependencies.get_user_by_id")
+@patch("app.dependencies.verify_token")
+async def test_update_user_me_no_changes(
+    mock_verify, mock_get_user, mock_user_crud, app, test_user
+):
+    mock_verify.return_value = {"sub": test_user["id"]}
+    mock_get_user.return_value = test_user
+    mock_user_crud.update_user = AsyncMock(return_value=False)
+    mock_user_crud.get_user_by_id = AsyncMock(return_value=test_user)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.put(
+            "/users/me",
+            json={},
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["id"] == test_user["id"]

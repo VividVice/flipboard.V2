@@ -150,7 +150,7 @@ const getMagazineCover = (mag: Magazine) => {
     <div class="bg-gray-900 border-b border-gray-800">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
         <div class="relative inline-block">
-           <img class="h-32 w-32 rounded-full border-4 border-gray-800 object-cover mx-auto" :src="displayUser.avatarUrl" alt="" />
+           <img class="h-32 w-32 rounded-full border-4 border-gray-800 object-cover mx-auto" :src="displayUser.avatarUrl" referrerpolicy="no-referrer" alt="" />
            <div class="absolute bottom-2 right-2 h-6 w-6 rounded-full bg-green-500 border-4 border-gray-900"></div>
         </div>
         

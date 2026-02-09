@@ -434,3 +434,60 @@ async def test_delete_magazine_not_found(mock_db):
 
     # THEN False is returned
     assert result is False
+
+
+# ============================================================================
+# enrich_magazines_with_covers Tests
+# ============================================================================
+
+
+@patch("app.crud.article.get_articles_by_ids")
+async def test_enrich_magazines_with_covers_success(mock_get_articles):
+    # GIVEN magazines with articles that have images
+    magazines = [
+        {"id": "m1", "article_ids": ["a1", "a2"]},
+        {"id": "m2", "article_ids": ["a3"]},
+    ]
+    mock_get_articles.return_value = [
+        {"id": "a1", "image_url": "https://example.com/img1.jpg"},
+        {"id": "a3", "image_url": "https://example.com/img3.jpg"},
+    ]
+
+    result = await magazine_crud.enrich_magazines_with_covers(magazines)
+
+    assert result[0]["cover_image_url"] == "https://example.com/img1.jpg"
+    assert result[1]["cover_image_url"] == "https://example.com/img3.jpg"
+    mock_get_articles.assert_awaited_once_with(["a1", "a3"])
+
+
+@patch("app.crud.article.get_articles_by_ids")
+async def test_enrich_magazines_with_covers_no_articles(mock_get_articles):
+    # GIVEN magazines with no articles
+    magazines = [
+        {"id": "m1", "article_ids": []},
+        {"id": "m2"},
+    ]
+
+    result = await magazine_crud.enrich_magazines_with_covers(magazines)
+
+    assert "cover_image_url" not in result[0]
+    assert "cover_image_url" not in result[1]
+    mock_get_articles.assert_not_called()
+
+
+@patch("app.crud.article.get_articles_by_ids")
+async def test_enrich_magazines_with_covers_empty_list(mock_get_articles):
+    result = await magazine_crud.enrich_magazines_with_covers([])
+    assert result == []
+    mock_get_articles.assert_not_called()
+
+
+@patch("app.crud.article.get_articles_by_ids")
+async def test_enrich_magazines_with_covers_article_not_found(mock_get_articles):
+    # GIVEN magazine references an article that doesn't exist
+    magazines = [{"id": "m1", "article_ids": ["a1"]}]
+    mock_get_articles.return_value = []
+
+    result = await magazine_crud.enrich_magazines_with_covers(magazines)
+
+    assert "cover_image_url" not in result[0]

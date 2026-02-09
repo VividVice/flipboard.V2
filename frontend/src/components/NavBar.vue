@@ -90,7 +90,7 @@ const scrollToTop = () => {
             <template v-else>
                <div class="flex items-center space-x-3 group cursor-pointer relative">
                   <RouterLink to="/profile" class="flex items-center space-x-2">
-                    <img v-if="user?.avatarUrl" :src="user.avatarUrl" class="h-8 w-8 rounded-full border border-gray-600" alt="User Avatar" />
+                    <img v-if="user?.avatarUrl" :src="user.avatarUrl" referrerpolicy="no-referrer" class="h-8 w-8 rounded-full border border-gray-600" alt="User Avatar" />
                     <div v-else class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600 text-white font-bold">
                         {{ user?.name.charAt(0) }}
                     </div>

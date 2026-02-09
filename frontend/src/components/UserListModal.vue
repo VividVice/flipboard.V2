@@ -81,9 +81,10 @@ const handleFollow = async (userId: string) => {
         <div v-else-if="users.length > 0" class="space-y-1">
           <div v-for="user in users" :key="user.id" class="flex items-center justify-between p-2 hover:bg-gray-800 rounded-md transition-colors group">
             <div @click="navigateToProfile(user.username)" class="flex items-center space-x-3 cursor-pointer flex-1">
-              <img 
-                :src="user.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'" 
-                class="h-10 w-10 rounded-full border border-gray-700 object-cover" 
+              <img
+                :src="user.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'"
+                referrerpolicy="no-referrer"
+                class="h-10 w-10 rounded-full border border-gray-700 object-cover"
               />
               <div>
                 <div class="text-sm font-bold text-white">{{ user.username }}</div>

@@ -102,6 +102,7 @@ const cancelDelete = () => {
             v-if="comment.author.avatarUrl"
             :src="comment.author.avatarUrl"
             :alt="comment.author.name"
+            referrerpolicy="no-referrer"
             class="h-full w-full object-cover"
           />
           <span v-else>{{ comment.author.name.charAt(0).toUpperCase() }}</span>
