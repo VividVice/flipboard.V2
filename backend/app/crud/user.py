@@ -135,4 +135,3 @@ async def get_users_by_ids(user_ids: list):
 async def get_users_following_magazine(magazine_id: str):
     cursor = db.users.find({"followed_magazines": magazine_id})
     return await cursor.to_list(length=None)
-

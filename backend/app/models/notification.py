@@ -23,6 +23,6 @@ class Notification(BaseModel):
                 "article_id": "article789",
                 "message": "New article 'Python in 2024' added to 'My Magazine'",
                 "read": False,
-                "created_at": "2024-01-01T12:00:00Z"
+                "created_at": "2024-01-01T12:00:00Z",
             }
         }

@@ -23,12 +23,7 @@ async def get_notifications_for_user(
     if read is not None:
         query["read"] = read
 
-    cursor = (
-        db.notifications.find(query)
-        .sort("created_at", -1)
-        .skip(skip)
-        .limit(limit)
-    )
+    cursor = db.notifications.find(query).sort("created_at", -1).skip(skip).limit(limit)
     return await cursor.to_list(length=limit)
 
 
@@ -49,6 +44,4 @@ async def mark_all_notifications_as_read(user_id: str):
 
 
 async def get_unread_notifications_count(user_id: str):
-    return await db.notifications.count_documents(
-        {"user_id": user_id, "read": False}
-    )
+    return await db.notifications.count_documents({"user_id": user_id, "read": False})

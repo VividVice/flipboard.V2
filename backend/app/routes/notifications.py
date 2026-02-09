@@ -47,8 +47,8 @@ async def update_notification(
             detail="Notification not found or not authorized",
         )
     # Return the updated notification (or fetch it to confirm)
-    updated_notification = (
-        await crud_notification.db.notifications.find_one({"id": notification_id})
+    updated_notification = await crud_notification.db.notifications.find_one(
+        {"id": notification_id}
     )
     return updated_notification
 
