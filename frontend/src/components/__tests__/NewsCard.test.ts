@@ -36,7 +36,7 @@ const createMockPost = (overrides = {}) => ({
 })
 
 describe('NewsCard', () => {
-  let router: any
+  let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
     setActivePinia(createPinia())

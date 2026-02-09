@@ -17,8 +17,8 @@ export const useMagazineStore = defineStore('magazines', {
       this.userMagazinesLoading = true
       try {
         this.magazines = await apiServiceExtended.getMagazines()
-      } catch (err: any) {
-        this.error = err.message || 'Failed to fetch magazines'
+      } catch (err: unknown) {
+        this.error = err instanceof Error ? err.message : 'Failed to fetch magazines'
       } finally {
         this.userMagazinesLoading = false
       }
@@ -28,8 +28,8 @@ export const useMagazineStore = defineStore('magazines', {
       this.exploreMagazinesLoading = true
       try {
         this.exploreMagazines = await apiServiceExtended.getExploreMagazines()
-      } catch (err: any) {
-        this.error = err.message || 'Failed to fetch explore magazines'
+      } catch (err: unknown) {
+        this.error = err instanceof Error ? err.message : 'Failed to fetch explore magazines'
       } finally {
         this.exploreMagazinesLoading = false
       }
@@ -39,7 +39,7 @@ export const useMagazineStore = defineStore('magazines', {
       this.followedMagazinesLoading = true
       try {
         this.followedMagazines = await apiServiceExtended.getFollowedMagazines()
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch followed magazines:', err)
       } finally {
         this.followedMagazinesLoading = false
@@ -51,8 +51,8 @@ export const useMagazineStore = defineStore('magazines', {
         const newMagazine = await apiServiceExtended.createMagazine(name, description)
         this.magazines.push(newMagazine)
         return newMagazine
-      } catch (err: any) {
-        this.error = err.message || 'Failed to create magazine'
+      } catch (err: unknown) {
+        this.error = err instanceof Error ? err.message : 'Failed to create magazine'
         throw err
       }
     },
@@ -64,8 +64,8 @@ export const useMagazineStore = defineStore('magazines', {
         if (mag && !mag.article_ids.includes(articleId)) {
           mag.article_ids.push(articleId)
         }
-      } catch (err: any) {
-        this.error = err.message || 'Failed to add article to magazine'
+      } catch (err: unknown) {
+        this.error = err instanceof Error ? err.message : 'Failed to add article to magazine'
         throw err
       }
     },
@@ -77,8 +77,8 @@ export const useMagazineStore = defineStore('magazines', {
         if (mag) {
           mag.article_ids = mag.article_ids.filter(id => id !== articleId)
         }
-      } catch (err: any) {
-        this.error = err.message || 'Failed to remove article from magazine'
+      } catch (err: unknown) {
+        this.error = err instanceof Error ? err.message : 'Failed to remove article from magazine'
         throw err
       }
     }

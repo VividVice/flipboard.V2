@@ -60,12 +60,12 @@ const handleTabChange = async (tab: string) => {
     try {
       const rawComments = await apiServiceExtended.getUserCommentsById(targetUser.value.id)
       // Transform raw backend data to Comment interface
-      targetComments.value = rawComments.map((c: any) => ({
+      targetComments.value = (rawComments as unknown as { id: string; article_id?: string; article_title?: string; user_id?: string; user?: { id: string; username: string; profile_pic?: string }; content: string; created_at: string; updated_at?: string }[]).map((c) => ({
         id: c.id,
-        articleId: c.article_id,
+        articleId: c.article_id || '',
         articleTitle: c.article_title,
         author: {
-          id: c.user?.id || c.user_id,
+          id: c.user?.id || c.user_id || '',
           name: c.user?.username || 'Unknown User',
           avatarUrl: c.user?.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },

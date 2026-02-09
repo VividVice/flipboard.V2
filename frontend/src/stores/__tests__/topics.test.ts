@@ -122,6 +122,13 @@ describe('Topic Store', () => {
         expect(store.error).toBe('Network error')
         expect(store.loading).toBe(false)
       })
+
+      it('should use default error message when error has no message', async () => {
+        vi.mocked(apiServiceExtended.getTopics).mockRejectedValue({})
+        const store = useTopicStore()
+        await store.fetchTopics()
+        expect(store.error).toBe('Failed to fetch topics')
+      })
     })
 
     describe('fetchFollowedTopics()', () => {
@@ -145,6 +152,13 @@ describe('Topic Store', () => {
         await store.fetchFollowedTopics()
 
         expect(store.error).toBe('Failed to fetch')
+      })
+
+      it('should use default error message when error has no message', async () => {
+        vi.mocked(apiServiceExtended.getFollowedTopics).mockRejectedValue({})
+        const store = useTopicStore()
+        await store.fetchFollowedTopics()
+        expect(store.error).toBe('Failed to fetch followed topics')
       })
     })
 
@@ -206,6 +220,16 @@ describe('Topic Store', () => {
 
         expect(showSpy).toHaveBeenCalledWith('Failed to toggle', 'error')
       })
+
+      it('should use default error message on failure', async () => {
+        vi.mocked(apiServiceExtended.followTopic).mockRejectedValue({})
+        const store = useTopicStore()
+        const toastStore = useToastStore()
+        const showSpy = vi.spyOn(toastStore, 'show')
+        store.topics = [mockTopic]
+        await store.toggleFollow('1')
+        expect(showSpy).toHaveBeenCalledWith('Failed to toggle topic', 'error')
+      })
     })
 
     describe('bulkFollow()', () => {
@@ -239,6 +263,15 @@ describe('Topic Store', () => {
         await store.bulkFollow(['1', '2', '3'])
 
         expect(showSpy).toHaveBeenCalledWith('Bulk follow failed', 'error')
+      })
+
+      it('should use default error message on failure', async () => {
+        vi.mocked(apiServiceExtended.bulkFollowTopics).mockRejectedValue({})
+        const store = useTopicStore()
+        const toastStore = useToastStore()
+        const showSpy = vi.spyOn(toastStore, 'show')
+        await store.bulkFollow(['1'])
+        expect(showSpy).toHaveBeenCalledWith('Failed to follow topics', 'error')
       })
     })
 

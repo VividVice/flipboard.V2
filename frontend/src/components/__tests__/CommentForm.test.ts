@@ -7,7 +7,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useCommentsStore } from '../../stores/comments'
 
 describe('CommentForm', () => {
-  let router: any
+  let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -203,11 +203,11 @@ describe('CommentForm', () => {
       })
 
       const commentsStore = useCommentsStore()
-      let resolvePromise: any
+      let resolvePromise: (value?: unknown) => void
       const promise = new Promise((resolve) => {
         resolvePromise = resolve
       })
-      vi.spyOn(commentsStore, 'createComment').mockReturnValue(promise as any)
+      vi.spyOn(commentsStore, 'createComment').mockReturnValue(promise as Promise<void>)
 
       const textarea = wrapper.find('textarea')
       const button = wrapper.find('button')
@@ -233,11 +233,11 @@ describe('CommentForm', () => {
       })
 
       const commentsStore = useCommentsStore()
-      let resolvePromise: any
+      let resolvePromise: (value?: unknown) => void
       const promise = new Promise((resolve) => {
         resolvePromise = resolve
       })
-      vi.spyOn(commentsStore, 'createComment').mockReturnValue(promise as any)
+      vi.spyOn(commentsStore, 'createComment').mockReturnValue(promise as Promise<void>)
 
       const textarea = wrapper.find('textarea')
       const button = wrapper.find('button')

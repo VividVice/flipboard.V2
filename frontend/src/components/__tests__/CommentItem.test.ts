@@ -35,7 +35,7 @@ const mockCommentWithArticle = {
 }
 
 describe('CommentItem', () => {
-  let router: any
+  let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
     setActivePinia(createPinia())

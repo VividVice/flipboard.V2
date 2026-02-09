@@ -19,13 +19,25 @@ const USE_MOCK_DATA = false
 
 console.log('🔧 Comments store initialized with USE_MOCK_DATA:', USE_MOCK_DATA)
 
-const transformComment = (apiComment: any): Comment => {
+interface ApiComment {
+  id: string
+  article_id?: string
+  magazine_id?: string
+  article_title?: string
+  user_id?: string
+  user?: { id: string; username: string; profile_pic?: string }
+  content: string
+  created_at: string
+  updated_at?: string
+}
+
+const transformComment = (apiComment: ApiComment): Comment => {
   return {
     id: apiComment.id,
-    articleId: apiComment.article_id || apiComment.magazine_id,
+    articleId: apiComment.article_id || apiComment.magazine_id || '',
     articleTitle: apiComment.article_title,
     author: {
-      id: apiComment.user?.id || apiComment.user_id,
+      id: apiComment.user?.id || apiComment.user_id || '',
       name: apiComment.user?.username || 'Unknown User',
       avatarUrl: apiComment.user?.profile_pic || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
     },
@@ -87,7 +99,7 @@ export const useCommentsStore = defineStore('comments', {
           }
         } else {
           const comments = await apiService.getComments(articleId)
-          this.commentsByArticle[articleId] = comments.map(transformComment)
+          this.commentsByArticle[articleId] = (comments as unknown as ApiComment[]).map(transformComment)
         }
       } catch (error) {
         this.error = 'Failed to load comments'
@@ -109,7 +121,7 @@ export const useCommentsStore = defineStore('comments', {
           }
         } else {
           const comments = await apiServiceExtended.getMagazineComments(magazineId)
-          this.commentsByMagazine[magazineId] = comments.map(transformComment)
+          this.commentsByMagazine[magazineId] = (comments as unknown as ApiComment[]).map(transformComment)
         }
       } catch (error) {
         this.error = 'Failed to load magazine comments'
@@ -127,7 +139,7 @@ export const useCommentsStore = defineStore('comments', {
           this.userComments = []
         } else {
           const comments = await apiService.getUserComments()
-          this.userComments = comments.map(transformComment)
+          this.userComments = (comments as unknown as ApiComment[]).map(transformComment)
         }
       } catch (error) {
         this.error = 'Failed to load user comments'
@@ -174,7 +186,7 @@ export const useCommentsStore = defineStore('comments', {
         } else {
           console.log('🌐 Calling API to create comment')
           const apiComment = await apiService.createComment(articleId, { content })
-          newComment = transformComment(apiComment)
+          newComment = transformComment(apiComment as unknown as ApiComment)
         }
 
         if (!this.commentsByArticle[articleId]) {
@@ -207,7 +219,7 @@ export const useCommentsStore = defineStore('comments', {
 
       try {
         const apiComment = await apiServiceExtended.createMagazineComment(magazineId, { content })
-        const newComment = transformComment(apiComment)
+        const newComment = transformComment(apiComment as unknown as ApiComment)
 
         if (!this.commentsByMagazine[magazineId]) {
           this.commentsByMagazine[magazineId] = []
@@ -247,7 +259,7 @@ export const useCommentsStore = defineStore('comments', {
           }
         } else {
           const apiComment = await apiService.updateComment(commentId, { content })
-          const updatedComment = transformComment(apiComment)
+          const updatedComment = transformComment(apiComment as unknown as ApiComment)
           
           if (index !== -1) {
             comments[index] = updatedComment

@@ -15,6 +15,11 @@ const props = defineProps<{
     liked?: boolean
     saved?: boolean
   }
+  removable?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'remove', articleId: string): void
 }>()
 
 const articleStore = useArticleStore()
@@ -39,6 +44,12 @@ const openSaveModal = (e: Event) => {
   magazineStore.fetchUserMagazines()
   isSaveModalOpen.value = true
 }
+
+const handleRemove = (e: Event) => {
+  e.preventDefault()
+  e.stopPropagation()
+  emit('remove', props.article.id)
+}
 </script>
 
 <template>
@@ -51,6 +62,18 @@ const openSaveModal = (e: Event) => {
         @close="isSaveModalOpen = false"
       />
     </Teleport>
+
+    <button
+      v-if="removable"
+      @click="handleRemove"
+      class="absolute right-3 top-3 z-10 rounded-full bg-gray-900/80 border border-gray-700 p-2 text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
+      aria-label="Remove from magazine"
+      title="Remove from magazine"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7v10m6-10v10M10 3h4a1 1 0 011 1v2H9V4a1 1 0 011-1zM4 7h16" />
+      </svg>
+    </button>
 
     <!-- Image Container -->
     <div class="relative aspect-[4/3] overflow-hidden bg-gray-800">
