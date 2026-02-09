@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from app.db.database import db
-from app.schemas.notification import NotificationCreate, NotificationUpdate
+from app.schemas.notification import NotificationCreate
 
 
 async def create_notification(notification: NotificationCreate):

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.crud import article as crud_article
 from app.crud import comment as crud_comment
 from app.crud import magazine as crud_magazine
+from app.crud import notification as crud_notification
 from app.crud import user as crud_user
 from app.dependencies import get_current_user
 from app.schemas.article import Article
@@ -12,7 +13,6 @@ from app.schemas.comment import CommentCreate, MagazineCommentWithUser
 from app.schemas.magazine import Magazine, MagazineCreate, MagazineUpdate
 from app.schemas.notification import NotificationCreate
 from app.utils.article_enricher import enrich_articles
-from app.crud import notification as crud_notification
 
 router = APIRouter()
 

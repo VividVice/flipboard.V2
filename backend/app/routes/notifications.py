@@ -43,10 +43,13 @@ async def update_notification(
     )
     if not notification:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found or not authorized"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found or not authorized",
         )
     # Return the updated notification (or fetch it to confirm)
-    updated_notification = await crud_notification.db.notifications.find_one({"id": notification_id})
+    updated_notification = (
+        await crud_notification.db.notifications.find_one({"id": notification_id})
+    )
     return updated_notification
 
 

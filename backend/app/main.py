@@ -35,7 +35,9 @@ app.include_router(comments.router, tags=["comments"])
 app.include_router(interactions.router, tags=["interactions"])
 app.include_router(news.router, prefix="/news", tags=["news"])
 app.include_router(magazines.router, prefix="/magazines", tags=["magazines"])
-app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+app.include_router(
+    notifications.router, prefix="/notifications", tags=["notifications"]
+)
 
 
 @app.get("/")
