@@ -5,6 +5,7 @@ import { useMagazineStore } from './magazines'
 import { useCommentsStore } from './comments'
 import { useTopicStore } from './topics'
 import { useNewsStore } from './news'
+import { useNotificationStore } from './notifications'
 import { apiService, apiServiceExtended } from '../services/api'
 import router from '../router'
 
@@ -281,12 +282,14 @@ export const useAuthStore = defineStore('auth', {
       const commentsStore = useCommentsStore()
       const topicStore = useTopicStore()
       const newsStore = useNewsStore()
+      const notificationStore = useNotificationStore()
 
       articleStore.$reset()
       magazineStore.$reset()
       commentsStore.$reset()
       topicStore.$reset()
       newsStore.$reset()
+      notificationStore.$reset()
       
       const toast = useToastStore()
       toast.show('You have been logged out.', 'info')

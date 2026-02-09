@@ -249,6 +249,16 @@ export interface Magazine {
   updated_at: string
 }
 
+export interface Notification {
+  id: string
+  user_id: string
+  magazine_id?: string
+  article_id?: string
+  message: string
+  read: boolean
+  created_at: string
+}
+
 // News API Types
 export interface FacebookStats {
   likes: number
@@ -412,6 +422,46 @@ class ApiServiceExtended extends ApiService {
     const url = `${API_BASE_URL}/articles/feed?${queryParams.toString()}`
     const response = await fetch(url, { headers: this.getHeaders(true) })
     if (!response.ok) throw new Error('Failed to fetch feed')
+    return response.json()
+  }
+
+  // Notifications
+  async getNotifications(params?: { skip?: number; limit?: number; read?: boolean }): Promise<Notification[]> {
+    const queryParams = new URLSearchParams()
+    if (params?.skip) queryParams.append('skip', params.skip.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.read !== undefined && params?.read !== null) queryParams.append('read', params.read.toString())
+
+    const url = `${API_BASE_URL}/notifications?${queryParams.toString()}`
+    const response = await fetch(url, { headers: this.getHeaders(true) })
+    if (!response.ok) throw new Error('Failed to fetch notifications')
+    return response.json()
+  }
+
+  async getUnreadNotificationsCount(): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/notifications/count`, {
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to fetch unread notification count')
+    return response.json()
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<Notification> {
+    const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ read: true }),
+    })
+    if (!response.ok) throw new Error('Failed to mark notification as read')
+    return response.json()
+  }
+
+  async markAllNotificationsAsRead(): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/notifications/mark_all_read`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    })
+    if (!response.ok) throw new Error('Failed to mark all notifications as read')
     return response.json()
   }
 
