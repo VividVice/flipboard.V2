@@ -39,7 +39,7 @@ export const useNotificationStore = defineStore('notifications', {
         const updatedNotification = await apiServiceExtended.markNotificationAsRead(notificationId)
         const index = this.notifications.findIndex((n) => n.id === notificationId)
         if (index !== -1) {
-          this.notifications[index].read = updatedNotification.read
+          this.notifications.splice(index, 1, updatedNotification)
         }
         this.fetchUnreadCount() // Update unread count
       } catch (error: unknown) {

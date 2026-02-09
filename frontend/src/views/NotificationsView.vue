@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotificationStore } from '../stores/notifications'
 import { storeToRefs } from 'pinia'
+import type { Notification } from '../services/api' // Added import for Notification type
 
 const router = useRouter()
 const notificationStore = useNotificationStore()
