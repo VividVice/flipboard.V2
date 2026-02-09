@@ -17,7 +17,7 @@ const magazineStore = useMagazineStore()
 const toastStore = useToastStore()
 const articleId = route.params.id as string
 
-const article = ref<any>(null)
+const article = ref<Record<string, unknown> | null>(null)
 const loading = ref(true)
 const showComments = ref(true)
 const scrollProgress = ref(0)
@@ -204,7 +204,7 @@ const handleShare = async () => {
         title,
         url
       })
-    } catch (err) {
+    } catch {
       // User cancelled or share failed
       copyToClipboard(url)
     }

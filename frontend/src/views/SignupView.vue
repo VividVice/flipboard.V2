@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { GoogleLogin, type CallbackTypes } from 'vue3-google-login'
+import { GoogleLogin } from 'vue3-google-login'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -25,22 +25,22 @@ const handleSignup = async () => {
   try {
     await authStore.signup(username.value, email.value, password.value)
     router.push('/welcome/topics')
-  } catch (err: any) {
-    error.value = err.message || 'Signup failed'
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : 'Signup failed'
   } finally {
     loading.value = false
   }
 }
 
-const handleGoogleLogin = async (response: any) => {
+const handleGoogleLogin = async (response: { credential?: string }) => {
   try {
     loading.value = true
     if (response.credential) {
         await authStore.loginWithGoogle(response.credential)
         router.push('/welcome/topics')
     }
-  } catch (err: any) {
-     error.value = err.message || 'Google Login failed'
+  } catch (err: unknown) {
+     error.value = err instanceof Error ? err.message : 'Google Login failed'
   } finally {
      loading.value = false
   }

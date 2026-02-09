@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, Page } from '@playwright/test'
 
 // Helper to detect mobile by viewport width
-const isMobileViewport = (page: any) => {
+const isMobileViewport = (page: Page) => {
   const viewport = page.viewportSize()
   return viewport && viewport.width < 640 // sm breakpoint in Tailwind
 }

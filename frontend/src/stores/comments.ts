@@ -19,7 +19,19 @@ const USE_MOCK_DATA = false
 
 console.log('🔧 Comments store initialized with USE_MOCK_DATA:', USE_MOCK_DATA)
 
-const transformComment = (apiComment: any): Comment => {
+interface ApiComment {
+  id: string
+  article_id?: string
+  magazine_id?: string
+  article_title?: string
+  user_id?: string
+  user?: { id: string; username: string; profile_pic?: string }
+  content: string
+  created_at: string
+  updated_at?: string
+}
+
+const transformComment = (apiComment: ApiComment): Comment => {
   return {
     id: apiComment.id,
     articleId: apiComment.article_id || apiComment.magazine_id,

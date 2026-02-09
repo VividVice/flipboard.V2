@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useMagazineStore } from '../magazines'
-import { apiServiceExtended } from '../../services/api'
+import { apiServiceExtended, type Magazine } from '../../services/api'
 
 vi.mock('../../services/api', () => ({
   apiServiceExtended: {
@@ -91,6 +91,38 @@ describe('Magazine Store', () => {
         await store.fetchUserMagazines()
 
         expect(store.error).toBe('Failed to fetch magazines')
+      })
+    })
+
+    describe('fetchExploreMagazines()', () => {
+      it('should fetch explore magazines successfully', async () => {
+        const mockExplore = [{ id: 'mag-4', name: 'Science' }]
+        vi.mocked(apiServiceExtended.getExploreMagazines).mockResolvedValue(mockExplore as unknown as Magazine[])
+
+        const store = useMagazineStore()
+        await store.fetchExploreMagazines()
+
+        expect(store.exploreMagazines).toEqual(mockExplore)
+        expect(store.exploreMagazinesLoading).toBe(false)
+      })
+
+      it('should handle errors in fetchExploreMagazines', async () => {
+        vi.mocked(apiServiceExtended.getExploreMagazines).mockRejectedValue(new Error('Explore fail'))
+
+        const store = useMagazineStore()
+        await store.fetchExploreMagazines()
+
+        expect(store.error).toBe('Explore fail')
+        expect(store.exploreMagazinesLoading).toBe(false)
+      })
+
+      it('should use default error message for fetchExploreMagazines', async () => {
+        vi.mocked(apiServiceExtended.getExploreMagazines).mockRejectedValue({})
+
+        const store = useMagazineStore()
+        await store.fetchExploreMagazines()
+
+        expect(store.error).toBe('Failed to fetch explore magazines')
       })
     })
 

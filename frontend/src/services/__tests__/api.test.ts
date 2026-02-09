@@ -169,6 +169,109 @@ describe('API Service', () => {
 
       await expect(apiService.login(loginData)).rejects.toThrow('Invalid credentials')
     })
+
+    it('should throw generic error on failed login if no detail provided', async () => {
+      const loginData: LoginDto = {
+        username: 'testuser',
+        password: 'wrongpassword',
+      }
+
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({}),
+      } as Response)
+
+      await expect(apiService.login(loginData)).rejects.toThrow('Failed to log in')
+    })
+  })
+
+  describe('loginGoogle()', () => {
+    it('should successfully log in with Google', async () => {
+      const tokenResponse: TokenResponse = {
+        access_token: 'google-token-123',
+        token_type: 'bearer',
+      }
+
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => tokenResponse,
+      } as Response)
+
+      const result = await apiService.loginGoogle('google-id-token')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/auth/google',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ token: 'google-id-token' }),
+        })
+      )
+      expect(result).toEqual(tokenResponse)
+      expect(localStorage.setItem).toHaveBeenCalledWith('token', 'google-token-123')
+    })
+
+    it('should throw error on failed Google login', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ detail: 'Invalid Google token' }),
+      } as Response)
+
+      await expect(apiService.loginGoogle('bad-token')).rejects.toThrow('Invalid Google token')
+    })
+
+    it('should throw generic error on failed Google login if no detail provided', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({}),
+      } as Response)
+
+      await expect(apiService.loginGoogle('bad-token')).rejects.toThrow('Failed to log in with Google')
+    })
+  })
+
+  describe('getUserComments()', () => {
+    it('should fetch current user comments', async () => {
+      localStorageMock.token = 'mock-token'
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+
+      await apiService.getUserComments()
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/users/me/comments',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer mock-token' }),
+        })
+      )
+    })
+
+    it('should throw error on failed fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiService.getUserComments()).rejects.toThrow('Failed to fetch user comments')
+    })
+  })
+
+  describe('getUserCommentsById()', () => {
+    it('should fetch comments for a specific user', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+
+      await apiService.getUserCommentsById('user-123')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/users/user-123/comments',
+        expect.any(Object)
+      )
+    })
+
+    it('should throw error on failed fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiService.getUserCommentsById('user-123')).rejects.toThrow('Failed to fetch user comments')
+    })
   })
 
   describe('getComments()', () => {
@@ -324,6 +427,18 @@ describe('API Service', () => {
       )
       expect(result).toEqual(mockComment)
     })
+
+    it('should throw error on failed update', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+      } as Response)
+
+      await expect(
+        apiService.updateComment('comment-1', { content: 'test' })
+      ).rejects.toThrow('Failed to update comment: 403 Forbidden')
+    })
   })
 
   describe('deleteComment()', () => {
@@ -412,6 +527,45 @@ describe('API Service Extended', () => {
         expect.any(Object)
       )
       expect(result).toEqual(mockTopics)
+    })
+
+    it('should throw error on failed topics fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getTopics()).rejects.toThrow('Failed to fetch topics')
+    })
+
+    it('should throw error on failed follow topic', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.followTopic('1')).rejects.toThrow('Failed to follow topic')
+    })
+
+    it('should throw error on failed bulk follow topics', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.bulkFollowTopics(['1'])).rejects.toThrow('Failed to follow topics')
+    })
+
+    it('should throw error on failed followed topics fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getFollowedTopics()).rejects.toThrow('Failed to fetch followed topics')
+    })
+  })
+
+  describe('Interactions', () => {
+    it('should throw error on failed like/save article', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: false } as Response)
+      await expect(apiServiceExtended.likeArticle('1')).rejects.toThrow('Failed to like article')
+      await expect(apiServiceExtended.saveArticle('1')).rejects.toThrow('Failed to save article')
+    })
+
+    it('should throw error on failed interaction status fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getInteractionStatus('1')).rejects.toThrow('Failed to get interaction status')
+    })
+
+    it('should throw error on failed liked/saved articles fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: false } as Response)
+      await expect(apiServiceExtended.getLikedArticles()).rejects.toThrow('Failed to fetch liked articles')
+      await expect(apiServiceExtended.getSavedArticles()).rejects.toThrow('Failed to fetch saved articles')
     })
 
     it('should follow a topic', async () => {
@@ -507,6 +661,45 @@ describe('API Service Extended', () => {
         expect.any(Object)
       )
       expect(result).toEqual(mockArticles)
+    })
+
+    it('should fetch articles with no params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+
+      await apiServiceExtended.getArticles()
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/articles\?$/),
+        expect.any(Object)
+      )
+    })
+
+    it('should throw error on failed articles fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getArticles()).rejects.toThrow('Failed to fetch articles')
+    })
+
+    it('should throw error on failed article fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getArticle('1')).rejects.toThrow('Failed to fetch article')
+    })
+
+    it('should throw error on failed hero article fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getHeroArticle()).rejects.toThrow('Failed to fetch hero article')
+    })
+
+    it('should fetch feed articles with no params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      await apiServiceExtended.getFeedArticles()
+      expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/\/articles\/feed\?$/), expect.any(Object))
+    })
+
+    it('should throw error on failed feed fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getFeedArticles()).rejects.toThrow('Failed to fetch feed')
     })
 
     it('should fetch single article', async () => {
@@ -684,6 +877,91 @@ describe('API Service Extended', () => {
       expect(result).toEqual(mockNews)
     })
 
+    it('should fetch news with no params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ posts: [] }),
+      } as Response)
+
+      await apiServiceExtended.getNews()
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('news?q=news'),
+        expect.any(Object)
+      )
+    })
+
+    it('should fetch news with all params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ posts: [] }),
+      } as Response)
+
+      await apiServiceExtended.getNews({ q: 'tech', ts: 123, size: 10, country: 'us' })
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('q=tech'),
+        expect.any(Object)
+      )
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('ts=123'),
+        expect.any(Object)
+      )
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('size=10'),
+        expect.any(Object)
+      )
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('country=us'),
+        expect.any(Object)
+      )
+    })
+
+    it('should throw error on failed news fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getNews()).rejects.toThrow('Failed to fetch news')
+    })
+
+    it('should fetch news by topic with no params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ posts: [] }),
+      } as Response)
+
+      await apiServiceExtended.getNewsByTopic('tech')
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/news\/topic\/tech\?$/),
+        expect.any(Object)
+      )
+    })
+
+    it('should fetch news by topic with all params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ posts: [] }),
+      } as Response)
+
+      await apiServiceExtended.getNewsByTopic('tech', { sentiment: 'pos', ts: 1, size: 2, country: 'fr' })
+      const url = vi.mocked(fetch).mock.calls[0][0] as string
+      expect(url).toContain('sentiment=pos')
+      expect(url).toContain('ts=1')
+      expect(url).toContain('size=2')
+      expect(url).toContain('country=fr')
+    })
+
+    it('should throw error on failed news by topic fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getNewsByTopic('tech')).rejects.toThrow('Failed to fetch news by topic')
+    })
+
+    it('should throw error on failed next news page fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getNextNewsPage('url')).rejects.toThrow('Failed to fetch next news page')
+    })
+
+    it('should throw error on failed article content fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getArticleContent('url')).rejects.toThrow('Failed to fetch article content')
+    })
+
     it('should fetch news by topic', async () => {
       localStorageMock.token = 'mock-token'
 
@@ -755,6 +1033,353 @@ describe('API Service Extended', () => {
         })
       )
       expect(result).toHaveProperty('id')
+    })
+
+    it('should throw error on failed import', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.importArticle({})).rejects.toThrow('Failed to import article')
+    })
+
+    it('should get news feed with no params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ posts: [] }),
+      } as Response)
+
+      await apiServiceExtended.getNewsFeed()
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('news/feed'), expect.any(Object))
+    })
+
+    it('should get news feed with all params', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ posts: [] }),
+      } as Response)
+
+      await apiServiceExtended.getNewsFeed({ sentiment: 'neutral', ts: 1, size: 2, country: 'us' })
+      const url = vi.mocked(fetch).mock.calls[0][0] as string
+      expect(url).toContain('sentiment=neutral')
+      expect(url).toContain('ts=1')
+      expect(url).toContain('size=2')
+      expect(url).toContain('country=us')
+    })
+
+    it('should throw error on failed news feed fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getNewsFeed()).rejects.toThrow('Failed to fetch news feed')
+    })
+  })
+
+  describe('User Settings & Profiles', () => {
+    it('should update current user settings', async () => {
+      localStorageMock.token = 'mock-token'
+      const updateData = { username: 'newname' }
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ username: 'newname' }),
+      } as Response)
+
+      const result = await apiServiceExtended.updateUserMe(updateData)
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/users/me',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify(updateData),
+        })
+      )
+      expect(result.username).toBe('newname')
+    })
+
+    it('should handle update failure with detail', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ detail: 'Invalid username' }),
+      } as Response)
+
+      await expect(apiServiceExtended.updateUserMe({})).rejects.toThrow('Invalid username')
+    })
+
+    it('should handle update failure without detail', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({}),
+      } as Response)
+
+      await expect(apiServiceExtended.updateUserMe({})).rejects.toThrow('Failed to update user settings')
+    })
+
+    it('should trigger newsletter', async () => {
+      localStorageMock.token = 'mock-token'
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: true } as Response)
+
+      await apiServiceExtended.triggerNewsletter()
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/users/newsletter/trigger',
+        expect.objectContaining({ method: 'POST' })
+      )
+    })
+
+    it('should get user by username', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ username: 'test' }),
+      } as Response)
+
+      await apiServiceExtended.getUserByUsername('test')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/users/test',
+        expect.any(Object)
+      )
+    })
+
+    it('should handle 404 for getUserByUsername', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      await expect(apiServiceExtended.getUserByUsername('test')).rejects.toThrow('User not found')
+    })
+
+    it('should get user by id', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: '1' }),
+      } as Response)
+
+      await apiServiceExtended.getUserById('1')
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/users/id/1',
+        expect.any(Object)
+      )
+    })
+
+    it('should get users by ids', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+
+      await apiServiceExtended.getUsersByIds(['1', '2'])
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/users/list',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify(['1', '2']),
+        })
+      )
+    })
+
+    it('should return empty array if no user ids provided', async () => {
+      const result = await apiServiceExtended.getUsersByIds([])
+      expect(result).toEqual([])
+      expect(fetch).not.toHaveBeenCalled()
+    })
+
+    it('should follow and unfollow user', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: true } as Response)
+
+      await apiServiceExtended.followUser('1')
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('users/1/follow'), expect.any(Object))
+
+      await apiServiceExtended.unfollowUser('1')
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('users/1/unfollow'), expect.any(Object))
+    })
+
+    it('should throw error on failed follow/unfollow user', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: false } as Response)
+      await expect(apiServiceExtended.followUser('1')).rejects.toThrow('Failed to follow user')
+      await expect(apiServiceExtended.unfollowUser('1')).rejects.toThrow('Failed to unfollow user')
+    })
+
+    it('should throw error on failed newsletter trigger', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.triggerNewsletter()).rejects.toThrow('Failed to trigger newsletter')
+    })
+
+    it('should throw error on failed getUserByUsername (generic)', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 500 } as Response)
+      await expect(apiServiceExtended.getUserByUsername('test')).rejects.toThrow('Failed to fetch user profile')
+    })
+
+    it('should throw error on failed getUserById (404)', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      await expect(apiServiceExtended.getUserById('1')).rejects.toThrow('User not found')
+    })
+
+    it('should throw error on failed getUserById (generic)', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 500 } as Response)
+      await expect(apiServiceExtended.getUserById('1')).rejects.toThrow('Failed to fetch user profile')
+    })
+
+    it('should throw error on failed getUsersByIds', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getUsersByIds(['1'])).rejects.toThrow('Failed to fetch users list')
+    })
+  })
+
+  describe('Magazines', () => {
+    it('should throw error on failed magazine fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getMagazines()).rejects.toThrow('Failed to fetch magazines')
+    })
+
+    it('should throw error on failed magazine by id fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getMagazineById('1')).rejects.toThrow('Failed to fetch magazine')
+    })
+
+    it('should throw error on failed user magazines fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getMagazinesByUserId('1')).rejects.toThrow('Failed to fetch user magazines')
+    })
+
+    it('should throw error on failed explore magazines fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getExploreMagazines()).rejects.toThrow('Failed to fetch explore magazines')
+    })
+
+    it('should throw error on failed magazine creation', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.createMagazine('name')).rejects.toThrow('Failed to create magazine')
+    })
+
+    it('should throw error on failed magazine deletion', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.deleteMagazine('1')).rejects.toThrow('Failed to delete magazine')
+    })
+
+    it('should throw error on failed add/remove article', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: false } as Response)
+      await expect(apiServiceExtended.addArticleToMagazine('1', '1')).rejects.toThrow('Failed to add article to magazine')
+      await expect(apiServiceExtended.removeArticleFromMagazine('1', '1')).rejects.toThrow('Failed to remove article from magazine')
+    })
+
+    it('should throw error on failed magazine articles/comments fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: false } as Response)
+      await expect(apiServiceExtended.getMagazineArticles('1')).rejects.toThrow('Failed to fetch magazine articles')
+      await expect(apiServiceExtended.getMagazineComments('1')).rejects.toThrow('Failed to fetch magazine comments')
+    })
+
+    it('should throw error on failed magazine comment creation', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.createMagazineComment('1', { content: 'test' })).rejects.toThrow('Failed to create magazine comment')
+    })
+
+    it('should throw error on failed followed magazines fetch', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false } as Response)
+      await expect(apiServiceExtended.getFollowedMagazines()).rejects.toThrow('Failed to fetch followed magazines')
+    })
+
+    it('should throw error on failed magazine follow/unfollow', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: false } as Response)
+      await expect(apiServiceExtended.followMagazine('1')).rejects.toThrow('Failed to follow magazine')
+      await expect(apiServiceExtended.unfollowMagazine('1')).rejects.toThrow('Failed to unfollow magazine')
+    })
+  })
+
+  describe('Magazines', () => {
+    it('should fetch magazines', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+
+      await apiServiceExtended.getMagazines()
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/', expect.any(Object))
+    })
+
+    it('should fetch magazine by id', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: '1' }),
+      } as Response)
+
+      await apiServiceExtended.getMagazineById('1')
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/1', expect.any(Object))
+    })
+
+    it('should fetch magazines by user id', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+
+      await apiServiceExtended.getMagazinesByUserId('user-1')
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/user/user-1', expect.any(Object))
+    })
+
+    it('should fetch explore magazines', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      } as Response)
+
+      await apiServiceExtended.getExploreMagazines()
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/explore', expect.any(Object))
+    })
+
+    it('should create and delete magazine', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+      await apiServiceExtended.createMagazine('New Mag', 'Desc')
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/magazines/',
+        expect.objectContaining({ method: 'POST', body: JSON.stringify({ name: 'New Mag', description: 'Desc' }) })
+      )
+
+      await apiServiceExtended.deleteMagazine('1')
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/1', expect.objectContaining({ method: 'DELETE' }))
+    })
+
+    it('should add/remove article from magazine', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: true } as Response)
+
+      await apiServiceExtended.addArticleToMagazine('mag-1', 'art-1')
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('magazines/mag-1/articles/art-1'), expect.objectContaining({ method: 'POST' }))
+
+      await apiServiceExtended.removeArticleFromMagazine('mag-1', 'art-1')
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('magazines/mag-1/articles/art-1'), expect.objectContaining({ method: 'DELETE' }))
+    })
+
+    it('should fetch magazine articles and comments', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ ok: true, json: async () => [] } as Response)
+
+      await apiServiceExtended.getMagazineArticles('1')
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/1/articles', expect.any(Object))
+
+      await apiServiceExtended.getMagazineComments('1')
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/1/comments', expect.any(Object))
+    })
+
+    it('should create magazine comment', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response)
+
+      await apiServiceExtended.createMagazineComment('1', { content: 'test' })
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/magazines/1/comments',
+        expect.objectContaining({ method: 'POST' })
+      )
+    })
+
+    it('should follow and unfollow magazine', async () => {
+      vi.mocked(global.fetch).mockResolvedValue({ 
+        ok: true, 
+        json: async () => [] 
+      } as Response)
+
+      await apiServiceExtended.getFollowedMagazines()
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/magazines/followed/me', expect.any(Object))
+
+      await apiServiceExtended.followMagazine('1')
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('magazines/1/follow'), expect.any(Object))
+
+      await apiServiceExtended.unfollowMagazine('1')
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('magazines/1/unfollow'), expect.any(Object))
     })
   })
 })

@@ -116,7 +116,7 @@ const handleUpdateProfile = async () => {
     })
     // Only close modal on success
     isEditModalOpen.value = false
-  } catch (error: any) {
+  } catch (error: unknown) {
     // The auth store's updateProfile already shows error toasts for API failures
     // Modal remains open on error so user can retry or correct their input
     console.error('Profile update failed:', error)

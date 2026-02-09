@@ -70,8 +70,8 @@ export const useArticleStore = defineStore('articles', {
           liked: a.liked ?? false,
           saved: a.saved ?? false
         }))
-      } catch (error: any) {
-        this.error = error.message || 'Failed to fetch articles'
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Failed to fetch articles'
         console.error('Error fetching articles:', error)
       } finally {
         this.loading = false
@@ -86,7 +86,7 @@ export const useArticleStore = defineStore('articles', {
           liked: article.liked ?? false,
           saved: article.saved ?? false
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching hero article:', error)
       }
     },
@@ -101,8 +101,8 @@ export const useArticleStore = defineStore('articles', {
           liked: a.liked ?? false,
           saved: a.saved ?? false
         }))
-      } catch (error: any) {
-        this.error = error.message || 'Failed to fetch feed'
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Failed to fetch feed'
         console.error('Error fetching feed:', error)
       } finally {
         this.loading = false
@@ -130,8 +130,8 @@ export const useArticleStore = defineStore('articles', {
         if (article.liked) {
           toast.show('Liked article')
         }
-      } catch (error: any) {
-        toast.show(error.message || 'Failed to like article', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Failed to like article', 'error')
       }
     },
 
@@ -149,8 +149,8 @@ export const useArticleStore = defineStore('articles', {
         } else {
           toast.show('Removed from Profile', 'info')
         }
-      } catch (error: any) {
-        toast.show(error.message || 'Failed to save article', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Failed to save article', 'error')
       }
     },
 
@@ -178,7 +178,7 @@ export const useArticleStore = defineStore('articles', {
                 this.articles.push(na)
             }
         })
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching saved articles:', error)
       } finally {
         this.loading = false

@@ -7,7 +7,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useArticleStore } from '../../stores/articles'
 
 describe('NavBar', () => {
-  let router: any
+  let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -66,8 +66,12 @@ describe('NavBar', () => {
       id: 'user-1',
       name: 'Test User',
       email: 'test@example.com',
-      avatarUrl: null,
-    } as any
+      avatarUrl: '',
+      newsletter_subscribed: false,
+      followers: [],
+      following: [],
+      followed_magazines: [],
+    }
 
     const wrapper = mount(NavBar, {
       global: {
@@ -89,7 +93,11 @@ describe('NavBar', () => {
       name: 'Test User',
       email: 'test@example.com',
       avatarUrl: 'https://example.com/avatar.jpg',
-    } as any
+      newsletter_subscribed: false,
+      followers: [],
+      following: [],
+      followed_magazines: [],
+    }
 
     const wrapper = mount(NavBar, {
       global: {
@@ -109,8 +117,12 @@ describe('NavBar', () => {
       id: 'user-1',
       name: 'Test User',
       email: 'test@example.com',
-      avatarUrl: null,
-    } as any
+      avatarUrl: '',
+      newsletter_subscribed: false,
+      followers: [],
+      following: [],
+      followed_magazines: [],
+    }
 
     const wrapper = mount(NavBar, {
       global: {
@@ -129,8 +141,12 @@ describe('NavBar', () => {
       id: 'user-1',
       name: 'Test User',
       email: 'test@example.com',
-      avatarUrl: null,
-    } as any
+      avatarUrl: '',
+      newsletter_subscribed: false,
+      followers: [],
+      following: [],
+      followed_magazines: [],
+    }
 
     const logoutSpy = vi.spyOn(authStore, 'logout').mockImplementation(() => {})
 

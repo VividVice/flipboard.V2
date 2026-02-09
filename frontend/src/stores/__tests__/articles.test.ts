@@ -163,6 +163,13 @@ describe('Article Store', () => {
         expect(store.gridArticles).toHaveLength(3)
       })
 
+      it('should return all articles when category is For You', () => {
+        const store = useArticleStore()
+        store.selectedCategory = 'For You'
+
+        expect(store.gridArticles).toHaveLength(3)
+      })
+
       it('should filter by selected category', () => {
         const store = useArticleStore()
         store.selectedCategory = 'Technology'
@@ -213,19 +220,26 @@ describe('Article Store', () => {
     describe('fetchArticles()', () => {
       it('should fetch and store articles', async () => {
         const mockArticles = [
-          { ...mockArticle, id: '1' },
-          { ...mockArticle, id: '2' },
+          { ...mockArticle, id: '1', liked: true, saved: undefined },
+          { ...mockArticle, id: '2', liked: undefined, saved: true },
         ]
-        vi.mocked(apiServiceExtended.getArticles).mockResolvedValue(mockArticles)
+        vi.mocked(apiServiceExtended.getArticles).mockResolvedValue(mockArticles as Article[])
 
         const store = useArticleStore()
         await store.fetchArticles()
 
         expect(store.articles).toHaveLength(2)
-        expect(store.articles[0].liked).toBe(false)
+        expect(store.articles[0].liked).toBe(true)
         expect(store.articles[0].saved).toBe(false)
-        expect(store.loading).toBe(false)
-        expect(store.error).toBeNull()
+        expect(store.articles[1].liked).toBe(false)
+        expect(store.articles[1].saved).toBe(true)
+      })
+
+      it('should use default error message when no error message provided', async () => {
+        vi.mocked(apiServiceExtended.getArticles).mockRejectedValue({})
+        const store = useArticleStore()
+        await store.fetchArticles()
+        expect(store.error).toBe('Failed to fetch articles')
       })
 
       it('should set loading state', async () => {
@@ -268,16 +282,47 @@ describe('Article Store', () => {
       })
     })
 
+    describe('fetchFeed()', () => {
+      it('should fetch and store feed articles', async () => {
+        const mockArticles = [{ ...mockArticle, id: 'feed-1', liked: undefined, saved: true }]
+        vi.mocked(apiServiceExtended.getFeedArticles).mockResolvedValue(mockArticles as Article[])
+
+        const store = useArticleStore()
+        await store.fetchFeed()
+
+        expect(store.articles).toHaveLength(1)
+        expect(store.articles[0].liked).toBe(false)
+        expect(store.articles[0].saved).toBe(true)
+      })
+
+      it('should handle feed fetch errors', async () => {
+        vi.mocked(apiServiceExtended.getFeedArticles).mockRejectedValue(new Error('Feed error'))
+
+        const store = useArticleStore()
+        await store.fetchFeed()
+
+        expect(store.error).toBe('Feed error')
+      })
+
+      it('should use default error message for feed', async () => {
+        vi.mocked(apiServiceExtended.getFeedArticles).mockRejectedValue({})
+
+        const store = useArticleStore()
+        await store.fetchFeed()
+
+        expect(store.error).toBe('Failed to fetch feed')
+      })
+    })
+
     describe('fetchHeroArticle()', () => {
       it('should fetch and store hero article', async () => {
-        vi.mocked(apiServiceExtended.getHeroArticle).mockResolvedValue(mockArticle)
+        vi.mocked(apiServiceExtended.getHeroArticle).mockResolvedValue({ ...mockArticle, liked: true, saved: undefined } as Article)
 
         const store = useArticleStore()
         await store.fetchHeroArticle()
 
         expect(store.heroArticle).toBeDefined()
-        expect(store.heroArticle?.id).toBe('1')
-        expect(store.heroArticle?.liked).toBe(false)
+        expect(store.heroArticle?.liked).toBe(true)
         expect(store.heroArticle?.saved).toBe(false)
       })
 
@@ -454,8 +499,8 @@ describe('Article Store', () => {
       })
 
       it('should update existing articles with saved status', async () => {
-        const savedArticles = [{ ...mockArticle, id: '1', saved: true }]
-        vi.mocked(apiServiceExtended.getSavedArticles).mockResolvedValue(savedArticles)
+        const savedArticles = [{ ...mockArticle, id: '1', liked: true, saved: true }]
+        vi.mocked(apiServiceExtended.getSavedArticles).mockResolvedValue(savedArticles as Article[])
 
         const store = useArticleStore()
         store.articles = [{ ...mockArticle, id: '1', liked: false, saved: false }]
@@ -463,6 +508,20 @@ describe('Article Store', () => {
         await store.fetchSavedArticles()
 
         expect(store.articles[0].saved).toBe(true)
+        expect(store.articles[0].liked).toBe(true)
+      })
+
+      it('should add new articles if not existing', async () => {
+        const savedArticles = [{ ...mockArticle, id: 'new-1', saved: true }]
+        vi.mocked(apiServiceExtended.getSavedArticles).mockResolvedValue(savedArticles)
+
+        const store = useArticleStore()
+        store.articles = [{ ...mockArticle, id: '1', saved: true, liked: false }]
+
+        await store.fetchSavedArticles()
+
+        expect(store.articles).toHaveLength(2)
+        expect(store.articles.some(a => a.id === 'new-1')).toBe(true)
       })
 
       it('should handle errors silently', async () => {

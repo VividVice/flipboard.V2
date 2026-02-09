@@ -25,7 +25,7 @@ const mockArticle = {
 }
 
 describe('ArticleCard', () => {
-  let router: any
+  let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
     setActivePinia(createPinia())

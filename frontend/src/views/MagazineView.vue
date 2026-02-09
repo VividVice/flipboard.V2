@@ -14,6 +14,12 @@ const owner = ref<User | null>(null)
 const articles = ref<Article[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const editName = ref('')
+const editDescription = ref('')
+const editLoading = ref(false)
+const deleteLoading = ref(false)
 
 const magazineId = computed(() => route.params.id as string)
 
@@ -58,9 +64,9 @@ const fetchMagazineData = async () => {
     // 3. Get Articles
     articles.value = await apiServiceExtended.getMagazineArticles(magazineId.value)
     
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err)
-    error.value = err.message || 'Failed to load magazine'
+    error.value = err instanceof Error ? err.message : 'Failed to load magazine'
   } finally {
     loading.value = false
   }
@@ -68,6 +74,56 @@ const fetchMagazineData = async () => {
 
 const goBack = () => {
   router.back()
+}
+
+const openEditModal = () => {
+  if (!magazine.value) return
+  editName.value = magazine.value.name
+  editDescription.value = magazine.value.description || ''
+  isEditModalOpen.value = true
+}
+
+const handleUpdateMagazine = async () => {
+  if (!magazine.value) return
+  const nextName = editName.value.trim()
+  if (!nextName) return
+  editLoading.value = true
+  try {
+    const updated = await apiServiceExtended.updateMagazine(magazine.value.id, {
+      name: nextName,
+      description: editDescription.value.trim() || undefined
+    })
+    magazine.value = updated
+    isEditModalOpen.value = false
+  } catch (err) {
+    console.error('Failed to update magazine:', err)
+  } finally {
+    editLoading.value = false
+  }
+}
+
+const handleDeleteMagazine = async () => {
+  if (!magazine.value) return
+  deleteLoading.value = true
+  try {
+    await apiServiceExtended.deleteMagazine(magazine.value.id)
+    isDeleteModalOpen.value = false
+    router.push('/profile')
+  } catch (err) {
+    console.error('Failed to delete magazine:', err)
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
+const handleRemoveArticle = async (articleId: string) => {
+  if (!magazine.value) return
+  try {
+    await apiServiceExtended.removeArticleFromMagazine(magazine.value.id, articleId)
+    articles.value = articles.value.filter(article => article.id !== articleId)
+  } catch (err) {
+    console.error('Failed to remove article from magazine:', err)
+  }
 }
 </script>
 
@@ -119,12 +175,121 @@ const goBack = () => {
           >
             {{ isFollowed ? 'Following Magazine' : 'Follow Magazine' }}
           </button>
+
+          <div v-if="isOwner" class="flex items-center gap-3">
+            <button
+              @click="openEditModal"
+              class="bg-gray-800 border border-gray-700 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-700 transition-colors"
+            >
+              Edit Magazine
+            </button>
+            <button
+              @click="isDeleteModalOpen = true"
+              class="bg-transparent border border-red-600 text-red-400 px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-red-600 hover:text-white transition-colors"
+            >
+              Delete Magazine
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Magazine Modal -->
+      <div v-if="isEditModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-800 rounded-lg w-full max-w-md overflow-hidden shadow-2xl">
+          <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+            <h2 class="text-xl font-display font-bold text-white uppercase tracking-tight">Edit Magazine</h2>
+            <button @click="isEditModalOpen = false" class="text-gray-500 hover:text-white transition-colors" aria-label="Close modal">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form @submit.prevent="handleUpdateMagazine" class="p-6 space-y-4">
+            <div>
+              <label for="magazine-name" class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Magazine Title</label>
+              <input
+                id="magazine-name"
+                v-model="editName"
+                type="text"
+                class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors"
+                required
+                minlength="2"
+                maxlength="100"
+              />
+            </div>
+
+            <div>
+              <label for="magazine-description" class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Description (Optional)</label>
+              <textarea
+                id="magazine-description"
+                v-model="editDescription"
+                rows="3"
+                maxlength="300"
+                class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:outline-none focus:border-flipboard-red transition-colors resize-none"
+              ></textarea>
+            </div>
+
+            <div class="pt-4 flex space-x-4">
+              <button
+                type="button"
+                @click="isEditModalOpen = false"
+                class="flex-1 bg-transparent border border-gray-700 text-gray-400 px-6 py-3 text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                :disabled="editLoading"
+                class="flex-1 bg-flipboard-red border border-flipboard-red text-white px-6 py-3 text-xs font-bold uppercase tracking-widest rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <span v-if="editLoading" class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                {{ editLoading ? 'Saving...' : 'Save Changes' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delete Magazine Modal -->
+      <div v-if="isDeleteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-800 rounded-lg w-full max-w-md overflow-hidden shadow-2xl">
+          <div class="p-6 border-b border-gray-800">
+            <h2 class="text-xl font-display font-bold text-white uppercase tracking-tight">Delete Magazine</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <p class="text-gray-400">This action cannot be undone. Are you sure you want to delete this magazine?</p>
+            <div class="flex space-x-4">
+              <button
+                type="button"
+                @click="isDeleteModalOpen = false"
+                class="flex-1 bg-transparent border border-gray-700 text-gray-400 px-6 py-3 text-xs font-bold uppercase tracking-widest rounded hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                @click="handleDeleteMagazine"
+                :disabled="deleteLoading"
+                class="flex-1 bg-red-600 border border-red-600 text-white px-6 py-3 text-xs font-bold uppercase tracking-widest rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <span v-if="deleteLoading" class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                {{ deleteLoading ? 'Deleting...' : 'Delete' }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       
       <!-- Articles Grid -->
       <div v-if="articles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <ArticleCard v-for="article in articles" :key="article.id" :article="article" />
+        <ArticleCard
+          v-for="article in articles"
+          :key="article.id"
+          :article="article"
+          :removable="isOwner"
+          @remove="handleRemoveArticle"
+        />
       </div>
       
       <div v-else class="text-center py-20 border border-dashed border-gray-800 rounded-lg max-w-2xl mx-auto px-6">

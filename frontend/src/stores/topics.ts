@@ -25,8 +25,8 @@ export const useTopicStore = defineStore('topics', {
       this.error = null
       try {
         this.topics = await apiServiceExtended.getTopics()
-      } catch (error: any) {
-        this.error = error.message || 'Failed to fetch topics'
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Failed to fetch topics'
         console.error('Error fetching topics:', error)
       } finally {
         this.loading = false
@@ -38,8 +38,8 @@ export const useTopicStore = defineStore('topics', {
       this.error = null
       try {
         this.followedTopics = await apiServiceExtended.getFollowedTopics()
-      } catch (error: any) {
-        this.error = error.message || 'Failed to fetch followed topics'
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Failed to fetch followed topics'
         console.error('Error fetching followed topics:', error)
       } finally {
         this.loading = false
@@ -66,8 +66,8 @@ export const useTopicStore = defineStore('topics', {
           this.followedTopics.push(topic)
           toast.show(`Following ${topic.name}`)
         }
-      } catch (error: any) {
-        toast.show(error.message || 'Failed to toggle topic', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Failed to toggle topic', 'error')
       }
     },
 
@@ -77,8 +77,8 @@ export const useTopicStore = defineStore('topics', {
         await apiServiceExtended.bulkFollowTopics(topicIds)
         await this.fetchFollowedTopics()
         toast.show(`Following ${topicIds.length} topics`)
-      } catch (error: any) {
-        toast.show(error.message || 'Failed to follow topics', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Failed to follow topics', 'error')
       }
     },
 

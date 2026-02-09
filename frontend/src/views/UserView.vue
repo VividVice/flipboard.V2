@@ -60,7 +60,7 @@ const handleTabChange = async (tab: string) => {
     try {
       const rawComments = await apiServiceExtended.getUserCommentsById(targetUser.value.id)
       // Transform raw backend data to Comment interface
-      targetComments.value = rawComments.map((c: any) => ({
+      targetComments.value = rawComments.map((c: { id: string; article_id?: string; article_title?: string; user_id?: string; user?: { id: string; username: string; profile_pic?: string }; content: string; created_at: string; updated_at?: string }) => ({
         id: c.id,
         articleId: c.article_id,
         articleTitle: c.article_title,

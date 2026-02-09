@@ -7,7 +7,7 @@ import { apiServiceExtended } from '../services/api'
 
 const props = withDefaults(defineProps<{
   isOpen: boolean
-  articleData: any
+  articleData: Record<string, unknown> & { id: string }
   shouldImport?: boolean
 }>(), {
   shouldImport: true

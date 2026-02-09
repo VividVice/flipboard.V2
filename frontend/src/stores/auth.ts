@@ -93,8 +93,8 @@ export const useAuthStore = defineStore('auth', {
         } else {
           throw new Error('Failed to fetch user data')
         }
-      } catch (error: any) {
-        toast.show(error.message || 'Login failed', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Login failed', 'error')
         throw error
       }
     },
@@ -128,8 +128,8 @@ export const useAuthStore = defineStore('auth', {
         } else {
           throw new Error('Failed to fetch user data')
         }
-      } catch (error: any) {
-        toast.show(error.message || 'Google login failed', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Google login failed', 'error')
         throw error
       }
     },
@@ -154,8 +154,8 @@ export const useAuthStore = defineStore('auth', {
         }
         this.isAuthenticated = true
         toast.show(`Welcome to Flipboard, ${username}!`)
-      } catch (error: any) {
-        toast.show(error.message || 'Signup failed', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Signup failed', 'error')
         throw error
       }
     },
@@ -168,7 +168,7 @@ export const useAuthStore = defineStore('auth', {
           this.user.newsletter_subscribed = userData.newsletter_subscribed
         }
         toast.show(subscribed ? 'Subscribed to newsletter!' : 'Unsubscribed from newsletter.', 'success')
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast.show('Failed to update newsletter subscription', 'error')
         throw error
       }
@@ -194,8 +194,8 @@ export const useAuthStore = defineStore('auth', {
           }
         }
         toast.show('Profile updated successfully!', 'success')
-      } catch (error: any) {
-        toast.show(error.message || 'Failed to update profile', 'error')
+      } catch (error: unknown) {
+        toast.show(error instanceof Error ? error.message : 'Failed to update profile', 'error')
         throw error
       }
     },
@@ -205,7 +205,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         await apiServiceExtended.triggerNewsletter()
         toast.show('Newsletter processing triggered!', 'success')
-      } catch (error: any) {
+      } catch {
         toast.show('Failed to trigger newsletter', 'error')
       }
     },
@@ -219,7 +219,7 @@ export const useAuthStore = defineStore('auth', {
             this.user.following.push(userId)
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         toast.show('Failed to follow user', 'error')
         throw error
       }
@@ -232,7 +232,7 @@ export const useAuthStore = defineStore('auth', {
         if (this.user) {
           this.user.following = this.user.following.filter(id => id !== userId)
         }
-      } catch (error: any) {
+      } catch (error) {
         toast.show('Failed to unfollow user', 'error')
         throw error
       }
@@ -249,7 +249,7 @@ export const useAuthStore = defineStore('auth', {
         }
         const magazineStore = useMagazineStore()
         await magazineStore.fetchFollowedMagazines()
-      } catch (error: any) {
+      } catch (error) {
         toast.show('Failed to follow magazine', 'error')
         throw error
       }
@@ -264,7 +264,7 @@ export const useAuthStore = defineStore('auth', {
         }
         const magazineStore = useMagazineStore()
         await magazineStore.fetchFollowedMagazines()
-      } catch (error: any) {
+      } catch (error) {
         toast.show('Failed to unfollow magazine', 'error')
         throw error
       }

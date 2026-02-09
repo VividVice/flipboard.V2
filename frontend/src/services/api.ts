@@ -531,7 +531,7 @@ class ApiServiceExtended extends ApiService {
     return response.json()
   }
 
-  async importArticle(articleData: any): Promise<Article> {
+  async importArticle(articleData: Record<string, unknown>): Promise<Article> {
     const response = await fetch(`${API_BASE_URL}/articles/import`, {
       method: 'POST',
       headers: this.getHeaders(true),
@@ -653,6 +653,16 @@ class ApiServiceExtended extends ApiService {
       body: JSON.stringify({ name, description }),
     })
     if (!response.ok) throw new Error('Failed to create magazine')
+    return response.json()
+  }
+
+  async updateMagazine(id: string, data: { name?: string; description?: string }): Promise<Magazine> {
+    const response = await fetch(`${API_BASE_URL}/magazines/${id}`, {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) throw new Error('Failed to update magazine')
     return response.json()
   }
 

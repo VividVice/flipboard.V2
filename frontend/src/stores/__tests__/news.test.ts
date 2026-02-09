@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useNewsStore } from '../news'
-import { apiServiceExtended } from '../../services/api'
+import { apiServiceExtended, type NewsPost } from '../../services/api'
 
 vi.mock('../../services/api', () => ({
   apiServiceExtended: {
@@ -189,7 +189,7 @@ describe('News Store', () => {
         vi.mocked(apiServiceExtended.getNews).mockResolvedValue(createMockNewsResponse())
 
         const store = useNewsStore()
-        store.posts = [{ uuid: 'old-post' } as any]
+        store.posts = [{ uuid: 'old-post' } as unknown as NewsPost]
 
         const promise = store.fetchNews()
         expect(store.posts).toEqual([])

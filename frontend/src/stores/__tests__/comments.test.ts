@@ -3,7 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useCommentsStore } from '../comments'
 import { useAuthStore } from '../auth'
 import { useToastStore } from '../toast'
-import { apiService } from '../../services/api'
+import { apiService, apiServiceExtended } from '../../services/api'
 import type { Comment } from '../../data/articles'
 
 vi.mock('../../services/api', () => ({
@@ -12,7 +12,12 @@ vi.mock('../../services/api', () => ({
     createComment: vi.fn(),
     updateComment: vi.fn(),
     deleteComment: vi.fn(),
+    getUserComments: vi.fn(),
   },
+  apiServiceExtended: {
+    getMagazineComments: vi.fn(),
+    createMagazineComment: vi.fn(),
+  }
 }))
 
 describe('Comments Store', () => {
@@ -26,6 +31,18 @@ describe('Comments Store', () => {
     },
     content: 'Test comment content',
     createdAt: '2024-01-01T00:00:00Z',
+  }
+
+  const mockApiComment = {
+    id: 'comment-1',
+    article_id: 'article-1',
+    user: {
+      id: 'user-1',
+      username: 'Test User',
+      profile_pic: 'https://example.com/avatar.jpg'
+    },
+    content: 'Test comment content',
+    created_at: '2024-01-01T00:00:00Z'
   }
 
   beforeEach(() => {
@@ -84,9 +101,178 @@ describe('Comments Store', () => {
         expect(store.getCommentsCount('article-999')).toBe(0)
       })
     })
+
+    describe('getCommentsByMagazineId', () => {
+      it('should return comments for a specific magazine', () => {
+        const store = useCommentsStore()
+        store.commentsByMagazine = { 'mag-1': [mockComment] }
+        expect(store.getCommentsByMagazineId('mag-1')).toHaveLength(1)
+      })
+
+      it('should return empty array if no comments for magazine', () => {
+        const store = useCommentsStore()
+        expect(store.getCommentsByMagazineId('non-existent')).toEqual([])
+      })
+    })
+
+    describe('getMagazineCommentsCount', () => {
+      it('should return the count of comments for a magazine', () => {
+        const store = useCommentsStore()
+        store.commentsByMagazine = { 'mag-1': [mockComment] }
+        expect(store.getMagazineCommentsCount('mag-1')).toBe(1)
+      })
+
+      it('should return 0 if no comments for magazine', () => {
+        const store = useCommentsStore()
+        expect(store.getMagazineCommentsCount('non-existent')).toBe(0)
+      })
+    })
   })
 
   describe('Actions', () => {
+    describe('fetchMagazineComments()', () => {
+      it('should fetch magazine comments from API', async () => {
+        const store = useCommentsStore()
+        const apiComment = { ...mockApiComment, magazine_id: 'mag-1', article_id: undefined }
+        vi.mocked(apiServiceExtended.getMagazineComments).mockResolvedValue([apiComment] as unknown as Comment[])
+
+        await store.fetchMagazineComments('mag-1')
+
+        expect(apiServiceExtended.getMagazineComments).toHaveBeenCalledWith('mag-1')
+        expect(store.commentsByMagazine['mag-1']).toHaveLength(1)
+        expect(store.commentsByMagazine['mag-1'][0].articleId).toBe('mag-1')
+      })
+
+      it('should handle magazine comments fetch failure', async () => {
+        const store = useCommentsStore()
+        vi.mocked(apiServiceExtended.getMagazineComments).mockRejectedValue(new Error('fail'))
+        await store.fetchMagazineComments('mag-1')
+        expect(store.error).toBe('Failed to load magazine comments')
+      })
+
+      it('should initialize empty comments array in mock mode', async () => {
+        const store = useCommentsStore()
+        store.useMockData = true
+
+        const promise = store.fetchMagazineComments('mag-1')
+        await vi.advanceTimersByTimeAsync(300)
+        await promise
+
+        expect(store.commentsByMagazine['mag-1']).toEqual([])
+      })
+
+      it('should NOT reinitialize if comments already exist in mock mode', async () => {
+        const store = useCommentsStore()
+        store.useMockData = true
+        store.commentsByMagazine['mag-1'] = [mockComment]
+
+        const promise = store.fetchMagazineComments('mag-1')
+        await vi.advanceTimersByTimeAsync(300)
+        await promise
+
+        expect(store.commentsByMagazine['mag-1']).toHaveLength(1)
+      })
+    })
+
+    describe('fetchUserComments()', () => {
+      it('should fetch current user comments', async () => {
+        const store = useCommentsStore()
+        vi.mocked(apiService.getUserComments).mockResolvedValue([mockApiComment] as unknown as Comment[])
+        await store.fetchUserComments()
+        expect(store.userComments).toHaveLength(1)
+      })
+
+      it('should handle user comments fetch failure', async () => {
+        const store = useCommentsStore()
+        vi.mocked(apiService.getUserComments).mockRejectedValue(new Error('fail'))
+        await store.fetchUserComments()
+        expect(store.error).toBe('Failed to load user comments')
+      })
+
+      it('should use mock data for user comments if enabled', async () => {
+        const store = useCommentsStore()
+        store.useMockData = true
+        await store.fetchUserComments()
+        expect(store.userComments).toEqual([])
+      })
+    })
+
+    describe('createMagazineComment()', () => {
+      it('should create magazine comment via API', async () => {
+        const authStore = useAuthStore()
+        authStore.user = { id: '1', name: 'test', email: 't@t.com', avatarUrl: '', newsletter_subscribed: false, followers: [], following: [], followed_magazines: [] }
+        const store = useCommentsStore()
+        const apiComment = { ...mockApiComment, magazine_id: 'mag-1', article_id: undefined }
+        vi.mocked(apiServiceExtended.createMagazineComment).mockResolvedValue(apiComment as unknown as Comment)
+
+        await store.createMagazineComment('mag-1', 'content')
+
+        expect(apiServiceExtended.createMagazineComment).toHaveBeenCalledWith('mag-1', { content: 'content' })
+        expect(store.commentsByMagazine['mag-1']).toHaveLength(1)
+      })
+
+      it('should initialize empty comments array if not exists in createMagazineComment', async () => {
+        const authStore = useAuthStore()
+        authStore.user = { id: '1', name: 'test', email: 't@t.com', avatarUrl: '', newsletter_subscribed: false, followers: [], following: [], followed_magazines: [] }
+        const store = useCommentsStore()
+        const apiComment = { ...mockApiComment, magazine_id: 'mag-1', article_id: undefined }
+        vi.mocked(apiServiceExtended.createMagazineComment).mockResolvedValue(apiComment as unknown as Comment)
+
+        // Ensure array is not initialized
+        delete store.commentsByMagazine['mag-1']
+        await store.createMagazineComment('mag-1', 'content')
+        expect(store.commentsByMagazine['mag-1']).toHaveLength(1)
+      })
+
+      it('should NOT reinitialize empty comments array if ALREADY exists in createMagazineComment', async () => {
+        const authStore = useAuthStore()
+        authStore.user = { id: '1', name: 'test', email: 't@t.com', avatarUrl: '', newsletter_subscribed: false, followers: [], following: [], followed_magazines: [] }
+        const store = useCommentsStore()
+        const apiComment = { ...mockApiComment, magazine_id: 'mag-1', article_id: undefined }
+        vi.mocked(apiServiceExtended.createMagazineComment).mockResolvedValue(apiComment as unknown as Comment)
+
+        store.commentsByMagazine['mag-1'] = [{ ...mockComment, id: 'existing' }]
+        await store.createMagazineComment('mag-1', 'content')
+        expect(store.commentsByMagazine['mag-1']).toHaveLength(2)
+        expect(store.commentsByMagazine['mag-1'][1].id).toBe('existing')
+      })
+
+      it('should show error if not logged in', async () => {
+        const store = useCommentsStore()
+        const toastStore = useToastStore()
+        const showSpy = vi.spyOn(toastStore, 'show')
+        await store.createMagazineComment('mag-1', 'c')
+        expect(showSpy).toHaveBeenCalledWith('Please login to comment', 'error')
+      })
+
+      it('should handle magazine comment creation failure', async () => {
+        const authStore = useAuthStore()
+        authStore.user = { id: '1', name: 'test', email: 't@t.com', avatarUrl: '', newsletter_subscribed: false, followers: [], following: [], followed_magazines: [] }
+        const store = useCommentsStore()
+        vi.mocked(apiServiceExtended.createMagazineComment).mockRejectedValue(new Error('fail'))
+        await store.createMagazineComment('mag-1', 'c')
+        expect(store.error).toBe('Failed to create comment')
+      })
+    })
+
+    describe('transformComment branches', () => {
+      it('should handle missing user object and use unknown name', async () => {
+        const store = useCommentsStore()
+        const apiComment = {
+          id: '1',
+          article_id: 'a1',
+          user_id: 'u1',
+          content: 'c',
+          created_at: '2024'
+        }
+        vi.mocked(apiService.getComments).mockResolvedValue([apiComment] as unknown as Comment[])
+        await store.fetchComments('a1')
+        const comment = store.commentsByArticle['a1'][0]
+        expect(comment.author.id).toBe('u1')
+        expect(comment.author.name).toBe('Unknown User')
+      })
+    })
+
     describe('fetchComments() - Mock Mode', () => {
       it('should initialize empty comments array in mock mode', async () => {
         const store = useCommentsStore()
@@ -143,7 +329,7 @@ describe('Comments Store', () => {
           content: 'Test comment content',
           created_at: '2024-01-01T00:00:00Z'
         }]
-        vi.mocked(apiService.getComments).mockResolvedValue(mockApiComments as any)
+        vi.mocked(apiService.getComments).mockResolvedValue(mockApiComments as unknown as Comment[])
 
         await store.fetchComments('article-1')
 
@@ -270,7 +456,7 @@ describe('Comments Store', () => {
           created_at: '2024-01-01T00:00:00Z'
         }
         
-        vi.mocked(apiService.createComment).mockResolvedValue(mockApiComment as any)
+        vi.mocked(apiService.createComment).mockResolvedValue(mockApiComment as unknown as Comment)
 
         await store.createComment('article-1', newCommentContent)
 
@@ -320,6 +506,18 @@ describe('Comments Store', () => {
         expect(store.commentsByArticle['article-1'][0].updatedAt).toBeDefined()
       })
 
+      it('should handle index === -1 in mock mode update', async () => {
+        const store = useCommentsStore()
+        store.useMockData = true
+        store.commentsByArticle['article-1'] = [mockComment]
+
+        const promise = store.updateComment('non-existent', 'article-1', 'Updated')
+        await vi.advanceTimersByTimeAsync(200)
+        await promise
+
+        expect(store.commentsByArticle['article-1'][0].content).toBe(mockComment.content)
+      })
+
       it('should update comment via API', async () => {
         const store = useCommentsStore()
         store.useMockData = false
@@ -334,6 +532,40 @@ describe('Comments Store', () => {
           content: 'Updated via API',
         })
         expect(store.commentsByArticle['article-1'][0].content).toBe('Updated via API')
+      })
+
+      it('should update magazine comment via API', async () => {
+        const store = useCommentsStore()
+        store.commentsByMagazine['mag-1'] = [mockComment]
+        vi.mocked(apiService.updateComment).mockResolvedValue({ ...mockComment, content: 'updated' })
+
+        await store.updateComment('comment-1', 'mag-1', 'updated', true)
+        expect(store.commentsByMagazine['mag-1'][0].content).toBe('updated')
+      })
+
+      it('should handle non-existent magazine comments array in update', async () => {
+        const store = useCommentsStore()
+        vi.mocked(apiService.updateComment).mockResolvedValue({ ...mockComment, content: 'updated' })
+
+        await store.updateComment('comment-1', 'mag-1', 'updated', true)
+        expect(store.commentsByMagazine['mag-1']).toBeUndefined()
+      })
+
+      it('should handle non-existent article comments array in update', async () => {
+        const store = useCommentsStore()
+        vi.mocked(apiService.updateComment).mockResolvedValue({ ...mockComment, content: 'updated' })
+
+        await store.updateComment('comment-1', 'art-1', 'updated', false)
+        expect(store.commentsByArticle['art-1']).toBeUndefined()
+      })
+
+      it('should update in userComments if present', async () => {
+        const store = useCommentsStore()
+        store.userComments = [mockComment]
+        vi.mocked(apiService.updateComment).mockResolvedValue({ ...mockComment, content: 'updated' })
+
+        await store.updateComment('comment-1', 'article-1', 'updated')
+        expect(store.userComments[0].content).toBe('updated')
       })
 
       it('should show success toast', async () => {
@@ -395,6 +627,40 @@ describe('Comments Store', () => {
 
         expect(apiService.deleteComment).toHaveBeenCalledWith('comment-1')
         expect(store.commentsByArticle['article-1']).toHaveLength(0)
+      })
+
+      it('should delete magazine comment via API', async () => {
+        const store = useCommentsStore()
+        store.commentsByMagazine['mag-1'] = [mockComment]
+        vi.mocked(apiService.deleteComment).mockResolvedValue(undefined)
+
+        await store.deleteComment('comment-1', 'mag-1', true)
+        expect(store.commentsByMagazine['mag-1']).toHaveLength(0)
+      })
+
+      it('should handle non-existent magazine comments array in delete', async () => {
+        const store = useCommentsStore()
+        vi.mocked(apiService.deleteComment).mockResolvedValue(undefined)
+
+        await store.deleteComment('comment-1', 'mag-1', true)
+        expect(store.commentsByMagazine['mag-1']).toEqual([])
+      })
+
+      it('should handle non-existent article comments array in delete', async () => {
+        const store = useCommentsStore()
+        vi.mocked(apiService.deleteComment).mockResolvedValue(undefined)
+
+        await store.deleteComment('comment-1', 'art-1', false)
+        expect(store.commentsByArticle['art-1']).toEqual([])
+      })
+
+      it('should also remove from userComments', async () => {
+        const store = useCommentsStore()
+        store.userComments = [mockComment]
+        vi.mocked(apiService.deleteComment).mockResolvedValue(undefined)
+
+        await store.deleteComment('comment-1', 'article-1')
+        expect(store.userComments).toHaveLength(0)
       })
 
       it('should show success toast', async () => {

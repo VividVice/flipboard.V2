@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior() {
     // Always scroll to top for all route navigations
     return { top: 0 }
   },
@@ -70,10 +70,10 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth) {
     // Ensure the auth store has had a chance to initialize (e.g., from localStorage)
     try {
-      if (typeof (authStore as any).initialize === 'function') {
-        await (authStore as any).initialize()
+      if ('initialize' in authStore && typeof authStore.initialize === 'function') {
+        await authStore.initialize()
       }
-    } catch (e) {
+    } catch {
       // If initialization fails, fall through to the authentication check below
     }
 
