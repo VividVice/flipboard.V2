@@ -24,7 +24,14 @@ async def get_notifications_for_user(
         query["read"] = read
 
     cursor = db.notifications.find(query).sort("created_at", -1).skip(skip).limit(limit)
-    return await cursor.to_list(length=limit)
+    notifications = await cursor.to_list(length=limit)
+
+    # Adapt old data: if 'message' is missing but 'content_preview' exists, use it
+    for notification in notifications:
+        if "message" not in notification and "content_preview" in notification:
+            notification["message"] = notification.pop("content_preview")
+
+    return notifications
 
 
 async def mark_notification_as_read(notification_id: str, user_id: str):
